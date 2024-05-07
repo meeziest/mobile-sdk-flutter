@@ -1,0 +1,54 @@
+syntax = "proto3";
+package webitel.portal;
+option go_package = "webitel.go/api/portal;portal";
+
+import "portal/auth.proto";
+import "portal/push.proto";
+import "portal/connect.proto";
+
+// Portal Customer Service
+service Customer {
+
+  // Network PING command
+  rpc Ping(Echo) returns (Echo);
+  
+  // Obtain your user's access token to portal services.
+  rpc Token(TokenRequest) returns (AccessToken);
+
+  // Logout session request
+  rpc Logout(LogoutRequest) returns (UpdateSignedOut);
+
+  // Inspect your authorization access token
+  rpc Inspect(InspectRequest) returns (AccessToken);
+
+  // Register device PUSH subscription
+  rpc RegisterDevice(RegisterDeviceRequest) returns (RegisterDeviceResponse);
+
+  // ----- Experimental ----- //
+
+  // Stay connected to the service and receive real-time updates
+  rpc Connect(stream Request) returns (stream Update);
+}
+
+// Inspect access_token details
+message InspectRequest {
+  // // End-User Authentication
+  // string access_token = 1;
+}
+
+
+message LogoutRequest {
+  // // REQUIRED. Session Authentication
+  // string access_token = 1;
+}
+
+message RegisterDeviceRequest {
+  // PUSH subscription update.
+  // Set provider type specific registered device token.
+  // None to deregister device PUSH subscription.
+  DevicePush push = 1;
+}
+
+message RegisterDeviceResponse {
+  
+}

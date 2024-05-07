@@ -1,0 +1,49 @@
+syntax = "proto3";
+package webitel.portal;
+option go_package = "webitel.go/api/portal;portal";
+
+import "chat/messages/message.proto";
+
+// Media (file) storage
+service MediaStorage {
+
+  // Upload a file (without actually sending it to the chat)
+  rpc UploadFile(stream UploadMedia) returns (webitel.chat.File);
+
+  // Returns content of a whole file
+  rpc GetFile(GetFileRequest) returns (stream MediaFile);
+
+}
+
+message InputFile {
+  // MIME type
+  string type = 4;
+  // Filename
+  string name = 5;
+}
+
+message UploadMedia {
+  // Input media type
+  oneof media_type {
+    // File metadata info
+    InputFile file = 1;
+    // File content part
+    bytes data = 2;
+  }
+}
+
+message GetFileRequest {
+
+  // File location
+  string file_id = 1;
+}
+
+message MediaFile {
+  // Output media type
+  oneof media_type {
+    // File metadata info
+    webitel.chat.File file = 1;
+    // File content part
+    bytes data = 2;
+  }
+}

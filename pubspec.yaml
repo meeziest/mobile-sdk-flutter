@@ -1,0 +1,32 @@
+name: webitel_portal_sdk
+description: Webitel Portal SDK.
+version: 1.0.1
+
+environment:
+  sdk: ^3.3.3
+
+dependencies:
+  build_runner: ^2.4.9
+  get_it: ^7.7.0
+  shared_preferences: ^2.2.3
+  sqflite: ^2.3.3
+  connectivity_plus: ^6.0.3
+  synchronized: ^3.1.0+1
+  path: ^1.9.0
+  flutter_image_compress: ^2.2.0
+  json_annotation: ^4.9.0
+  logging: ^1.2.0
+  injectable: ^2.4.1
+  package_info_plus: ^7.0.0
+  protobuf: ^3.1.0
+  uuid: ^4.4.0
+  grpc: ^3.2.4
+
+
+
+dev_dependencies:
+  lints: ^3.0.0
+  injectable_generator: ^2.6.1
+  json_serializable: ^6.7.1
+
+

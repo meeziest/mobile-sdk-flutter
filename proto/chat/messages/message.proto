@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package webitel.chat; 
+
+option go_package = "github.com/webitel/protos/chat/messages";
+
+import "chat/messages/peer.proto";
+import "chat/messages/chat.proto";
+
+// Chat Message.
+message Message {
+  
+  // Unique message identifier inside this chat.
+  int64 id = 1;
+
+  // Timestamp when this message was sent (published).
+  int64 date = 2;
+  
+  // Sender of the message.
+  Peer from = 3;
+
+  // Conversation the message belongs to ..
+  Chat chat = 4;
+  
+  // Chat Sender of the message, sent on behalf of a chat (member).
+  Chat sender = 5;
+
+  // Timestamp when this message was last edited.
+  int64 edit = 6;
+
+  // // MIME Type of the message, e.g.: text, file, read, status etc.
+  // string type = 5;
+  
+  // Message Text.
+  string text = 7;
+  
+  // Message Media. Attachment. 
+  File file = 8;
+  
+  // Context. Variables. Environment.
+  map<string, string> context = 9;
+
+}
+
+// Media File.
+message File {
+
+  // File location
+  string id = 1;
+
+  // string url = 2;
+
+  // Size in bytes
+  int64 size = 3;
+
+  // MIME media type
+  string type = 4;
+
+  // Filename
+  string name = 5;
+}
