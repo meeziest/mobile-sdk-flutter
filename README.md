@@ -2,7 +2,7 @@
 
 ## Features
 
-List the key features and functionalities of your project:
+List the key features and functionalities:
 
 - Feature 1: [Send messages]
 
