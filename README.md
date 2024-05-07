@@ -56,7 +56,3 @@ Fetch updates | set limit/offset(reversed to **fetchMessages**)
 Listen to upcoming/incoming messages
 `WebitelPortalSdk.instance.messageHandler.listenToMessages();`
 
-
-### PortalHandler
-Exit Portal
-`WebitelPortalSdk.instance.portalHandler.exitPortal();`
