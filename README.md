@@ -4,13 +4,13 @@
 
 List the key features and functionalities:
 
-- Feature 1: [Send messages]
+- Feature 1: Send messages
 
-- Feature 2: [Listen to incoming/upcoming messages]
+- Feature 2: Listen to incoming/upcoming messages
 
-- Feature 3: [Fetch messages/updates]
+- Feature 3: Fetch messages/updates
 
-- Feature 4: [Send/Receive files]
+- Feature 4: Send/Receive files
 
 ## Usage
 
