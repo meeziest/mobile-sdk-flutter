@@ -37,12 +37,6 @@ Register device for push notifications
 Fetch dialogs
 `WebitelPortalSdk.instance.chatListHandler.fetchDialogs();`
 
-Enter Chat
-`WebitelPortalSdk.instance.chatListHandler.enterChat();`
-
-Exit Chat
-`WebitelPortalSdk.instance.chatListHandler.exitChat();`
-
 ### MessageHandler
 Send message or message with media
 `WebitelPortalSdk.instance.messageHandler.sendMessage();`
