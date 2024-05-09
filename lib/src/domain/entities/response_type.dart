@@ -1,1 +1,5 @@
-enum ResponseType { response, updateNewMessage, error }
+enum ResponseType {
+  response,
+  updateNewMessage,
+  error,
+}

@@ -12,7 +12,7 @@ class ResponseDialogMessageBuilder {
   late String _id;
   late String _userId;
   late UpdateNewMessage _update;
-  late MediaFileResponseEntity _file;
+  late MediaFileResponseEntity? _file;
 
   ResponseDialogMessageBuilder setDialogMessageContent(
       String dialogMessageContent) {
@@ -75,7 +75,14 @@ class ResponseDialogMessageBuilder {
       requestId: _requestId,
       peer: peerInfo,
       messageId: _messageId,
-      file: _file,
+      file: _file ??
+          MediaFileResponseEntity(
+            size: 0,
+            bytes: [],
+            name: '',
+            type: '',
+            id: '',
+          ),
       id: _id,
     );
   }
