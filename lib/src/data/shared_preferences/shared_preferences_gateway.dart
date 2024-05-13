@@ -54,6 +54,14 @@ class SharedPreferencesGateway {
     return await getFromDisk('deviceId');
   }
 
+  Future<void> saveAppToken(String appToken) async {
+    await saveToDisk('appToken', appToken);
+  }
+
+  Future<String?> readAppToken() async {
+    return await getFromDisk('appToken');
+  }
+
   Future<void> saveUserId(String userId) async {
     await saveToDisk('userId', userId);
   }

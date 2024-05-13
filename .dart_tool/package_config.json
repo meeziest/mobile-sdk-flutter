@@ -332,6 +332,18 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "package_info_plus",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_info_plus-8.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "3.3"
+    },
+    {
+      "name": "package_info_plus_platform_interface",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_info_plus_platform_interface-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.18"
+    },
+    {
       "name": "path",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/path-1.9.0",
       "packageUri": "lib/",
@@ -554,6 +566,12 @@
       "languageVersion": "2.17"
     },
     {
+      "name": "ua_client_hints",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/ua_client_hints-1.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
       "name": "uuid",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/uuid-4.4.0",
       "packageUri": "lib/",
@@ -614,7 +632,7 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-05-13T09:40:29.741054Z",
+  "generated": "2024-05-13T13:14:38.658797Z",
   "generator": "pub",
   "generatorVersion": "3.3.3"
 }

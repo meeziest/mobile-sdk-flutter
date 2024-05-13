@@ -14,19 +14,26 @@ List the key features and functionalities:
 
 ## Usage
 
+### Client
+
+Configure client:
+`final client = await WebitelPortalSdk.instance.initClient();`
+
 ### Auth
+
 Login user:
-`await WebitelPortalSdk.instance.login();`
+`await client.login();`
 
 Logout user and disable push notifications:
-`await WebitelPortalSdk.instance.logout();`
+`await client.logout();`
 
 Register device for push notifications:
-`await WebitelPortalSdk.instance.registerDevice();`
+`await client.registerDevice();`
 
 ### Channel & Connect Status listeners
+
 Get Channel:
-`final channel = await WebitelPortalSdk.instance.getChannel();`
+`final channel = await client.getChannel();`
 
 Listen to changes in channel status:
 `channel.onChannelStatusChange.listen...`
@@ -35,9 +42,9 @@ Listen to changes in connect status:
 `channel.onConnectStreamStatusChange.listen...`
 
 ### Dialogs
-Fetch dialog:
-`final dialog = await WebitelPortalSdk.instance.fetchServiceDialog();`
 
+Fetch dialog:
+`final dialog = await client.fetchServiceDialog();`
 
 Send message or message with media to dialog:
 `await dialog.sendMessage();`

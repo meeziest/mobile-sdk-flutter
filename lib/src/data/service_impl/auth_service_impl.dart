@@ -1,14 +1,22 @@
+import 'dart:io';
+
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:ua_client_hints/ua_client_hints.dart';
 import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/builder/token_request_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/user_agent_builder.dart';
+import 'package:webitel_portal_sdk/src/communication/call_handler.dart';
+import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
+import 'package:webitel_portal_sdk/src/data/client_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/database/database.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/client.dart' as client;
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response_status.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/user/user.dart';
@@ -31,31 +39,25 @@ class AuthServiceImpl implements AuthService {
   );
 
   @override
-  Future<ResponseEntity> login({
+  Future<client.Client> initClient({
     required String url,
     required String appToken,
-    required String appName,
-    required String appVersion,
-    required String platform,
-    required String platformVersion,
-    required String model,
-    required String device,
-    required String architecture,
-    required String name,
-    required String sub,
-    required String issuer,
   }) async {
     log.info('Attempting to log in with base URL: $url');
     await _sharedPreferencesGateway.init();
+    await _sharedPreferencesGateway.saveAppToken(appToken);
     final deviceId = await getOrGenerateDeviceId();
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+    final uaData = await userAgentData();
+
     final userAgentString = buildUserAgent(
-      appName: appName,
-      appVersion: appVersion,
-      platform: platform,
-      platformVersion: platformVersion,
-      model: model,
-      device: device,
-      architecture: architecture,
+      appName: packageInfo.appName,
+      appVersion: packageInfo.version,
+      platform: Platform.operatingSystem,
+      platformVersion: uaData.platformVersion,
+      model: uaData.model,
+      device: uaData.device,
+      architecture: uaData.architecture,
     );
 
     final urlHelper = UrlHelper(url);
@@ -73,11 +75,26 @@ class AuthServiceImpl implements AuthService {
       port: port,
       secure: secureConnection,
     );
+    return ClientImpl(
+      url: url,
+      appToken: appToken,
+      callHandler: CallHandler(),
+      chatHandler: ChatHandler(),
+    );
+  }
 
+  @override
+  Future<ResponseEntity> login({
+    required String name,
+    required String sub,
+    required String issuer,
+  }) async {
+    final deviceId = await getOrGenerateDeviceId();
+    final appToken = await _sharedPreferencesGateway.readAppToken();
     final request = TokenRequestBuilder()
         .setGrantType('identity')
         .setResponseType(['user', 'token', 'chat'])
-        .setAppToken(appToken)
+        .setAppToken(appToken ?? '')
         .setIdentity(
           Identity(
             name: name,
@@ -97,7 +114,7 @@ class AuthServiceImpl implements AuthService {
         UserEntity(
           accessToken: response.accessToken,
           id: response.chat.user.id,
-          appToken: appToken,
+          appToken: appToken ?? '',
           deviceId: deviceId,
         ),
       );
