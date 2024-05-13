@@ -3,6 +3,7 @@ import 'package:injectable/injectable.dart';
 import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
+import 'package:webitel_portal_sdk/src/backbone/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/builder/token_request_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/user_agent_builder.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_gateway.dart';
@@ -31,23 +32,46 @@ class AuthServiceImpl implements AuthService {
 
   @override
   Future<ResponseEntity> login({
-    required String baseUrl,
-    required String clientToken,
+    required String url,
     required String appToken,
-    required String userAgent,
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+    required String name,
+    required String sub,
+    required String issuer,
   }) async {
-    log.info('Attempting to log in with base URL: $baseUrl');
+    log.info('Attempting to log in with base URL: $url');
     await _sharedPreferencesGateway.init();
     final deviceId = await getOrGenerateDeviceId();
-    final userAgentString = buildUserAgent(userAgent: userAgent);
+    final userAgentString = buildUserAgent(
+      appName: appName,
+      appVersion: appVersion,
+      platform: platform,
+      platformVersion: platformVersion,
+      model: model,
+      device: device,
+      architecture: architecture,
+    );
+
+    final urlHelper = UrlHelper(url);
+    final secureConnection = urlHelper.isSecure();
+    final hostUrl = urlHelper.getUrl();
+    final port = urlHelper.getPort();
 
     log.info(
         'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
     await _grpcGateway.init(
-      baseUrl: baseUrl,
-      clientToken: clientToken,
+      url: hostUrl,
+      appToken: appToken,
       deviceId: deviceId,
       userAgent: userAgentString,
+      port: port,
+      secure: secureConnection,
     );
 
     final request = TokenRequestBuilder()
@@ -56,9 +80,9 @@ class AuthServiceImpl implements AuthService {
         .setAppToken(appToken)
         .setIdentity(
           Identity(
-            name: 'Volodia Hunkalo',
-            sub: 'Hunkalo acc2',
-            iss: Constants.iss,
+            name: name,
+            sub: sub,
+            iss: issuer,
           ),
         )
         .build();
@@ -73,7 +97,7 @@ class AuthServiceImpl implements AuthService {
         UserEntity(
           accessToken: response.accessToken,
           id: response.chat.user.id,
-          clientToken: clientToken,
+          appToken: appToken,
           deviceId: deviceId,
         ),
       );
@@ -83,13 +107,15 @@ class AuthServiceImpl implements AuthService {
     } on GrpcError catch (err) {
       log.severe('GRPC Error during login: ${err.toString()}');
       return ResponseEntity(
-          status: ResponseStatus.error,
-          message: 'Failed to login: ${err.toString()}');
+        status: ResponseStatus.error,
+        message: 'Failed to login: ${err.toString()}',
+      );
     } catch (err) {
       log.severe('Exception during login: ${err.toString()}');
       return ResponseEntity(
-          status: ResponseStatus.error,
-          message: 'Failed to login: ${err.toString()}');
+        status: ResponseStatus.error,
+        message: 'Failed to login: ${err.toString()}',
+      );
     }
   }
 
@@ -104,8 +130,9 @@ class AuthServiceImpl implements AuthService {
     } catch (err) {
       log.severe('Failed to register device: ${err.toString()}');
       return ResponseEntity(
-          status: ResponseStatus.error,
-          message: 'Failed to register device: ${err.toString()}');
+        status: ResponseStatus.error,
+        message: 'Failed to register device: ${err.toString()}',
+      );
     }
   }
 
@@ -119,8 +146,9 @@ class AuthServiceImpl implements AuthService {
     } catch (err) {
       log.severe('Failed to logout: ${err.toString()}');
       return ResponseEntity(
-          status: ResponseStatus.error,
-          message: 'Failed to logout: ${err.toString()}');
+        status: ResponseStatus.error,
+        message: 'Failed to logout: ${err.toString()}',
+      );
     }
   }
 
@@ -136,11 +164,25 @@ class AuthServiceImpl implements AuthService {
     return savedDeviceId;
   }
 
-  String buildUserAgent({required String userAgent}) {
+  String buildUserAgent({
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+  }) {
     final userAgentString = UserAgentBuilder(
-      userAgent: userAgent,
       sdkName: Constants.sdkName,
       sdkVersion: Constants.sdkVersion,
+      appName: appName,
+      version: appVersion,
+      platform: platform,
+      platformVersion: platformVersion,
+      model: model,
+      device: device,
+      architecture: architecture,
     ).build();
     log.info('Built user agent: $userAgentString');
     return userAgentString;

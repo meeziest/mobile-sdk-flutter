@@ -36,6 +36,8 @@ message GetFileRequest {
 
   // File location
   string file_id = 1;
+  // Range: bytes=<start>
+  int64 offset = 2;
 }
 
 message MediaFile {

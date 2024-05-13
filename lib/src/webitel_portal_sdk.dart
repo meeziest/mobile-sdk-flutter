@@ -48,16 +48,32 @@ class WebitelPortalSdk {
   }
 
   Future<ResponseEntity> login({
-    required String baseUrl,
-    required String clientToken,
-    required String userAgent,
+    required String url,
     required String appToken,
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+    required String name,
+    required String sub,
+    required String issuer,
   }) async {
     return await _authService.login(
+      url: url,
       appToken: appToken,
-      baseUrl: baseUrl,
-      clientToken: clientToken,
-      userAgent: userAgent,
+      appName: appName,
+      appVersion: appVersion,
+      platform: platform,
+      platformVersion: platformVersion,
+      model: model,
+      device: device,
+      architecture: architecture,
+      name: name,
+      sub: sub,
+      issuer: issuer,
     );
   }
 }

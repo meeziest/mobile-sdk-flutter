@@ -1,53 +1,39 @@
-# Webitel Portal SDK
+<!-- 
+This README describes the package. If you publish this package to pub.dev,
+this README's contents appear on the landing page for your package.
+
+For information about how to write a good package README, see the guide for
+[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+
+For general information about developing packages, see the Dart guide for
+[creating packages](https://dart.dev/guides/libraries/create-library-packages)
+and the Flutter guide for
+[developing packages and plugins](https://flutter.dev/developing-packages). 
+-->
+
+TODO: Put a short description of the package here that helps potential users
+know whether this package might be useful for them.
 
 ## Features
 
-List the key features and functionalities:
+TODO: List what your package can do. Maybe include images, gifs, or videos.
 
-- Feature 1: Send messages
+## Getting started
 
-- Feature 2: Listen to incoming/upcoming messages
-
-- Feature 3: Fetch messages/updates
-
-- Feature 4: Send/Receive files
+TODO: List prerequisites and provide or point to information on how to
+start using the package.
 
 ## Usage
 
-### Auth
-Login user:
-`await WebitelPortalSdk.instance.login();`
+TODO: Include short and useful examples for package users. Add longer examples
+to `/example` folder. 
 
-Logout user and disable push notifications:
-`await WebitelPortalSdk.instance.logout();`
+```dart
+const like = 'sample';
+```
 
-Register device for push notifications:
-`await WebitelPortalSdk.instance.registerDevice();`
+## Additional information
 
-### Channel & Connect Status listeners
-Get Channel:
-`final channel = await WebitelPortalSdk.instance.getChannel();`
-
-Listen to changes in channel status:
-`channel.onChannelStatusChange.listen...`
-
-Listen to changes in connect status:
-`channel.onConnectStreamStatusChange.listen...`
-
-### Dialogs
-Fetch dialog:
-`final dialog = await WebitelPortalSdk.instance.fetchServiceDialog();`
-
-
-Send message or message with media to dialog:
-`await dialog.sendMessage();`
-
-Fetch messages | set limit/offset for dialog:
-`await dialog.fetchMessages();`
-
-Fetch updates | set limit/offset (reversed to **fetchMessages**) for dialog:
-`await dialog.fetchUpdates();`
-
-Listen to upcoming/incoming messages in dialog:
-`await dialog.listenToMessages();`
-
+TODO: Tell users more about the package: where to find more information, how to 
+contribute to the package, how to file issues, what response they can expect 
+from the package authors, and more.

@@ -29,12 +29,12 @@ abstract class Dialog {
 
   Future<List<DialogMessageResponseEntity>> fetchMessages({
     int? limit,
-    String? offset,
+    int? offset,
   });
 
   Future<List<DialogMessageResponseEntity>> fetchUpdates({
     int? limit,
-    String? offset,
+    int? offset,
   });
 
   static final Map<String, Dialog> _cache = {};

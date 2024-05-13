@@ -58,19 +58,31 @@ class ConnectListenerGateway {
 
           switch (responseType) {
             case ResponseType.response:
-              final decodedResponse = update.data.unpackInto(portal.Response());
-              _responseStreamController.add(decodedResponse);
+              _responseStreamController.add(
+                update.data.unpackInto(
+                  portal.Response(),
+                ),
+              );
               break;
+
             case ResponseType.updateNewMessage:
-              final decodedUpdate = update.data.unpackInto(UpdateNewMessage());
+              final decodedUpdate = update.data.unpackInto(
+                UpdateNewMessage(),
+              );
               _updateStreamController.add(decodedUpdate);
               log.info(decodedUpdate.message.text);
               break;
+
             case ResponseType.error:
-              final decodedResponse = update.data.unpackInto(portal.Response());
-              _errorStreamController.add(ErrorEntity(
+              final decodedResponse = update.data.unpackInto(
+                portal.Response(),
+              );
+              _errorStreamController.add(
+                ErrorEntity(
                   statusCode: decodedResponse.err.code.toString(),
-                  errorMessage: decodedResponse.err.message));
+                  errorMessage: decodedResponse.err.message,
+                ),
+              );
               break;
           }
         }
@@ -79,6 +91,7 @@ class ConnectListenerGateway {
       }
     } on GrpcError catch (err, stack) {
       log.warning('GRPC Error: $err', err, stack);
+      _errorStreamController.add(ErrorEntity.fromGrpcError(err));
       handleConnectionClosure(err.toString());
     } catch (err, stack) {
       log.warning('Unexpected error: $err', err, stack);
@@ -192,7 +205,7 @@ class ConnectListenerGateway {
 
   Stream<UpdateNewMessage> get updateStream => _updateStreamController.stream;
 
-  Stream<ErrorEntity> get errorStream => _errorStreamController.stream;
+  StreamController<ErrorEntity> get errorStream => _errorStreamController;
 
   StreamController<ConnectEntity> get connectStatusStream => _connectController;
 

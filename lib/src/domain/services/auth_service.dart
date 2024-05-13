@@ -6,9 +6,17 @@ abstract interface class AuthService {
   Future<ResponseEntity> registerDevice();
 
   Future<ResponseEntity> login({
-    required String baseUrl,
-    required String userAgent,
-    required String clientToken,
+    required String url,
     required String appToken,
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+    required String name,
+    required String sub,
+    required String issuer,
   });
 }

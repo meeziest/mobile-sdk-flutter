@@ -9,14 +9,14 @@ part of 'user.dart';
 UserEntity _$UserEntityFromJson(Map<String, dynamic> json) => UserEntity(
       accessToken: json['accessToken'] as String,
       id: json['id'] as String,
-      clientToken: json['clientToken'] as String,
+      appToken: json['appToken'] as String,
       deviceId: json['deviceId'] as String,
     );
 
 Map<String, dynamic> _$UserEntityToJson(UserEntity instance) =>
     <String, dynamic>{
       'id': instance.id,
-      'clientToken': instance.clientToken,
+      'appToken': instance.appToken,
       'deviceId': instance.deviceId,
       'accessToken': instance.accessToken,
     };

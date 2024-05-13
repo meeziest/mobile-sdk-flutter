@@ -9,7 +9,7 @@ class ResponseDialogMessageBuilder {
   late String _requestId;
   late String _chatId;
   late String _messageId;
-  late String _id;
+  late int _id;
   late String _userId;
   late UpdateNewMessage _update;
   late MediaFileResponseEntity? _file;
@@ -40,7 +40,7 @@ class ResponseDialogMessageBuilder {
     return this;
   }
 
-  ResponseDialogMessageBuilder setId(String id) {
+  ResponseDialogMessageBuilder setId(int id) {
     _id = id;
     return this;
   }

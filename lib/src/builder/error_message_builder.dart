@@ -12,7 +12,7 @@ class ErrorMessageBuilder {
 
   DialogMessageResponseEntity build() {
     return DialogMessageResponseEntity(
-      id: '',
+      id: 0,
       dialogMessageContent: _errorMessage,
       requestId: '',
       chatId: '',

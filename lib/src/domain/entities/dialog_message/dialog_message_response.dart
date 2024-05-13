@@ -5,7 +5,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 enum Sender { user, operator, bot }
 
 class DialogMessageResponseEntity {
-  final String id;
+  final int id;
   final MediaFileResponseEntity file;
   final String dialogMessageContent;
   final PeerInfo peer;

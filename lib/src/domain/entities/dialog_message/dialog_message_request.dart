@@ -5,7 +5,6 @@ class DialogMessageRequestEntity {
   final MessageType messageType;
   final MediaFileRequestEntity file;
   final String dialogMessageContent;
-
   final String requestId;
   final String? chatId;
   final String? messageId;

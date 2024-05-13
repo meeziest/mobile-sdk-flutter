@@ -68,7 +68,7 @@ class DialogImpl implements Dialog {
   @override
   Future<List<DialogMessageResponseEntity>> fetchMessages({
     int? limit,
-    String? offset,
+    int? offset,
   }) async {
     return await _chatService.fetchMessages(
       chatId: id,
@@ -80,7 +80,7 @@ class DialogImpl implements Dialog {
   @override
   Future<List<DialogMessageResponseEntity>> fetchUpdates({
     int? limit,
-    String? offset,
+    int? offset,
   }) async {
     return await _chatService.fetchMessages(
       chatId: id,

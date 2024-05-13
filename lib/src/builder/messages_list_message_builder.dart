@@ -37,7 +37,7 @@ class MessagesListMessageBuilder {
           _peers[peerIndex].id == _userId ? Sender.user : Sender.operator;
 
       return DialogMessageResponseEntity(
-        id: message.file.id,
+        id: message.id.toInt(),
         chatId: _chatId,
         sender: messageType,
         dialogMessageContent: message.text,

@@ -13,27 +13,35 @@ class GrpcGateway {
   late MediaStorageClient _mediaStorageStub;
   late ClientChannel _channel;
   late String _accessToken = '';
-  late String _baseUrl;
+  late String _url;
+  late int _port;
+  late bool _secure;
   late String _deviceId;
-  late String _clientToken;
+  late String _appToken;
   late String _userAgent;
   final _streamControllerState = StreamController<ConnectionState>();
 
   Future<void> init({
-    required String baseUrl,
-    required String clientToken,
+    required String url,
+    required String appToken,
     required String deviceId,
     required String userAgent,
+    required int port,
+    required bool secure,
   }) async {
-    _baseUrl = baseUrl;
+    _url = url;
+    _secure = secure;
+    _port = port;
     _deviceId = deviceId;
-    _clientToken = clientToken;
+    _appToken = appToken;
     _userAgent = userAgent;
     await _createChannel(
-      baseUrl: baseUrl,
+      url: url,
       deviceId: deviceId,
-      clientToken: clientToken,
+      appToken: appToken,
       userAgent: _userAgent,
+      port: port,
+      secure: secure,
     );
   }
 
@@ -41,9 +49,11 @@ class GrpcGateway {
     _accessToken = accessToken;
 
     await _createChannel(
-      baseUrl: _baseUrl,
+      url: _url,
+      port: _port,
+      secure: _secure,
       deviceId: _deviceId,
-      clientToken: _clientToken,
+      appToken: _appToken,
       userAgent: _userAgent,
     );
   }
@@ -61,15 +71,17 @@ class GrpcGateway {
   StreamController<ConnectionState> get stateStream => _streamControllerState;
 
   Future<void> _createChannel({
-    required String baseUrl,
     required String deviceId,
-    required String clientToken,
+    required String appToken,
     required String userAgent,
+    required int port,
+    required String url,
+    required bool secure,
   }) async {
     final completer = Completer<void>();
     _channel = ClientChannel(
-      baseUrl,
-      port: 443,
+      url,
+      port: port,
       options: ChannelOptions(
         userAgent: userAgent,
         keepAlive: ClientKeepAliveOptions(
@@ -87,7 +99,7 @@ class GrpcGateway {
       interceptors: [GRPCInterceptor()],
       options: CallOptionsBuilder()
           .setDeviceId(deviceId)
-          .setClientToken(clientToken)
+          .setClientToken(appToken)
           .setAccessToken(_accessToken)
           .build(),
     );
@@ -96,7 +108,7 @@ class GrpcGateway {
       interceptors: [GRPCInterceptor()],
       options: CallOptionsBuilder()
           .setDeviceId(deviceId)
-          .setClientToken(clientToken)
+          .setClientToken(appToken)
           .setAccessToken(_accessToken)
           .build(),
     );

@@ -134,12 +134,6 @@
       "languageVersion": "2.18"
     },
     {
-      "name": "cross_file",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/cross_file-0.3.4+1",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
       "name": "crypto",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/crypto-3.0.3",
       "packageUri": "lib/",
@@ -180,42 +174,6 @@
       "rootUri": "file:///Users/volodiahunkalo/Downloads/development/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.2"
-    },
-    {
-      "name": "flutter_image_compress",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress-2.2.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "flutter_image_compress_common",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress_common-1.0.5",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "flutter_image_compress_macos",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress_macos-1.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "flutter_image_compress_ohos",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress_ohos-0.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "flutter_image_compress_platform_interface",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress_platform_interface-1.0.5",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
-      "name": "flutter_image_compress_web",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/flutter_image_compress_web-0.1.4+1",
-      "packageUri": "lib/",
-      "languageVersion": "2.16"
     },
     {
       "name": "flutter_web_plugins",
@@ -327,9 +285,9 @@
     },
     {
       "name": "lints",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/lints-3.0.0",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/lints-4.0.0",
       "packageUri": "lib/",
-      "languageVersion": "3.0"
+      "languageVersion": "3.1"
     },
     {
       "name": "logging",
@@ -372,18 +330,6 @@
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_config-2.1.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
-    },
-    {
-      "name": "package_info_plus",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_info_plus-7.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
-      "name": "package_info_plus_platform_interface",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_info_plus_platform_interface-3.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
     },
     {
       "name": "path",
@@ -668,7 +614,7 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-05-07T14:00:26.922292Z",
+  "generated": "2024-05-13T09:40:29.741054Z",
   "generator": "pub",
   "generatorVersion": "3.3.3"
 }

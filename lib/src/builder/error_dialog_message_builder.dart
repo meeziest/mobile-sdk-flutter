@@ -25,7 +25,7 @@ class ErrorDialogMessageBuilder {
     );
 
     return DialogMessageResponseEntity(
-      id: '',
+      id: 0,
       chatId: '',
       dialogMessageContent: _dialogMessageContent,
       requestId: _requestId,

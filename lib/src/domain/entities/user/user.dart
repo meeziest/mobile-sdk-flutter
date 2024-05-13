@@ -5,14 +5,14 @@ part 'user.g.dart';
 @JsonSerializable()
 class UserEntity {
   final String id;
-  final String clientToken;
+  final String appToken;
   final String deviceId;
   final String accessToken;
 
   UserEntity({
     required this.accessToken,
     required this.id,
-    required this.clientToken,
+    required this.appToken,
     required this.deviceId,
   });
 
@@ -20,7 +20,7 @@ class UserEntity {
     return UserEntity(
       accessToken: '',
       id: '',
-      clientToken: '',
+      appToken: '',
       deviceId: '',
     );
   }
