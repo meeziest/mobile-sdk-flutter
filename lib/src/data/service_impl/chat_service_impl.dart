@@ -10,9 +10,9 @@ import 'package:webitel_portal_sdk/src/backbone/message_helper.dart';
 import 'package:webitel_portal_sdk/src/builder/error_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/messages_list_message_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/response_dialog_message_builder.dart';
-import 'package:webitel_portal_sdk/src/data/grpc/connect_listener_gateway.dart';
-import 'package:webitel_portal_sdk/src/data/grpc/grpc_gateway.dart';
-import 'package:webitel_portal_sdk/src/data/service_impl/dialog_impl.dart';
+import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
+import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
+import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
@@ -35,9 +35,10 @@ import 'package:webitel_portal_sdk/webitel_portal_sdk.dart';
 
 @LazySingleton(as: ChatService)
 class ChatServiceImpl implements ChatService {
-  final ConnectListenerGateway _connectListenerGateway;
+  final GrpcChannel _grpcChannel;
+  final GrpcConnect _grpcConnect;
   final SharedPreferencesGateway _sharedPreferencesGateway;
-  final GrpcGateway _grpcGateway;
+
   final uuid = Uuid();
   final log = CustomLogger.getLogger('ChatServiceImpl');
   final Map<String, StreamController<DialogMessageResponseEntity>>
@@ -49,8 +50,8 @@ class ChatServiceImpl implements ChatService {
   // final Map<String, StreamController<void>> _onOperatorActions = {};
 
   ChatServiceImpl(
-    this._grpcGateway,
-    this._connectListenerGateway,
+    this._grpcChannel,
+    this._grpcConnect,
     this._sharedPreferencesGateway,
   ) {
     log.info("Initializing Chat service...");
@@ -84,10 +85,10 @@ class ChatServiceImpl implements ChatService {
     );
 
     log.info('Sending request to fetch chat dialogs');
-    await _connectListenerGateway.sendRequest(request);
+    await _grpcConnect.sendRequest(request);
 
     try {
-      final response = await _connectListenerGateway.responseStream
+      final response = await _grpcConnect.responseStream
           .firstWhere((response) => response.id == requestId);
 
       log.info('Received response for chat dialogs request ID: $requestId');
@@ -145,10 +146,10 @@ class ChatServiceImpl implements ChatService {
     );
 
     log.info('Sending request to fetch chat dialogs');
-    await _connectListenerGateway.sendRequest(request);
+    await _grpcConnect.sendRequest(request);
 
     try {
-      final response = await _connectListenerGateway.responseStream
+      final response = await _grpcConnect.responseStream
           .firstWhere((response) => response.id == requestId);
       log.info('Received response for chat dialogs request ID: $requestId');
       if (response.data.canUnpackInto(ChatList())) {
@@ -235,7 +236,7 @@ class ChatServiceImpl implements ChatService {
   Future<MediaFileResponseEntity?> downloadMediaFile(
       {required String fileId}) async {
     final mediaStream =
-        _grpcGateway.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
+        _grpcChannel.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
 
     MediaFileResponseEntity? file;
     fixnum.Int64 offset = fixnum.Int64(0);
@@ -287,7 +288,7 @@ class ChatServiceImpl implements ChatService {
     required MediaFileResponseEntity file,
     required fixnum.Int64 offset,
   }) async {
-    final resumedMedia = _grpcGateway.mediaStorageStub.getFile(
+    final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
       GetFileRequest(
         fileId: fileId,
         offset: offset,
@@ -307,7 +308,7 @@ class ChatServiceImpl implements ChatService {
   Future<void> listenToMessages() async {
     await _sharedPreferencesGateway.init();
     final userId = await _sharedPreferencesGateway.readUserId();
-    _connectListenerGateway.updateStream.listen((update) async {
+    _grpcConnect.updateStream.listen((update) async {
       log.info(
           "Message Controllers length: ${_onNewMessageControllers.length}");
       if (_onNewMessageControllers.containsKey(update.message.chat.id)) {
@@ -427,7 +428,7 @@ class ChatServiceImpl implements ChatService {
       log.info("Sending message of type $messageType for user $userId");
       final request = await _buildRequest(message, userId ?? '', messageType);
 
-      _connectListenerGateway.sendRequest(request);
+      _grpcConnect.sendRequest(request);
       return await _listenForResponse(message.requestId, userId ?? '')
           .timeout(const Duration(seconds: 5));
     } on GrpcError catch (err) {
@@ -451,7 +452,7 @@ class ChatServiceImpl implements ChatService {
     final completer = Completer<DialogMessageResponseEntity>();
     StreamSubscription<portal.Response>? streamSubscription;
 
-    streamSubscription = _connectListenerGateway.responseStream
+    streamSubscription = _grpcConnect.responseStream
         .where((response) => response.id == requestId)
         .listen(
           (response) => _handleResponse(response, completer, userId),
@@ -544,7 +545,7 @@ class ChatServiceImpl implements ChatService {
 
     if (messageType == MessageType.outcomingMedia) {
       log.info("Uploading media for message.");
-      final uploadedFile = await _grpcGateway.mediaStorageStub.uploadFile(
+      final uploadedFile = await _grpcChannel.mediaStorageStub.uploadFile(
         stream(
           data: message.file.data,
           name: message.file.name,
@@ -593,8 +594,8 @@ class ChatServiceImpl implements ChatService {
     );
 
     try {
-      await _connectListenerGateway.sendRequest(request);
-      final response = await _connectListenerGateway.responseStream
+      await _grpcConnect.sendRequest(request);
+      final response = await _grpcConnect.responseStream
           .firstWhere((response) => response.id == requestId)
           .timeout(const Duration(seconds: 5));
 
@@ -651,8 +652,8 @@ class ChatServiceImpl implements ChatService {
     );
 
     try {
-      _connectListenerGateway.sendRequest(request);
-      final response = await _connectListenerGateway.responseStream
+      _grpcConnect.sendRequest(request);
+      final response = await _grpcConnect.responseStream
           .firstWhere((response) => response.id == requestId)
           .timeout(const Duration(seconds: 5));
 
@@ -687,16 +688,16 @@ class ChatServiceImpl implements ChatService {
 
   @override
   StreamController<ChannelStatus> onChannelStatusChange() {
-    return _connectListenerGateway.chanelStatusStream;
+    return _grpcConnect.chanelStatusStream;
   }
 
   @override
   StreamController<ConnectEntity> onConnectStreamStatusChange() {
-    return _connectListenerGateway.connectStatusStream;
+    return _grpcConnect.connectStatusStream;
   }
 
   @override
   StreamController<ErrorEntity> onError() {
-    return _connectListenerGateway.errorStream;
+    return _grpcConnect.errorStream;
   }
 }

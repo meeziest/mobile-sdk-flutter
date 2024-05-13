@@ -6,7 +6,7 @@ import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/builder/token_request_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/user_agent_builder.dart';
-import 'package:webitel_portal_sdk/src/data/grpc/grpc_gateway.dart';
+import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/database/database.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
@@ -21,12 +21,12 @@ import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
 class AuthServiceImpl implements AuthService {
   final DatabaseProvider _databaseProvider;
   final SharedPreferencesGateway _sharedPreferencesGateway;
-  final GrpcGateway _grpcGateway;
+  final GrpcChannel _grpcChannel;
   final log = CustomLogger.getLogger('AuthServiceImpl');
 
   AuthServiceImpl(
     this._databaseProvider,
-    this._grpcGateway,
+    this._grpcChannel,
     this._sharedPreferencesGateway,
   );
 
@@ -65,7 +65,7 @@ class AuthServiceImpl implements AuthService {
 
     log.info(
         'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
-    await _grpcGateway.init(
+    await _grpcChannel.init(
       url: hostUrl,
       appToken: appToken,
       deviceId: deviceId,
@@ -88,7 +88,7 @@ class AuthServiceImpl implements AuthService {
         .build();
 
     try {
-      final response = await _grpcGateway.customerStub.token(request);
+      final response = await _grpcChannel.customerStub.token(request);
       log.info(
           'Logged in successfully, saving user ID and setting access token');
       await _sharedPreferencesGateway.saveUserId(response.chat.user.id);
@@ -102,7 +102,7 @@ class AuthServiceImpl implements AuthService {
         ),
       );
 
-      _grpcGateway.setAccessToken(response.accessToken);
+      _grpcChannel.setAccessToken(response.accessToken);
       return ResponseEntity(status: ResponseStatus.success);
     } on GrpcError catch (err) {
       log.severe('GRPC Error during login: ${err.toString()}');
@@ -123,7 +123,7 @@ class AuthServiceImpl implements AuthService {
   Future<ResponseEntity> registerDevice() async {
     log.info('Attempting to register device');
     try {
-      await _grpcGateway.customerStub
+      await _grpcChannel.customerStub
           .registerDevice(RegisterDeviceRequest(push: DevicePush()));
       log.info('Device registered successfully');
       return ResponseEntity(status: ResponseStatus.success);
@@ -140,7 +140,7 @@ class AuthServiceImpl implements AuthService {
   Future<ResponseEntity> logout() async {
     log.info('Attempting to logout');
     try {
-      await _grpcGateway.customerStub.logout(LogoutRequest());
+      await _grpcChannel.customerStub.logout(LogoutRequest());
       log.info('Logged out successfully');
       return ResponseEntity(status: ResponseStatus.success);
     } catch (err) {
