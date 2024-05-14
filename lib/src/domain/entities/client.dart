@@ -1,7 +1,7 @@
-import 'package:webitel_portal_sdk/src/communication/call_handler.dart';
-import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
+import 'package:webitel_portal_sdk/src/managers/call.dart';
+import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 abstract interface class Client {
   Future<Response> logout();
@@ -16,7 +16,7 @@ abstract interface class Client {
     required String issuer,
   });
 
-  ChatHandler get chatHandler;
+  ChatManager get chat;
 
-  CallHandler get callHandler;
+  CallManager get call;
 }

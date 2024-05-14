@@ -1,21 +1,21 @@
 import 'package:injectable/injectable.dart';
-import 'package:webitel_portal_sdk/src/communication/call_handler.dart';
-import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
+import 'package:webitel_portal_sdk/src/managers/call.dart';
+import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 @LazySingleton(as: Client)
 final class ClientImpl implements Client {
   final String url;
   final String appToken;
   @override
-  final CallHandler callHandler;
+  final CallManager call;
   @override
-  final ChatHandler chatHandler;
+  final ChatManager chat;
 
   late final AuthService _authService;
   late final ChatService _chatService;
@@ -23,8 +23,8 @@ final class ClientImpl implements Client {
   ClientImpl({
     required this.url,
     required this.appToken,
-    required this.callHandler,
-    required this.chatHandler,
+    required this.call,
+    required this.chat,
   }) {
     _authService = getIt.get<AuthService>();
     _chatService = getIt.get<ChatService>();

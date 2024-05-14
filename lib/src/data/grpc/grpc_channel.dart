@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
-import 'package:webitel_portal_sdk/src/builder/call_options_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/call_options_builder.dart';
 import 'package:webitel_portal_sdk/src/data/interceptor/interceptor.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';

@@ -5,13 +5,11 @@ import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:ua_client_hints/ua_client_hints.dart';
 import 'package:uuid/uuid.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/token_request_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
-import 'package:webitel_portal_sdk/src/backbone/uri_helper.dart';
-import 'package:webitel_portal_sdk/src/builder/token_request_builder.dart';
-import 'package:webitel_portal_sdk/src/builder/user_agent_builder.dart';
-import 'package:webitel_portal_sdk/src/communication/call_handler.dart';
-import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
 import 'package:webitel_portal_sdk/src/data/client_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
@@ -22,6 +20,8 @@ import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
+import 'package:webitel_portal_sdk/src/managers/call.dart';
+import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 @LazySingleton(as: AuthService)
 final class AuthServiceImpl implements AuthService {
@@ -76,8 +76,8 @@ final class AuthServiceImpl implements AuthService {
     return ClientImpl(
       url: url,
       appToken: appToken,
-      callHandler: CallHandler(),
-      chatHandler: ChatHandler(),
+      call: CallManager(),
+      chat: ChatManager(),
     );
   }
 
@@ -87,7 +87,6 @@ final class AuthServiceImpl implements AuthService {
     required String sub,
     required String issuer,
   }) async {
-    final deviceId = await getOrGenerateDeviceId();
     final appToken = await _sharedPreferencesGateway.readAppToken();
 
     final request = TokenRequestBuilder()
