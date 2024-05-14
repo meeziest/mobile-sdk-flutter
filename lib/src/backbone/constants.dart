@@ -1,4 +1,4 @@
-class Constants {
+final class Constants {
   Constants._();
 
   static const String sdkName = 'webitel_portal_sdk';

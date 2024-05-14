@@ -1,6 +1,6 @@
 import 'package:grpc/grpc.dart';
 
-class CallOptionsBuilder {
+final class CallOptionsBuilder {
   late String? _deviceId;
   late String _clientToken;
   late String _accessToken;

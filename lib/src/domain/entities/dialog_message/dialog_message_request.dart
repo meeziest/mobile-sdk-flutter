@@ -1,15 +1,15 @@
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 
-class DialogMessageRequestEntity {
+class DialogMessageRequest {
   final MessageType messageType;
-  final MediaFileRequestEntity file;
+  final MediaFileRequest file;
   final String dialogMessageContent;
   final String requestId;
   final String? chatId;
   final String? messageId;
 
-  DialogMessageRequestEntity({
+  DialogMessageRequest({
     required this.messageType,
     required this.requestId,
     required this.dialogMessageContent,

@@ -1,12 +1,15 @@
+import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/communication/call_handler.dart';
 import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
+import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
-class ClientImpl implements Client {
+@LazySingleton(as: Client)
+final class ClientImpl implements Client {
   final String url;
   final String appToken;
   @override
@@ -15,6 +18,7 @@ class ClientImpl implements Client {
   final ChatHandler chatHandler;
 
   late final AuthService _authService;
+  late final ChatService _chatService;
 
   ClientImpl({
     required this.url,
@@ -23,25 +27,21 @@ class ClientImpl implements Client {
     required this.chatHandler,
   }) {
     _authService = getIt.get<AuthService>();
+    _chatService = getIt.get<ChatService>();
   }
 
   @override
-  Future<ResponseEntity> logout() async {
-    return await _authService.logout();
-  }
+  Future<Channel> getChannel() async => _chatService.getChannel();
 
   @override
-  Future<Channel> getChannel() async {
-    return getIt.get<Channel>();
-  }
+  Future<Response> logout() async => await _authService.logout();
 
   @override
-  Future<ResponseEntity> registerDevice() async {
-    return await _authService.registerDevice();
-  }
+  Future<Response> registerDevice() async =>
+      await _authService.registerDevice();
 
   @override
-  Future<ResponseEntity> login({
+  Future<Response> login({
     required String name,
     required String sub,
     required String issuer,

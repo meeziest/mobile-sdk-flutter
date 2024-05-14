@@ -2,14 +2,14 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_mes
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 
-class RequestDialogMessageBuilder {
+final class RequestDialogMessageBuilder {
   late String _dialogMessageContent;
   late String _requestId;
   late String _chatId;
   late String _messageId;
   late MessageType _messageType;
 
-  late MediaFileRequestEntity _file;
+  late MediaFileRequest _file;
 
   RequestDialogMessageBuilder setDialogMessageContent(
       String dialogMessageContent) {
@@ -32,7 +32,7 @@ class RequestDialogMessageBuilder {
     return this;
   }
 
-  RequestDialogMessageBuilder setFile(MediaFileRequestEntity file) {
+  RequestDialogMessageBuilder setFile(MediaFileRequest file) {
     _file = file;
     return this;
   }
@@ -42,8 +42,8 @@ class RequestDialogMessageBuilder {
     return this;
   }
 
-  DialogMessageRequestEntity build() {
-    return DialogMessageRequestEntity(
+  DialogMessageRequest build() {
+    return DialogMessageRequest(
       messageType: _messageType,
       chatId: _chatId,
       dialogMessageContent: _dialogMessageContent,

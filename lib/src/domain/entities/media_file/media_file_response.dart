@@ -1,11 +1,11 @@
-class MediaFileResponseEntity {
+class MediaFileResponse {
   final String name;
   final String type;
   final String id;
   final int size;
   final List<int> bytes;
 
-  MediaFileResponseEntity({
+  MediaFileResponse({
     required this.size,
     required this.bytes,
     required this.name,
@@ -13,21 +13,21 @@ class MediaFileResponseEntity {
     required this.id,
   });
 
-  MediaFileResponseEntity.initial()
+  MediaFileResponse.initial()
       : name = '',
         type = '',
         id = '',
         size = 0,
         bytes = [];
 
-  MediaFileResponseEntity copyWith({
+  MediaFileResponse copyWith({
     String? name,
     String? type,
     String? id,
     int? size,
     List<int>? bytes,
   }) {
-    return MediaFileResponseEntity(
+    return MediaFileResponse(
       name: name ?? this.name,
       type: type ?? this.type,
       id: id ?? this.id,

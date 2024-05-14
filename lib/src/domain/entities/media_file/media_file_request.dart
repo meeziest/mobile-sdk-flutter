@@ -1,10 +1,10 @@
-class MediaFileRequestEntity {
+class MediaFileRequest {
   final String name;
   final String type;
   final String requestId;
   final Stream<List<int>> data;
 
-  MediaFileRequestEntity({
+  MediaFileRequest({
     required this.data,
     required this.name,
     required this.type,

@@ -1,6 +1,6 @@
 import 'package:logging/logging.dart';
 
-class CustomLogger {
+final class CustomLogger {
   static void initialize() {
     Logger.root.level = Level.ALL;
     Logger.root.onRecord.listen(

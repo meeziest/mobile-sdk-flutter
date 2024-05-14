@@ -4,7 +4,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/peer.pb.dart';
 
-class MessagesListMessageBuilder {
+final class MessagesListMessageBuilder {
   late String _chatId;
   late String _userId;
   late List<Message> _messages;
@@ -30,13 +30,13 @@ class MessagesListMessageBuilder {
     return this;
   }
 
-  List<DialogMessageResponseEntity> build() {
+  List<DialogMessageResponse> build() {
     return _messages.map((message) {
       final peerIndex = int.parse(message.from.id) - 1;
       final messageType =
           _peers[peerIndex].id == _userId ? Sender.user : Sender.operator;
 
-      return DialogMessageResponseEntity(
+      return DialogMessageResponse(
         id: message.id.toInt(),
         chatId: _chatId,
         sender: messageType,
@@ -46,7 +46,7 @@ class MessagesListMessageBuilder {
           type: message.chat.peer.type,
           id: message.chat.peer.id,
         ),
-        file: MediaFileResponseEntity(
+        file: MediaFileResponse(
           id: message.file.id,
           size: message.file.size.toInt(),
           bytes: [],

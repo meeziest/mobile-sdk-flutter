@@ -2,7 +2,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_mes
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 
-class ErrorDialogMessageBuilder {
+final class ErrorDialogMessageBuilder {
   late String _dialogMessageContent;
   late String _requestId;
 
@@ -17,21 +17,21 @@ class ErrorDialogMessageBuilder {
     return this;
   }
 
-  DialogMessageResponseEntity build() {
+  DialogMessageResponse build() {
     final peerInfo = PeerInfo(
       id: '',
       name: 'ERROR',
       type: 'Unknown',
     );
 
-    return DialogMessageResponseEntity(
+    return DialogMessageResponse(
       id: 0,
       chatId: '',
       dialogMessageContent: _dialogMessageContent,
       requestId: _requestId,
       peer: peerInfo,
       messageId: '',
-      file: MediaFileResponseEntity.initial(),
+      file: MediaFileResponse.initial(),
     );
   }
 }

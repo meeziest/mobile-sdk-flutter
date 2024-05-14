@@ -7,7 +7,9 @@ import 'package:webitel_portal_sdk/src/domain/entities/error.dart';
 abstract interface class Channel {
   Stream<ChannelStatus> get onChannelStatusChange;
 
-  Stream<ConnectEntity> get onConnectStreamStatusChange;
+  Stream<Connect> get onConnectStreamStatusChange;
 
-  Stream<ErrorEntity> get onError;
+  Stream<Error> get onError;
+
+  Future<void> reconnectToStream();
 }

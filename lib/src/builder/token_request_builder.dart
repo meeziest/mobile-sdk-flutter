@@ -1,7 +1,7 @@
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/auth.pb.dart';
 
-class TokenRequestBuilder {
+final class TokenRequestBuilder {
   late String grantType;
   late List<String> responseType;
   late String appToken;

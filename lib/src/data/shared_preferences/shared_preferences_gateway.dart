@@ -2,7 +2,7 @@ import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 @LazySingleton()
-class SharedPreferencesGateway {
+final class SharedPreferencesGateway {
   late SharedPreferences _preferences;
 
   Future<void> clearPreferences() async {
@@ -60,6 +60,14 @@ class SharedPreferencesGateway {
 
   Future<String?> readAppToken() async {
     return await getFromDisk('appToken');
+  }
+
+  Future<void> saveAccessToken(String accessToken) async {
+    await saveToDisk('accessToken', accessToken);
+  }
+
+  Future<String?> readAccessToken() async {
+    return await getFromDisk('accessToken');
   }
 
   Future<void> saveUserId(String userId) async {

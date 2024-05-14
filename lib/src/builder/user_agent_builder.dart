@@ -1,4 +1,4 @@
-class UserAgentBuilder {
+final class UserAgentBuilder {
   late String _appName;
   late String _version;
   late String _platform;
@@ -77,7 +77,7 @@ class UserAgentBuilder {
     _sdkVersion = sdkVersion;
     return this;
   }
-  
+
   String build() {
     return '$_appName/$_version ($_platform $_platformVersion; $_model; $_device; $_architecture) $_sdkName/$_sdkVersion';
   }

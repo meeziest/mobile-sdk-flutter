@@ -1,6 +1,6 @@
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
 
-class ChannelStatusHelper {
+final class ChannelStatusHelper {
   static ChannelStatus toChannelStatus(String status) {
     switch (status) {
       case "connecting":

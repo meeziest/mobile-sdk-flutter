@@ -1,7 +1,7 @@
 import 'package:webitel_portal_sdk/src/generated/chat/messages/peer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
 
-class SendMessageRequestBuilder {
+final class SendMessageRequestBuilder {
   late String text;
   late Peer peer;
 

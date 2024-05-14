@@ -10,13 +10,13 @@ import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
 @LazySingleton(as: Dialog)
-class DialogImpl implements Dialog {
+final class DialogImpl implements Dialog {
   @override
   final String id;
   @override
   final String topMessage;
   @override
-  final Stream<DialogMessageResponseEntity> onNewMessage;
+  final Stream<DialogMessageResponse> onNewMessage;
 
 // final StreamController<String> onMemberAdded;
 // final StreamController<String> onMemberRemoved;
@@ -43,7 +43,7 @@ class DialogImpl implements Dialog {
         onNewMessage = Stream.empty();
 
   @override
-  Future<DialogMessageResponseEntity> sendMessage({
+  Future<DialogMessageResponse> sendMessage({
     required String dialogMessageContent,
     required String requestId,
     required String messageType,
@@ -53,11 +53,11 @@ class DialogImpl implements Dialog {
   }) async {
     return await _chatService.sendMessage(
       chatId: id,
-      message: DialogMessageRequestEntity(
+      message: DialogMessageRequest(
         messageType: MessageHelper.fromStringToEnum(messageType),
         dialogMessageContent: dialogMessageContent,
         requestId: requestId,
-        file: MediaFileRequestEntity(
+        file: MediaFileRequest(
           data: mediaData,
           name: mediaName,
           type: mediaType,
@@ -68,7 +68,7 @@ class DialogImpl implements Dialog {
   }
 
   @override
-  Future<List<DialogMessageResponseEntity>> fetchMessages({
+  Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
     int? offset,
   }) async {
@@ -80,7 +80,7 @@ class DialogImpl implements Dialog {
   }
 
   @override
-  Future<List<DialogMessageResponseEntity>> fetchUpdates({
+  Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
     int? offset,
   }) async {

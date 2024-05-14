@@ -15,25 +15,21 @@ import 'package:webitel_portal_sdk/src/communication/chat_handler.dart';
 import 'package:webitel_portal_sdk/src/data/client_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
-import 'package:webitel_portal_sdk/src/database/database.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/client.dart' as client;
-import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/response.dart' as res;
 import 'package:webitel_portal_sdk/src/domain/entities/response_status.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/user/user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
 
 @LazySingleton(as: AuthService)
-class AuthServiceImpl implements AuthService {
-  final DatabaseProvider _databaseProvider;
+final class AuthServiceImpl implements AuthService {
   final SharedPreferencesGateway _sharedPreferencesGateway;
   final GrpcChannel _grpcChannel;
   final log = CustomLogger.getLogger('AuthServiceImpl');
 
   AuthServiceImpl(
-    this._databaseProvider,
     this._grpcChannel,
     this._sharedPreferencesGateway,
   );
@@ -43,7 +39,7 @@ class AuthServiceImpl implements AuthService {
     required String url,
     required String appToken,
   }) async {
-    log.info('Attempting to log in with base URL: $url');
+    log.info('Attempting to init gRPC channel for: $url');
     await _sharedPreferencesGateway.init();
     await _sharedPreferencesGateway.saveAppToken(appToken);
     final deviceId = await getOrGenerateDeviceId();
@@ -67,6 +63,7 @@ class AuthServiceImpl implements AuthService {
 
     log.info(
         'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
+
     await _grpcChannel.init(
       url: hostUrl,
       appToken: appToken,
@@ -75,6 +72,7 @@ class AuthServiceImpl implements AuthService {
       port: port,
       secure: secureConnection,
     );
+
     return ClientImpl(
       url: url,
       appToken: appToken,
@@ -84,13 +82,14 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<ResponseEntity> login({
+  Future<res.Response> login({
     required String name,
     required String sub,
     required String issuer,
   }) async {
     final deviceId = await getOrGenerateDeviceId();
     final appToken = await _sharedPreferencesGateway.readAppToken();
+
     final request = TokenRequestBuilder()
         .setGrantType('identity')
         .setResponseType(['user', 'token', 'chat'])
@@ -108,28 +107,24 @@ class AuthServiceImpl implements AuthService {
       final response = await _grpcChannel.customerStub.token(request);
       log.info(
           'Logged in successfully, saving user ID and setting access token');
-      await _sharedPreferencesGateway.saveUserId(response.chat.user.id);
 
-      _databaseProvider.writeUser(
-        UserEntity(
-          accessToken: response.accessToken,
-          id: response.chat.user.id,
-          appToken: appToken ?? '',
-          deviceId: deviceId,
-        ),
-      );
+      await _sharedPreferencesGateway.saveUserId(response.chat.user.id);
+      await _sharedPreferencesGateway.saveAccessToken(response.accessToken);
 
       _grpcChannel.setAccessToken(response.accessToken);
-      return ResponseEntity(status: ResponseStatus.success);
+
+      return res.Response(status: ResponseStatus.success);
     } on GrpcError catch (err) {
       log.severe('GRPC Error during login: ${err.toString()}');
-      return ResponseEntity(
+
+      return res.Response(
         status: ResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
     } catch (err) {
       log.severe('Exception during login: ${err.toString()}');
-      return ResponseEntity(
+
+      return res.Response(
         status: ResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
@@ -137,16 +132,18 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<ResponseEntity> registerDevice() async {
+  Future<res.Response> registerDevice() async {
     log.info('Attempting to register device');
     try {
       await _grpcChannel.customerStub
           .registerDevice(RegisterDeviceRequest(push: DevicePush()));
       log.info('Device registered successfully');
-      return ResponseEntity(status: ResponseStatus.success);
+
+      return res.Response(status: ResponseStatus.success);
     } catch (err) {
       log.severe('Failed to register device: ${err.toString()}');
-      return ResponseEntity(
+
+      return res.Response(
         status: ResponseStatus.error,
         message: 'Failed to register device: ${err.toString()}',
       );
@@ -154,15 +151,17 @@ class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<ResponseEntity> logout() async {
+  Future<res.Response> logout() async {
     log.info('Attempting to logout');
     try {
       await _grpcChannel.customerStub.logout(LogoutRequest());
       log.info('Logged out successfully');
-      return ResponseEntity(status: ResponseStatus.success);
+
+      return res.Response(status: ResponseStatus.success);
     } catch (err) {
       log.severe('Failed to logout: ${err.toString()}');
-      return ResponseEntity(
+
+      return res.Response(
         status: ResponseStatus.error,
         message: 'Failed to logout: ${err.toString()}',
       );
@@ -202,6 +201,7 @@ class AuthServiceImpl implements AuthService {
       architecture: architecture,
     ).build();
     log.info('Built user agent: $userAgentString');
+
     return userAgentString;
   }
 }

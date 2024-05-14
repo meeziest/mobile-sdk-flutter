@@ -116,18 +116,6 @@
       "languageVersion": "2.18"
     },
     {
-      "name": "connectivity_plus",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/connectivity_plus-6.0.3",
-      "packageUri": "lib/",
-      "languageVersion": "3.2"
-    },
-    {
-      "name": "connectivity_plus_platform_interface",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/connectivity_plus_platform_interface-2.0.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.18"
-    },
-    {
       "name": "convert",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/convert-3.1.1",
       "packageUri": "lib/",
@@ -144,12 +132,6 @@
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/dart_style-2.3.6",
       "packageUri": "lib/",
       "languageVersion": "3.0"
-    },
-    {
-      "name": "dbus",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/dbus-0.7.10",
-      "packageUri": "lib/",
-      "languageVersion": "2.17"
     },
     {
       "name": "ffi",
@@ -254,12 +236,6 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "injectable_generator",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/injectable_generator-2.6.1",
-      "packageUri": "lib/",
-      "languageVersion": "3.0"
-    },
-    {
       "name": "io",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/io-1.0.4",
       "packageUri": "lib/",
@@ -320,12 +296,6 @@
       "languageVersion": "3.2"
     },
     {
-      "name": "nm",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/nm-0.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
-    },
-    {
       "name": "package_config",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/package_config-2.1.0",
       "packageUri": "lib/",
@@ -368,12 +338,6 @@
       "languageVersion": "2.19"
     },
     {
-      "name": "petitparser",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/petitparser-6.0.2",
-      "packageUri": "lib/",
-      "languageVersion": "3.2"
-    },
-    {
       "name": "platform",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/platform-3.1.4",
       "packageUri": "lib/",
@@ -408,12 +372,6 @@
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/pubspec_parse-1.2.3",
       "packageUri": "lib/",
       "languageVersion": "2.18"
-    },
-    {
-      "name": "recase",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/recase-4.1.0",
-      "packageUri": "lib/",
-      "languageVersion": "2.12"
     },
     {
       "name": "shared_preferences",
@@ -498,18 +456,6 @@
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/sprintf-7.0.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
-    },
-    {
-      "name": "sqflite",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/sqflite-2.3.3+1",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
-    },
-    {
-      "name": "sqflite_common",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/sqflite_common-2.5.4",
-      "packageUri": "lib/",
-      "languageVersion": "3.3"
     },
     {
       "name": "stack_trace",
@@ -614,12 +560,6 @@
       "languageVersion": "3.0"
     },
     {
-      "name": "xml",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/xml-6.5.0",
-      "packageUri": "lib/",
-      "languageVersion": "3.2"
-    },
-    {
       "name": "yaml",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/yaml-3.1.2",
       "packageUri": "lib/",
@@ -632,7 +572,7 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-05-13T13:14:38.658797Z",
+  "generated": "2024-05-14T08:50:34.679735Z",
   "generator": "pub",
   "generatorVersion": "3.3.3"
 }

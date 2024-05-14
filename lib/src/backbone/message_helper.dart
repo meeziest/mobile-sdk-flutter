@@ -2,7 +2,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_mes
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
 
-class MessageHelper {
+final class MessageHelper {
   static const MessageType outcomingMedia = MessageType.outcomingMedia;
   static const MessageType outcomingMessage = MessageType.outcomingMessage;
   static const MessageType incomingMedia = MessageType.incomingMedia;
@@ -27,7 +27,7 @@ class MessageHelper {
   }
 
   static MessageType determineMessageTypeRequest(
-      DialogMessageRequestEntity dialogMessageRequestEntity) {
+      DialogMessageRequest dialogMessageRequestEntity) {
     if (dialogMessageRequestEntity.file.name.isNotEmpty) {
       return MessageType.outcomingMedia;
     } else {

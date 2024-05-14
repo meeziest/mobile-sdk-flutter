@@ -1,7 +1,7 @@
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect_status.dart';
 
-class ConnectStreamStatusBuilder {
+final class ConnectStreamStatusBuilder {
   late ConnectStatus _status;
   String? _errorMessage;
 
@@ -15,8 +15,8 @@ class ConnectStreamStatusBuilder {
     return this;
   }
 
-  ConnectEntity build() {
-    return ConnectEntity(
+  Connect build() {
+    return Connect(
       status: _status,
       errorMessage: _errorMessage,
     );

@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 
-abstract class Dialog {
+abstract interface class Dialog {
   String get id;
 
   String get topMessage;
 
-  Stream<DialogMessageResponseEntity> get onNewMessage;
+  Stream<DialogMessageResponse> get onNewMessage;
 
 //  StreamController<String> get onMemberAdded;
 //  StreamController<String> get onMemberRemoved;
@@ -18,7 +18,7 @@ abstract class Dialog {
 //  StreamController<String> get onNewReaction;
 //  StreamController<String> get onTyping;
 
-  Future<DialogMessageResponseEntity> sendMessage({
+  Future<DialogMessageResponse> sendMessage({
     required String dialogMessageContent,
     required String requestId,
     required String messageType,
@@ -27,31 +27,13 @@ abstract class Dialog {
     required Stream<List<int>> mediaData,
   });
 
-  Future<List<DialogMessageResponseEntity>> fetchMessages({
+  Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
     int? offset,
   });
 
-  Future<List<DialogMessageResponseEntity>> fetchUpdates({
+  Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
     int? offset,
   });
-
-  static final Map<String, Dialog> _cache = {};
-
-  static String _generateCacheKey(String id, String topMessage) {
-    return '$id-$topMessage';
-  }
-
-  static Dialog getOrCreate(String dialogId, String initialTopMessage,
-      Dialog Function() createDialog) {
-    final cacheKey = _generateCacheKey(dialogId, initialTopMessage);
-    if (_cache.containsKey(cacheKey)) {
-      return _cache[cacheKey]!;
-    } else {
-      final dialog = createDialog();
-      _cache[cacheKey] = dialog;
-      return dialog;
-    }
-  }
 }

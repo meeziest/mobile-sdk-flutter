@@ -2,7 +2,7 @@ import 'package:webitel_portal_sdk/src/generated/google/protobuf/any.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
     as portal;
 
-class PortalRequestBuilder {
+final class PortalRequestBuilder {
   late String path;
   late Any data;
   late String id;

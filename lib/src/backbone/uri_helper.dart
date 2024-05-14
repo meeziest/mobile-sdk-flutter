@@ -1,4 +1,4 @@
-class UrlHelper {
+final class UrlHelper {
   late Uri _uri;
 
   UrlHelper(String url) {

@@ -1,10 +1,10 @@
 import 'package:webitel_portal_sdk/src/domain/entities/connect_status.dart';
 
-class ConnectEntity {
+class Connect {
   final ConnectStatus status;
   final String? errorMessage;
 
-  ConnectEntity({
+  Connect({
     required this.status,
     this.errorMessage,
   });

@@ -7,7 +7,7 @@ import 'package:webitel_portal_sdk/src/backbone/channel_status_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/response_type_helper.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
-import 'package:webitel_portal_sdk/src/database/database.dart';
+import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect_status.dart';
@@ -19,20 +19,20 @@ import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
 
 @LazySingleton()
-class GrpcConnect {
+final class GrpcConnect {
   final GrpcChannel _grpcChannel;
-  final DatabaseProvider _databaseProvider;
+  final SharedPreferencesGateway _sharedPreferencesGateway;
 
   final StreamController<portal.Response> _responseStreamController =
       StreamController<portal.Response>.broadcast();
-  final StreamController<ConnectEntity> _connectController =
-      StreamController<ConnectEntity>.broadcast();
+  final StreamController<Connect> _connectController =
+      StreamController<Connect>.broadcast();
   final StreamController<UpdateNewMessage> _updateStreamController =
       StreamController<UpdateNewMessage>.broadcast();
   final StreamController<portal.Request> _requestStreamController =
       StreamController<portal.Request>.broadcast();
-  final StreamController<ErrorEntity> _errorStreamController =
-      StreamController<ErrorEntity>.broadcast();
+  final StreamController<Error> _errorStreamController =
+      StreamController<Error>.broadcast();
   Stream<portal.Update>? _responseStream;
   final StreamController<ChannelStatus> _channelStatus =
       StreamController<ChannelStatus>.broadcast();
@@ -43,7 +43,7 @@ class GrpcConnect {
   ConnectionState? _connectionState;
   Timer? _timer;
 
-  GrpcConnect(this._databaseProvider, this._grpcChannel) {
+  GrpcConnect(this._sharedPreferencesGateway, this._grpcChannel) {
     listenToChannelStatus();
   }
 
@@ -52,7 +52,7 @@ class GrpcConnect {
       if (_responseStream != null) {
         await for (portal.Update update in _responseStream!) {
           connectClosed = false;
-          _connectController.add(ConnectEntity(status: ConnectStatus.opened));
+          _connectController.add(Connect(status: ConnectStatus.opened));
           final responseType = ResponseTypeHelper.determineResponseType(update);
           log.info('Response type: $responseType');
 
@@ -78,7 +78,7 @@ class GrpcConnect {
                 portal.Response(),
               );
               _errorStreamController.add(
-                ErrorEntity(
+                Error(
                   statusCode: decodedResponse.err.code.toString(),
                   errorMessage: decodedResponse.err.message,
                 ),
@@ -91,7 +91,7 @@ class GrpcConnect {
       }
     } on GrpcError catch (err, stack) {
       log.warning('GRPC Error: $err', err, stack);
-      _errorStreamController.add(ErrorEntity.fromGrpcError(err));
+      _errorStreamController.add(Error.fromGrpcError(err));
       handleConnectionClosure(err.toString());
     } catch (err, stack) {
       log.warning('Unexpected error: $err', err, stack);
@@ -102,10 +102,12 @@ class GrpcConnect {
   void handleConnectionClosure(String errorMessage) {
     connectClosed = true;
     _responseStream = null;
-    _connectController.add(ConnectEntity(
-      status: ConnectStatus.closed,
-      errorMessage: errorMessage,
-    ));
+    _connectController.add(
+      Connect(
+        status: ConnectStatus.closed,
+        errorMessage: errorMessage,
+      ),
+    );
   }
 
   Future<void> _connect() async {
@@ -149,8 +151,8 @@ class GrpcConnect {
   Future<void> reconnect() async {
     if (_connectionState == ConnectionState.shutdown) {
       log.info('Current connection state: $_connectionState');
-      final user = await _databaseProvider.readUser();
-      await _grpcChannel.setAccessToken(user.accessToken);
+      final accessToken = await _sharedPreferencesGateway.readAccessToken();
+      await _grpcChannel.setAccessToken(accessToken ?? '');
       log.info('Re-init gRPC Channel');
     }
     await _lock.synchronized(() async {
@@ -173,7 +175,7 @@ class GrpcConnect {
       if (state == ConnectionState.shutdown) {
         handleStreamCleanup();
         _connectController.add(
-          ConnectEntity(
+          Connect(
             errorMessage:
                 'Connect was closed duu to the channel state change: $state',
             status: ConnectStatus.opened,
@@ -182,7 +184,7 @@ class GrpcConnect {
         log.warning('Response stream canceled due to $state');
       } else if (state == ConnectionState.transientFailure) {
         _connectController.add(
-          ConnectEntity(
+          Connect(
             errorMessage:
                 'Connect was closed duu to the channel state change: $state',
             status: ConnectStatus.opened,
@@ -205,9 +207,9 @@ class GrpcConnect {
 
   Stream<UpdateNewMessage> get updateStream => _updateStreamController.stream;
 
-  StreamController<ErrorEntity> get errorStream => _errorStreamController;
+  StreamController<Error> get errorStream => _errorStreamController;
 
-  StreamController<ConnectEntity> get connectStatusStream => _connectController;
+  StreamController<Connect> get connectStatusStream => _connectController;
 
   StreamController<ChannelStatus> get chanelStatusStream => _channelStatus;
 

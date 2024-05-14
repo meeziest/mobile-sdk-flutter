@@ -10,10 +10,12 @@ import 'package:webitel_portal_sdk/src/backbone/message_helper.dart';
 import 'package:webitel_portal_sdk/src/builder/error_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/messages_list_message_builder.dart';
 import 'package:webitel_portal_sdk/src/builder/response_dialog_message_builder.dart';
+import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
@@ -30,18 +32,18 @@ import 'package:webitel_portal_sdk/src/generated/google/protobuf/any.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
     as portal;
 import 'package:webitel_portal_sdk/src/generated/portal/media.pb.dart';
-import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
+import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 import 'package:webitel_portal_sdk/webitel_portal_sdk.dart';
 
 @LazySingleton(as: ChatService)
-class ChatServiceImpl implements ChatService {
+final class ChatServiceImpl implements ChatService {
   final GrpcChannel _grpcChannel;
   final GrpcConnect _grpcConnect;
   final SharedPreferencesGateway _sharedPreferencesGateway;
 
   final uuid = Uuid();
   final log = CustomLogger.getLogger('ChatServiceImpl');
-  final Map<String, StreamController<DialogMessageResponseEntity>>
+  final Map<String, StreamController<DialogMessageResponse>>
       _onNewMessageControllers = {};
 
   // final Map<String, StreamController<void>> _onTypingControllers = {};
@@ -212,7 +214,7 @@ class ChatServiceImpl implements ChatService {
   }
 
   //Get controller for specific chat by chatId or create one if absent
-  Future<StreamController<DialogMessageResponseEntity>> getControllerForChat(
+  Future<StreamController<DialogMessageResponse>> getControllerForChat(
     String chatId,
   ) async {
     var controllerExists = _onNewMessageControllers.containsKey(chatId);
@@ -227,24 +229,23 @@ class ChatServiceImpl implements ChatService {
       () {
         log.info(
             'New StreamController for DialogMessageResponseEntity created for chat ID: $chatId');
-        return StreamController<DialogMessageResponseEntity>.broadcast();
+        return StreamController<DialogMessageResponse>.broadcast();
       },
     );
   }
 
   //Downloading media file if we receive incoming media message
-  Future<MediaFileResponseEntity?> downloadMediaFile(
-      {required String fileId}) async {
+  Future<MediaFileResponse?> downloadMediaFile({required String fileId}) async {
     final mediaStream =
         _grpcChannel.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
 
-    MediaFileResponseEntity? file;
+    MediaFileResponse? file;
     fixnum.Int64 offset = fixnum.Int64(0);
 
     try {
       await for (MediaFile mediaFile in mediaStream) {
         if (mediaFile.file.name.isNotEmpty && file == null) {
-          file = MediaFileResponseEntity(
+          file = MediaFileResponse(
             size: mediaFile.file.size.toInt(),
             name: mediaFile.file.name,
             type: mediaFile.file.type,
@@ -285,7 +286,7 @@ class ChatServiceImpl implements ChatService {
   /// Resumes the download of a media file from a specified offset.
   Future<void> downloadMediaFromOffset({
     required String fileId,
-    required MediaFileResponseEntity file,
+    required MediaFileResponse file,
     required fixnum.Int64 offset,
   }) async {
     final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
@@ -329,7 +330,7 @@ class ChatServiceImpl implements ChatService {
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(
-                  MediaFileResponseEntity(
+                  MediaFileResponse(
                     id: update.message.file.id,
                     type: update.message.file.type,
                     name: update.message.file.name,
@@ -354,7 +355,7 @@ class ChatServiceImpl implements ChatService {
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(
-                  MediaFileResponseEntity(
+                  MediaFileResponse(
                     id: update.message.file.id,
                     type: update.message.file.type,
                     name: update.message.file.name,
@@ -379,7 +380,7 @@ class ChatServiceImpl implements ChatService {
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(
-                  MediaFileResponseEntity(
+                  MediaFileResponse(
                     id: file != null ? file.id : '',
                     type: file != null ? file.type : '',
                     name: file != null ? file.name : '',
@@ -403,7 +404,7 @@ class ChatServiceImpl implements ChatService {
                 .setId(update.message.id.toInt())
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
-                .setFile(MediaFileResponseEntity.initial())
+                .setFile(MediaFileResponse.initial())
                 .build();
 
             messageController?.add(dialogMessage);
@@ -418,8 +419,8 @@ class ChatServiceImpl implements ChatService {
 
   /// Sends a message to the chat service and waits for a response.
   @override
-  Future<DialogMessageResponseEntity> sendMessage({
-    required DialogMessageRequestEntity message,
+  Future<DialogMessageResponse> sendMessage({
+    required DialogMessageRequest message,
     required String chatId,
   }) async {
     try {
@@ -447,9 +448,9 @@ class ChatServiceImpl implements ChatService {
   }
 
   //LISTEN FOR RESPONSE BY EQUAL REQUEST ID
-  Future<DialogMessageResponseEntity> _listenForResponse(
+  Future<DialogMessageResponse> _listenForResponse(
       String requestId, String userId) {
-    final completer = Completer<DialogMessageResponseEntity>();
+    final completer = Completer<DialogMessageResponse>();
     StreamSubscription<portal.Response>? streamSubscription;
 
     streamSubscription = _grpcConnect.responseStream
@@ -465,7 +466,7 @@ class ChatServiceImpl implements ChatService {
 
   Future<void> _handleResponse(
     portal.Response response,
-    Completer<DialogMessageResponseEntity> completer,
+    Completer<DialogMessageResponse> completer,
     String userId,
   ) async {
     if (response.data.canUnpackInto(UpdateNewMessage())) {
@@ -484,7 +485,7 @@ class ChatServiceImpl implements ChatService {
               .setMessageId(unpackedMessage.id)
               .setChatId(unpackedMessage.message.chat.id)
               .setUpdate(unpackedMessage)
-              .setFile(MediaFileResponseEntity.initial())
+              .setFile(MediaFileResponse.initial())
               .build();
           completer.complete(dialogMessage);
           break;
@@ -500,7 +501,7 @@ class ChatServiceImpl implements ChatService {
               .setChatId(unpackedMessage.message.chat.id)
               .setUpdate(unpackedMessage)
               .setFile(
-                MediaFileResponseEntity(
+                MediaFileResponse(
                   id: unpackedMessage.message.file.id,
                   type: unpackedMessage.message.file.type,
                   name: unpackedMessage.message.file.name,
@@ -522,8 +523,8 @@ class ChatServiceImpl implements ChatService {
     }
   }
 
-  void _handleError(Object error,
-      Completer<DialogMessageResponseEntity> completer, String requestId) {
+  void _handleError(Object error, Completer<DialogMessageResponse> completer,
+      String requestId) {
     final errorMessage =
         error is GrpcError ? error.toString() : 'Unknown error occurred';
     log.severe("Error on handling message response: $errorMessage");
@@ -535,7 +536,7 @@ class ChatServiceImpl implements ChatService {
     );
   }
 
-  Future<portal.Request> _buildRequest(DialogMessageRequestEntity message,
+  Future<portal.Request> _buildRequest(DialogMessageRequest message,
       String userId, MessageType messageType) async {
     log.info("Building request for message type $messageType");
 
@@ -568,7 +569,7 @@ class ChatServiceImpl implements ChatService {
 
   //FETCH MESSAGES
   @override
-  Future<List<DialogMessageResponseEntity>> fetchMessages({
+  Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
     int? offset,
     required String chatId,
@@ -629,7 +630,7 @@ class ChatServiceImpl implements ChatService {
 
   //FETCH MESSAGES REVERSED FOR PAGINATION
   @override
-  Future<List<DialogMessageResponseEntity>> fetchUpdates({
+  Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
     int? offset,
     required String chatId,
@@ -687,17 +688,27 @@ class ChatServiceImpl implements ChatService {
   }
 
   @override
+  Future<void> reconnectToStream() async {
+    await _grpcConnect.reconnect();
+  }
+
+  @override
+  Future<Channel> getChannel() async {
+    return ChannelImpl();
+  }
+
+  @override
   StreamController<ChannelStatus> onChannelStatusChange() {
     return _grpcConnect.chanelStatusStream;
   }
 
   @override
-  StreamController<ConnectEntity> onConnectStreamStatusChange() {
+  StreamController<Connect> onConnectStreamStatusChange() {
     return _grpcConnect.connectStatusStream;
   }
 
   @override
-  StreamController<ErrorEntity> onError() {
+  StreamController<Error> onError() {
     return _grpcConnect.errorStream;
   }
 }

@@ -8,7 +8,7 @@ import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
 
 @LazySingleton()
-class GrpcChannel {
+final class GrpcChannel {
   late CustomerClient _customerStub;
   late MediaStorageClient _mediaStorageStub;
   late ClientChannel _channel;
@@ -83,6 +83,9 @@ class GrpcChannel {
       url,
       port: port,
       options: ChannelOptions(
+        credentials: secure
+            ? ChannelCredentials.secure()
+            : ChannelCredentials.insecure(),
         userAgent: userAgent,
         keepAlive: ClientKeepAliveOptions(
           pingInterval: Duration(seconds: 5),

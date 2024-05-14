@@ -9,7 +9,7 @@ import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
 @LazySingleton(as: Channel)
-class ChannelImpl implements Channel {
+final class ChannelImpl implements Channel {
   late final ChatService _chatService;
 
   ChannelImpl() {
@@ -21,9 +21,12 @@ class ChannelImpl implements Channel {
       _chatService.onChannelStatusChange().stream;
 
   @override
-  Stream<ConnectEntity> get onConnectStreamStatusChange =>
+  Stream<Connect> get onConnectStreamStatusChange =>
       _chatService.onConnectStreamStatusChange().stream;
 
   @override
-  Stream<ErrorEntity> get onError => _chatService.onError().stream;
+  Stream<Error> get onError => _chatService.onError().stream;
+
+  @override
+  Future<void> reconnectToStream() => _chatService.reconnectToStream();
 }
