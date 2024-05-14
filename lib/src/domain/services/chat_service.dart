@@ -7,6 +7,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/error.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 
 abstract interface class ChatService {
   Future<List<DialogMessageResponse>> fetchMessages({
@@ -33,6 +34,8 @@ abstract interface class ChatService {
   Future<void> reconnectToStream();
 
   Future<Channel> getChannel();
+
+  StreamController<MediaFileResponse> downloadFile({required String fileId});
 
   StreamController<ChannelStatus> onChannelStatusChange();
 

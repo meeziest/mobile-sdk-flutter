@@ -6,6 +6,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
@@ -90,4 +91,8 @@ final class DialogImpl implements Dialog {
       offset: offset,
     );
   }
+
+  @override
+  StreamController<MediaFileResponse> downloadFile({required String fileId}) =>
+      _chatService.downloadFile(fileId: fileId);
 }

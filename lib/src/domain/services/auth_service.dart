@@ -12,5 +12,10 @@ abstract interface class AuthService {
     required String name,
     required String sub,
     required String issuer,
+    String locale,
+    String email,
+    bool emailVerified,
+    String phoneNumber,
+    bool phoneNumberVerified,
   });
 }

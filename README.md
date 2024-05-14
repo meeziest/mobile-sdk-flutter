@@ -58,3 +58,6 @@ Fetch updates | set limit/offset (reversed to **fetchMessages**) for dialog:
 Listen to upcoming/incoming messages in dialog:
 `await dialog.listenToMessages();`
 
+Download file:
+`await dialog.downloadFile(fileId: fileId);`
+

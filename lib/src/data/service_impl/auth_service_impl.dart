@@ -86,6 +86,11 @@ final class AuthServiceImpl implements AuthService {
     required String name,
     required String sub,
     required String issuer,
+    String? locale,
+    String? email,
+    bool? emailVerified,
+    String? phoneNumber,
+    bool? phoneNumberVerified,
   }) async {
     final appToken = await _sharedPreferencesGateway.readAppToken();
 
@@ -98,6 +103,11 @@ final class AuthServiceImpl implements AuthService {
             name: name,
             sub: sub,
             iss: issuer,
+            locale: locale,
+            email: email,
+            emailVerified: emailVerified,
+            phoneNumber: phoneNumber,
+            phoneNumberVerified: phoneNumberVerified,
           ),
         )
         .build();

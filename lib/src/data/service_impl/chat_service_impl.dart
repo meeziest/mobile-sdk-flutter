@@ -234,11 +234,54 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
-  //Downloading media file if we receive incoming media message
-  Future<MediaFileResponse?> downloadMediaFile({required String fileId}) async {
+  Future<void> downloadMediaFromOffset({
+    required String fileId,
+    required MediaFileResponse file,
+    required fixnum.Int64 offset,
+    required StreamController<MediaFileResponse> controller,
+    int retries = 5,
+  }) async {
+    for (int attempt = 0; attempt < retries; attempt++) {
+      try {
+        final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
+          GetFileRequest(fileId: fileId, offset: offset),
+        );
+
+        await for (MediaFile mediaFile in resumedMedia) {
+          file.bytes.addAll(mediaFile.data);
+          offset += mediaFile.data.length;
+          log.info(
+              "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
+          controller.add(file);
+        }
+
+        log.info("Resumed and completed file download for '${file.name}'.");
+        return;
+      } on GrpcError catch (err) {
+        log.warning(
+            "GrpcError encountered while resuming download for '${file.name}': ${err.message}");
+        if (attempt == retries - 1) {
+          controller.addError(err);
+        }
+      }
+    }
+  }
+
+  @override
+  StreamController<MediaFileResponse> downloadFile({
+    required String fileId,
+  }) {
+    StreamController<MediaFileResponse> getFileController = StreamController();
+    getFileFromServer(fileId: fileId, controller: getFileController);
+    return getFileController;
+  }
+
+  Future<StreamController<MediaFileResponse>> getFileFromServer({
+    required String fileId,
+    required StreamController<MediaFileResponse> controller,
+  }) async {
     final mediaStream =
         _grpcChannel.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
-
     MediaFileResponse? file;
     fixnum.Int64 offset = fixnum.Int64(0);
 
@@ -252,57 +295,52 @@ final class ChatServiceImpl implements ChatService {
             id: mediaFile.file.id,
             bytes: [],
           );
+          controller.add(file);
           log.info(
               "Initialized file download for '${file.name}' with ID '${file.id}', expected size: ${file.size} bytes.");
-        } else if (file != null) {
+        }
+
+        if (file != null) {
+          file.bytes.clear();
           file.bytes.addAll(mediaFile.data);
           offset += mediaFile.data.length;
           log.info(
               "Received ${mediaFile.data.length} bytes for file '${file.name}'; Total received: $offset bytes.");
+          controller.add(file);
         }
       }
-      if (file != null && offset == file.size) {
-        log.info(
-            "Successfully downloaded file '${file.name}' with full size: ${file.size} bytes.");
+
+      if (file != null) {
+        if (offset == fixnum.Int64(file.size)) {
+          log.info(
+              "Successfully downloaded file '${file.name}' with full size: ${file.size} bytes.");
+        } else {
+          log.warning(
+              "Downloaded file '${file.name}' has a size mismatch. Expected: ${file.size} bytes, Received: $offset bytes.");
+        }
       }
     } on GrpcError catch (err) {
       log.warning(
           "GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
-      if (file != null && offset < file.size) {
+      if (file != null && offset < fixnum.Int64(file.size)) {
         log.info(
             "Attempting to resume file download for '${file.name}' from offset $offset.");
-
         await downloadMediaFromOffset(
           fileId: fileId,
           file: file,
           offset: offset,
+          controller: controller,
         );
+      } else {
+        log.warning("Failed to download file due to GrpcError: $err");
+      }
+    } finally {
+      if (!controller.isClosed) {
+        controller.close();
       }
     }
 
-    return file;
-  }
-
-  /// Resumes the download of a media file from a specified offset.
-  Future<void> downloadMediaFromOffset({
-    required String fileId,
-    required MediaFileResponse file,
-    required fixnum.Int64 offset,
-  }) async {
-    final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
-      GetFileRequest(
-        fileId: fileId,
-        offset: offset,
-      ),
-    );
-
-    await for (MediaFile mediaFile in resumedMedia) {
-      file.bytes.addAll(mediaFile.data);
-      offset += mediaFile.data.length;
-      log.info(
-          "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
-    }
-    log.info("Resumed and completed file download for '${file.name}'.");
+    return controller;
   }
 
   /// Listens for all messages from server
@@ -368,9 +406,6 @@ final class ChatServiceImpl implements ChatService {
             messageController?.add(dialogMessage);
 
           case MessageType.incomingMedia:
-            final file =
-                await downloadMediaFile(fileId: update.message.file.id);
-
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
@@ -381,11 +416,11 @@ final class ChatServiceImpl implements ChatService {
                 .setUpdate(update)
                 .setFile(
                   MediaFileResponse(
-                    id: file != null ? file.id : '',
-                    type: file != null ? file.type : '',
-                    name: file != null ? file.name : '',
-                    bytes: file != null ? file.bytes : [],
-                    size: file != null ? file.size.toInt() : 0,
+                    id: update.message.file.id,
+                    type: update.message.file.type,
+                    name: update.message.file.name,
+                    bytes: [],
+                    size: update.message.file.size.toInt(),
                   ),
                 )
                 .build();
