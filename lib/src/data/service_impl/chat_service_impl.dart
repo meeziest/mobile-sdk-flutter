@@ -268,12 +268,12 @@ final class ChatServiceImpl implements ChatService {
   }
 
   @override
-  StreamController<MediaFileResponse> downloadFile({
+  Stream<MediaFileResponse> downloadFile({
     required String fileId,
   }) {
     StreamController<MediaFileResponse> getFileController = StreamController();
     getFileFromServer(fileId: fileId, controller: getFileController);
-    return getFileController;
+    return getFileController.stream;
   }
 
   Future<StreamController<MediaFileResponse>> getFileFromServer({

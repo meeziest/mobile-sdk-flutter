@@ -10,7 +10,7 @@ abstract interface class Dialog {
 
   Stream<DialogMessageResponse> get onNewMessage;
 
-  StreamController<MediaFileResponse> downloadFile({required String fileId});
+  Stream<MediaFileResponse> downloadFile({required String fileId});
 
 //  StreamController<String> get onMemberAdded;
 //  StreamController<String> get onMemberRemoved;

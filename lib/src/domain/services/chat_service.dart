@@ -35,7 +35,7 @@ abstract interface class ChatService {
 
   Future<Channel> getChannel();
 
-  StreamController<MediaFileResponse> downloadFile({required String fileId});
+  Stream<MediaFileResponse> downloadFile({required String fileId});
 
   StreamController<ChannelStatus> onChannelStatusChange();
 

@@ -93,6 +93,6 @@ final class DialogImpl implements Dialog {
   }
 
   @override
-  StreamController<MediaFileResponse> downloadFile({required String fileId}) =>
+  Stream<MediaFileResponse> downloadFile({required String fileId}) =>
       _chatService.downloadFile(fileId: fileId);
 }
