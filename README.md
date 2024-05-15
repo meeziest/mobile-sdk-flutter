@@ -30,6 +30,9 @@ Logout user and disable push notifications:
 Register device for push notifications:
 `await client.registerDevice();`
 
+Get user:
+`await client.getUser();`
+
 ### Channel & Connect Status listeners
 
 Get Channel:
