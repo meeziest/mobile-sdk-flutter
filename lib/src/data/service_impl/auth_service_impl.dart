@@ -10,10 +10,11 @@ import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart'
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
-import 'package:webitel_portal_sdk/src/data/client_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
+import 'package:webitel_portal_sdk/src/data/portal_client_impl.dart';
 import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/client.dart' as client;
+import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart'
+    as client;
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart' as res;
 import 'package:webitel_portal_sdk/src/domain/entities/response_status.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
@@ -35,7 +36,7 @@ final class AuthServiceImpl implements AuthService {
   );
 
   @override
-  Future<client.Client> initClient({
+  Future<client.PortalClient> initClient({
     required String url,
     required String appToken,
   }) async {
@@ -73,7 +74,7 @@ final class AuthServiceImpl implements AuthService {
       secure: secureConnection,
     );
 
-    return ClientImpl(
+    return PortalClientImpl(
       url: url,
       appToken: appToken,
       call: CallManager(),

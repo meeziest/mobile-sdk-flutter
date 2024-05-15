@@ -3,7 +3,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
-abstract interface class Client {
+abstract interface class PortalClient {
   Future<Response> logout();
 
   Future<Channel> getChannel();

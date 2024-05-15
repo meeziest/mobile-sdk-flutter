@@ -1,6 +1,6 @@
 import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/client.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
@@ -8,8 +8,8 @@ import 'package:webitel_portal_sdk/src/injection/injection.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
-@LazySingleton(as: Client)
-final class ClientImpl implements Client {
+@LazySingleton(as: PortalClient)
+final class PortalClientImpl implements PortalClient {
   final String url;
   final String appToken;
   @override
@@ -20,7 +20,7 @@ final class ClientImpl implements Client {
   late final AuthService _authService;
   late final ChatService _chatService;
 
-  ClientImpl({
+  PortalClientImpl({
     required this.url,
     required this.appToken,
     required this.call,
