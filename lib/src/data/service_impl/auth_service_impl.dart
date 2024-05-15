@@ -10,13 +10,15 @@ import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart'
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
+import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/portal_client_impl.dart';
-import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart'
     as client;
-import 'package:webitel_portal_sdk/src/domain/entities/response.dart' as res;
-import 'package:webitel_portal_sdk/src/domain/entities/response_status.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart'
+    as res;
+import 'package:webitel_portal_sdk/src/domain/entities/portal_response_status.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
@@ -83,7 +85,7 @@ final class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<res.Response> login({
+  Future<res.PortalResponse> login({
     required String name,
     required String sub,
     required String issuer,
@@ -123,26 +125,26 @@ final class AuthServiceImpl implements AuthService {
 
       _grpcChannel.setAccessToken(response.accessToken);
 
-      return res.Response(status: ResponseStatus.success);
+      return res.PortalResponse(status: PortalResponseStatus.success);
     } on GrpcError catch (err) {
       log.severe('GRPC Error during login: ${err.toString()}');
 
-      return res.Response(
-        status: ResponseStatus.error,
+      return res.PortalResponse(
+        status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
     } catch (err) {
       log.severe('Exception during login: ${err.toString()}');
 
-      return res.Response(
-        status: ResponseStatus.error,
+      return res.PortalResponse(
+        status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
     }
   }
 
   @override
-  Future<res.Response> registerDevice({required String pushToken}) async {
+  Future<res.PortalResponse> registerDevice({required String pushToken}) async {
     log.info('Attempting to register device');
     try {
       await _grpcChannel.customerStub.registerDevice(
@@ -154,30 +156,30 @@ final class AuthServiceImpl implements AuthService {
       );
       log.info('Device registered successfully');
 
-      return res.Response(status: ResponseStatus.success);
+      return res.PortalResponse(status: PortalResponseStatus.success);
     } catch (err) {
       log.severe('Failed to register device: ${err.toString()}');
 
-      return res.Response(
-        status: ResponseStatus.error,
+      return res.PortalResponse(
+        status: PortalResponseStatus.error,
         message: 'Failed to register device: ${err.toString()}',
       );
     }
   }
 
   @override
-  Future<res.Response> logout() async {
+  Future<res.PortalResponse> logout() async {
     log.info('Attempting to logout');
     try {
       await _grpcChannel.customerStub.logout(LogoutRequest());
       log.info('Logged out successfully');
 
-      return res.Response(status: ResponseStatus.success);
+      return res.PortalResponse(status: PortalResponseStatus.success);
     } catch (err) {
       log.severe('Failed to logout: ${err.toString()}');
 
-      return res.Response(
-        status: ResponseStatus.error,
+      return res.PortalResponse(
+        status: PortalResponseStatus.error,
         message: 'Failed to logout: ${err.toString()}',
       );
     }
@@ -218,5 +220,32 @@ final class AuthServiceImpl implements AuthService {
     log.info('Built user agent: $userAgentString');
 
     return userAgentString;
+  }
+
+  @override
+  Future<User> getUser() async {
+    try {
+      String? deviceId = await _sharedPreferencesGateway.readDeviceId();
+      String? appToken = await _sharedPreferencesGateway.readAppToken();
+
+      final token = await _grpcChannel.customerStub.inspect(InspectRequest());
+
+      return User(
+        name: token.user.identity.name,
+        sub: token.user.identity.sub,
+        issuer: token.user.identity.iss,
+        id: token.chat.user.id,
+        tokenExpiration: token.expiresIn,
+        tokenType: token.tokenType,
+        appToken: appToken ?? '',
+        deviceId: deviceId ?? '',
+      );
+    } on GrpcError catch (err) {
+      log.severe('GRPC Error while getting user: ${err.toString()}');
+      rethrow;
+    } catch (err) {
+      log.severe('Exception while getting user: ${err.toString()}');
+      rethrow;
+    }
   }
 }

@@ -1,7 +1,8 @@
 import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
@@ -34,14 +35,14 @@ final class PortalClientImpl implements PortalClient {
   Future<Channel> getChannel() async => _chatService.getChannel();
 
   @override
-  Future<Response> logout() async => await _authService.logout();
+  Future<PortalResponse> logout() async => await _authService.logout();
 
   @override
-  Future<Response> registerDevice({required String pushToken}) async =>
+  Future<PortalResponse> registerDevice({required String pushToken}) async =>
       await _authService.registerDevice(pushToken: pushToken);
 
   @override
-  Future<Response> login({
+  Future<PortalResponse> login({
     required String name,
     required String sub,
     required String issuer,
@@ -52,4 +53,7 @@ final class PortalClientImpl implements PortalClient {
       issuer: issuer,
     );
   }
+
+  @override
+  Future<User> getUser() async => _authService.getUser();
 }

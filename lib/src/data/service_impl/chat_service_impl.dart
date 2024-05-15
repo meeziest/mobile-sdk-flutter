@@ -10,11 +10,11 @@ import 'package:webitel_portal_sdk/src/backbone/builder/messages_list_message_bu
 import 'package:webitel_portal_sdk/src/backbone/builder/response_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
+import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
-import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';

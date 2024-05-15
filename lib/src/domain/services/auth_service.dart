@@ -1,17 +1,18 @@
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
 
 abstract interface class AuthService {
-  Future<Response> logout();
+  Future<PortalResponse> logout();
 
-  Future<Response> registerDevice({required String pushToken});
+  Future<PortalResponse> registerDevice({required String pushToken});
 
   Future<PortalClient> initClient({
     required String url,
     required String appToken,
   });
 
-  Future<Response> login({
+  Future<PortalResponse> login({
     required String name,
     required String sub,
     required String issuer,
@@ -21,4 +22,6 @@ abstract interface class AuthService {
     String phoneNumber,
     bool phoneNumberVerified,
   });
+
+  Future<User> getUser();
 }
