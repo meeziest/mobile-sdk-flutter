@@ -4,6 +4,7 @@ import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/channel_status_helper.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/response_type_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
@@ -77,9 +78,14 @@ final class GrpcConnect {
               final decodedResponse = update.data.unpackInto(
                 portal.Response(),
               );
+              _responseStreamController.add(decodedResponse);
+
+              final code =
+                  ErrorHelper.getCodeFromMessage(decodedResponse.err.message);
+
               _errorStreamController.add(
                 Error(
-                  statusCode: decodedResponse.err.code.toString(),
+                  statusCode: code,
                   errorMessage: decodedResponse.err.message,
                 ),
               );
@@ -91,7 +97,12 @@ final class GrpcConnect {
       }
     } on GrpcError catch (err, stack) {
       log.warning('GRPC Error: $err', err, stack);
-      _errorStreamController.add(Error.fromGrpcError(err));
+      _errorStreamController.add(
+        Error(
+          statusCode: err.code.toString(),
+          errorMessage: err.message ?? '',
+        ),
+      );
       handleConnectionClosure(err.toString());
     } catch (err, stack) {
       log.warning('Unexpected error: $err', err, stack);

@@ -211,7 +211,7 @@ final class AuthServiceImpl implements AuthService {
       sdkVersion: Constants.sdkVersion,
       appName: appName,
       version: appVersion,
-      platform: platform,
+      platform: platform == 'android' ? 'Android' : platform,
       platformVersion: platformVersion,
       model: model,
       device: device,

@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/error_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/messages_list_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/response_dialog_message_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
@@ -19,7 +20,6 @@ import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
@@ -379,9 +379,7 @@ final class ChatServiceImpl implements ChatService {
 
             messageController?.add(dialogMessage);
 
-          case MessageType.outcomingMessage:
-            log.info(
-                "Processing ${messageType.toString()} message: ${update.message.text}");
+          case MessageType.incomingMedia:
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
@@ -402,7 +400,9 @@ final class ChatServiceImpl implements ChatService {
 
             messageController?.add(dialogMessage);
 
-          case MessageType.incomingMedia:
+          case MessageType.outcomingMessage:
+            log.info(
+                "Processing ${messageType.toString()} message: ${update.message.text}");
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
@@ -435,6 +435,15 @@ final class ChatServiceImpl implements ChatService {
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(MediaFileResponse.initial())
+                .setFile(
+                  MediaFileResponse(
+                    id: update.message.file.id,
+                    type: update.message.file.type,
+                    name: update.message.file.name,
+                    bytes: [],
+                    size: update.message.file.size.toInt(),
+                  ),
+                )
                 .build();
 
             messageController?.add(dialogMessage);
@@ -543,10 +552,14 @@ final class ChatServiceImpl implements ChatService {
           break;
       }
     } else if (response.err.hasMessage()) {
-      completer.complete(ErrorDialogMessageBuilder()
-          .setDialogMessageContent(response.err.message)
-          .setRequestId(response.id)
-          .build());
+      final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
+      completer.complete(
+        DialogMessageResponse.error(
+          statusCode: statusCode,
+          requestId: response.id,
+          dialogMessageContent: response.err.message,
+        ),
+      );
     }
   }
 
@@ -639,9 +652,19 @@ final class ChatServiceImpl implements ChatService {
         log.info(
             'Successfully fetched ${messages.length} messages for chatId: $chatId');
         return messages;
-      } else {
+      } else if (response.err.hasMessage()) {
         log.severe(
             'Failed to unpack dialog messages for requestId: $requestId');
+        final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
+
+        return [
+          DialogMessageResponse.error(
+            statusCode: statusCode,
+            requestId: response.id,
+            dialogMessageContent: response.err.message,
+          )
+        ];
+      } else {
         return [];
       }
     } catch (e) {
@@ -697,9 +720,19 @@ final class ChatServiceImpl implements ChatService {
         log.info(
             'Successfully fetched ${messages.length} message updates for chatId: $chatId');
         return messages;
-      } else {
+      } else if (response.err.hasMessage()) {
         log.severe(
             'Failed to unpack dialog messages for requestId: $requestId');
+        final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
+
+        return [
+          DialogMessageResponse.error(
+            statusCode: statusCode,
+            requestId: response.id,
+            dialogMessageContent: response.err.message,
+          )
+        ];
+      } else {
         return [];
       }
     } catch (e) {

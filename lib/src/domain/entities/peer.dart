@@ -8,4 +8,10 @@ class PeerInfo {
     required this.type,
     required this.name,
   });
+
+  // Named constructor for creating an initial/default instance
+  PeerInfo.initial()
+      : id = 'initial_id',
+        type = 'initial_type',
+        name = 'initial_name';
 }
