@@ -12,10 +12,8 @@ final class ErrorMessageBuilder {
 
   DialogMessageResponse build() {
     return DialogMessageResponse(
-      id: 0,
       dialogMessageContent: _errorMessage,
       requestId: '',
-      chatId: '',
       peer: PeerInfo(id: '', name: '', type: ''),
       file: MediaFileResponse.initial(),
     );

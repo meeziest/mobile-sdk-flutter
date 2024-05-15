@@ -88,8 +88,8 @@ final class GrpcChannel {
             : ChannelCredentials.insecure(),
         userAgent: userAgent,
         keepAlive: ClientKeepAliveOptions(
-          pingInterval: Duration(seconds: 5),
-          timeout: Duration(seconds: 3),
+          pingInterval: Duration(seconds: 3),
+          timeout: Duration(seconds: 2),
         ),
       ),
     );

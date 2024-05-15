@@ -4,7 +4,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/response.dart';
 abstract interface class AuthService {
   Future<Response> logout();
 
-  Future<Response> registerDevice();
+  Future<Response> registerDevice({required String pushToken});
 
   Future<Client> initClient({required String url, required String appToken});
 

@@ -8,8 +8,7 @@ final class ResponseDialogMessageBuilder {
   late String _dialogMessageContent;
   late String _requestId;
   late String _chatId;
-  late String _messageId;
-  late int _id;
+  late int _messageId;
   late String _userId;
   late UpdateNewMessage _update;
   late MediaFileResponse? _file;
@@ -30,18 +29,13 @@ final class ResponseDialogMessageBuilder {
     return this;
   }
 
-  ResponseDialogMessageBuilder setMessageId(String messageId) {
+  ResponseDialogMessageBuilder setMessageId(int messageId) {
     _messageId = messageId;
     return this;
   }
 
   ResponseDialogMessageBuilder setUpdate(UpdateNewMessage update) {
     _update = update;
-    return this;
-  }
-
-  ResponseDialogMessageBuilder setId(int id) {
-    _id = id;
     return this;
   }
 
@@ -83,7 +77,6 @@ final class ResponseDialogMessageBuilder {
             type: '',
             id: '',
           ),
-      id: _id,
     );
   }
 }

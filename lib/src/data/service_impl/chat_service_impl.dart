@@ -293,7 +293,6 @@ final class ChatServiceImpl implements ChatService {
             name: mediaFile.file.name,
             type: mediaFile.file.type,
             id: mediaFile.file.id,
-            bytes: [],
           );
           controller.add(file);
           log.info(
@@ -362,9 +361,8 @@ final class ChatServiceImpl implements ChatService {
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
-                .setMessageId(update.id)
+                .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
-                .setId(update.message.id.toInt())
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(
@@ -386,9 +384,8 @@ final class ChatServiceImpl implements ChatService {
                 "Processing ${messageType.toString()} message: ${update.message.text}");
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
-                .setId(update.message.id.toInt())
                 .setRequestId(update.id)
-                .setMessageId(update.id)
+                .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
@@ -409,9 +406,8 @@ final class ChatServiceImpl implements ChatService {
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
-                .setMessageId(update.id)
+                .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
-                .setId(update.message.id.toInt())
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(
@@ -434,9 +430,8 @@ final class ChatServiceImpl implements ChatService {
             final dialogMessage = ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
-                .setMessageId(update.id)
+                .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
-                .setId(update.message.id.toInt())
                 .setChatId(update.message.chat.id)
                 .setUpdate(update)
                 .setFile(MediaFileResponse.initial())
@@ -515,9 +510,8 @@ final class ChatServiceImpl implements ChatService {
           final dialogMessage = ResponseDialogMessageBuilder()
               .setDialogMessageContent(unpackedMessage.message.text)
               .setRequestId(unpackedMessage.id)
-              .setId(unpackedMessage.message.id.toInt())
               .setUserUd(userId)
-              .setMessageId(unpackedMessage.id)
+              .setMessageId(unpackedMessage.message.id.toInt())
               .setChatId(unpackedMessage.message.chat.id)
               .setUpdate(unpackedMessage)
               .setFile(MediaFileResponse.initial())
@@ -530,9 +524,8 @@ final class ChatServiceImpl implements ChatService {
           final dialogMessage = ResponseDialogMessageBuilder()
               .setDialogMessageContent(unpackedMessage.message.text)
               .setRequestId(unpackedMessage.id)
-              .setMessageId(unpackedMessage.id)
+              .setMessageId(unpackedMessage.message.id.toInt())
               .setUserUd(userId)
-              .setId(unpackedMessage.message.id.toInt())
               .setChatId(unpackedMessage.message.chat.id)
               .setUpdate(unpackedMessage)
               .setFile(
@@ -540,7 +533,6 @@ final class ChatServiceImpl implements ChatService {
                   id: unpackedMessage.message.file.id,
                   type: unpackedMessage.message.file.type,
                   name: unpackedMessage.message.file.name,
-                  bytes: [],
                   size: unpackedMessage.message.file.size.toInt(),
                 ),
               )

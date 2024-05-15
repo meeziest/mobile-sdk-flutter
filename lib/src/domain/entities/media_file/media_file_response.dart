@@ -6,12 +6,12 @@ class MediaFileResponse {
   final List<int> bytes;
 
   MediaFileResponse({
+    List<int>? bytes,
     required this.size,
-    required this.bytes,
     required this.name,
     required this.type,
     required this.id,
-  });
+  }) : bytes = bytes ?? [];
 
   MediaFileResponse.initial()
       : name = '',

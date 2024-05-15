@@ -141,11 +141,16 @@ final class AuthServiceImpl implements AuthService {
   }
 
   @override
-  Future<res.Response> registerDevice() async {
+  Future<res.Response> registerDevice({required String pushToken}) async {
     log.info('Attempting to register device');
     try {
-      await _grpcChannel.customerStub
-          .registerDevice(RegisterDeviceRequest(push: DevicePush()));
+      await _grpcChannel.customerStub.registerDevice(
+        RegisterDeviceRequest(
+          push: Platform.isIOS
+              ? DevicePush(aPN: pushToken)
+              : DevicePush(fCM: pushToken),
+        ),
+      );
       log.info('Device registered successfully');
 
       return res.Response(status: ResponseStatus.success);

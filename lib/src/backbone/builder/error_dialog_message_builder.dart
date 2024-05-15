@@ -25,12 +25,9 @@ final class ErrorDialogMessageBuilder {
     );
 
     return DialogMessageResponse(
-      id: 0,
-      chatId: '',
       dialogMessageContent: _dialogMessageContent,
       requestId: _requestId,
       peer: peerInfo,
-      messageId: '',
       file: MediaFileResponse.initial(),
     );
   }

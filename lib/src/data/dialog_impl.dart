@@ -45,11 +45,11 @@ final class DialogImpl implements Dialog {
 
   @override
   Future<DialogMessageResponse> sendMessage({
+    String? mediaType,
+    String? mediaName,
     required String dialogMessageContent,
     required String requestId,
     required String messageType,
-    required String mediaType,
-    required String mediaName,
     required Stream<List<int>> mediaData,
   }) async {
     return await _chatService.sendMessage(
@@ -60,8 +60,8 @@ final class DialogImpl implements Dialog {
         requestId: requestId,
         file: MediaFileRequest(
           data: mediaData,
-          name: mediaName,
-          type: mediaType,
+          name: mediaName ?? '',
+          type: mediaType ?? '',
           requestId: requestId,
         ),
       ),

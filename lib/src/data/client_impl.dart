@@ -37,8 +37,8 @@ final class ClientImpl implements Client {
   Future<Response> logout() async => await _authService.logout();
 
   @override
-  Future<Response> registerDevice() async =>
-      await _authService.registerDevice();
+  Future<Response> registerDevice({required String pushToken}) async =>
+      await _authService.registerDevice(pushToken: pushToken);
 
   @override
   Future<Response> login({

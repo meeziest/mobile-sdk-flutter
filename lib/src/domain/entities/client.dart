@@ -8,7 +8,7 @@ abstract interface class Client {
 
   Future<Channel> getChannel();
 
-  Future<Response> registerDevice();
+  Future<Response> registerDevice({required String pushToken});
 
   Future<Response> login({
     required String name,

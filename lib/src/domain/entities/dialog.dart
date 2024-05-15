@@ -22,11 +22,11 @@ abstract interface class Dialog {
 //  StreamController<String> get onTyping;
 
   Future<DialogMessageResponse> sendMessage({
+    String mediaType,
+    String mediaName,
     required String dialogMessageContent,
     required String requestId,
     required String messageType,
-    required String mediaType,
-    required String mediaName,
     required Stream<List<int>> mediaData,
   });
 
