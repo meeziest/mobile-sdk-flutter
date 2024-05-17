@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
@@ -16,6 +17,8 @@ final class DialogImpl implements Dialog {
   final String id;
   @override
   final String topMessage;
+  @override
+  final CallError? error;
   @override
   final Stream<DialogMessageResponse> onNewMessage;
 
@@ -34,6 +37,7 @@ final class DialogImpl implements Dialog {
     required this.topMessage,
     required this.id,
     required this.onNewMessage,
+    this.error,
   }) {
     _chatService = getIt.get<ChatService>();
   }
@@ -41,6 +45,7 @@ final class DialogImpl implements Dialog {
   DialogImpl.initial()
       : id = 'default_id',
         topMessage = 'No messages yet',
+        error = CallError(statusCode: '', errorMessage: ''),
         onNewMessage = Stream.empty();
 
   @override

@@ -21,7 +21,11 @@ class WebitelPortalSdk {
     CustomLogger.initialize();
     AuthService authService = getIt<AuthService>();
 
-    final client = authService.initClient(url: url, appToken: appToken);
+    final client = authService.initClient(
+      url: url,
+      appToken: appToken,
+    );
+
     return client;
   }
 }

@@ -1,3 +1,4 @@
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
@@ -5,7 +6,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 enum Sender { user, operator, bot }
 
 class DialogMessageResponse {
-  final String? statusCode;
+  final CallError? error;
   final MediaFileResponse file;
   final String dialogMessageContent;
   final PeerInfo peer;
@@ -16,7 +17,7 @@ class DialogMessageResponse {
   final int? messageId;
 
   DialogMessageResponse({
-    this.statusCode,
+    this.error,
     this.messageType,
     this.sender,
     this.chatId,
@@ -28,13 +29,13 @@ class DialogMessageResponse {
   });
 
   DialogMessageResponse.error({
-    required this.statusCode,
+    required this.error,
     required this.requestId,
-    required this.dialogMessageContent,
   })  : file = MediaFileResponse.initial(),
         peer = PeerInfo.initial(),
         sender = null,
         messageType = null,
         chatId = null,
+        dialogMessageContent = '',
         messageId = null;
 }

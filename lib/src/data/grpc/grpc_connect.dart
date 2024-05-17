@@ -9,10 +9,10 @@ import 'package:webitel_portal_sdk/src/backbone/helper/response_type_helper.dart
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect_status.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/response_type.dart';
 import 'package:webitel_portal_sdk/src/generated/google/protobuf/any.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
@@ -32,8 +32,8 @@ final class GrpcConnect {
       StreamController<UpdateNewMessage>.broadcast();
   final StreamController<portal.Request> _requestStreamController =
       StreamController<portal.Request>.broadcast();
-  final StreamController<Error> _errorStreamController =
-      StreamController<Error>.broadcast();
+  final StreamController<CallError> _errorStreamController =
+      StreamController<CallError>.broadcast();
   Stream<portal.Update>? _responseStream;
   final StreamController<ChannelStatus> _channelStatus =
       StreamController<ChannelStatus>.broadcast();
@@ -79,12 +79,10 @@ final class GrpcConnect {
                 portal.Response(),
               );
               _responseStreamController.add(decodedResponse);
-
               final code =
                   ErrorHelper.getCodeFromMessage(decodedResponse.err.message);
-
               _errorStreamController.add(
-                Error(
+                CallError(
                   statusCode: code,
                   errorMessage: decodedResponse.err.message,
                 ),
@@ -98,12 +96,13 @@ final class GrpcConnect {
     } on GrpcError catch (err, stack) {
       log.warning('GRPC Error: $err', err, stack);
       _errorStreamController.add(
-        Error(
+        CallError(
           statusCode: err.code.toString(),
           errorMessage: err.message ?? '',
         ),
       );
-      handleConnectionClosure(err.toString());
+
+      handleConnectionClosure(err.message ?? '');
     } catch (err, stack) {
       log.warning('Unexpected error: $err', err, stack);
       handleConnectionClosure(err.toString());
@@ -218,7 +217,7 @@ final class GrpcConnect {
 
   Stream<UpdateNewMessage> get updateStream => _updateStreamController.stream;
 
-  StreamController<Error> get errorStream => _errorStreamController;
+  StreamController<CallError> get errorStream => _errorStreamController;
 
   StreamController<Connect> get connectStatusStream => _connectController;
 

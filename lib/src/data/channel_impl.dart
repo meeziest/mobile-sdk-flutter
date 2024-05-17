@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:injectable/injectable.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/error.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
@@ -25,7 +25,7 @@ final class ChannelImpl implements Channel {
       _chatService.onConnectStreamStatusChange().stream;
 
   @override
-  Stream<Error> get onError => _chatService.onError().stream;
+  Stream<CallError> get onError => _chatService.onError().stream;
 
   @override
   Future<void> reconnectToStream() => _chatService.reconnectToStream();

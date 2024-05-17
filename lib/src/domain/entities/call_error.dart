@@ -1,17 +1,17 @@
 import 'package:grpc/grpc.dart';
 
-class Error {
+class CallError {
   final String statusCode;
   final String errorMessage;
 
   // Constructor to create an error entity manually
-  Error({
+  CallError({
     required this.statusCode,
     required this.errorMessage,
   });
 
   // Factory method to create an error entity from a GrpcError
-  static Error fromGrpcError(GrpcError error) {
+  static CallError fromGrpcError(GrpcError error) {
     String message;
     switch (error.code) {
       case StatusCode.cancelled:
@@ -66,15 +66,15 @@ class Error {
         message = "An unexpected error occurred.";
         break;
     }
-    return Error(
+    return CallError(
       statusCode: error.codeName,
       errorMessage: message,
     );
   }
 
   // Static method to create a generic timeout error
-  static Error createTimeoutError() {
-    return Error(
+  static CallError createTimeoutError() {
+    return CallError(
       statusCode: 'Timeout',
       errorMessage: "The operation timed out.",
     );

@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
@@ -16,12 +17,15 @@ final class PortalClientImpl implements PortalClient {
   @override
   final CallManager call;
   @override
+  final CallError? error;
+  @override
   final ChatManager chat;
 
   late final AuthService _authService;
   late final ChatService _chatService;
 
   PortalClientImpl({
+    this.error,
     required this.url,
     required this.appToken,
     required this.call,

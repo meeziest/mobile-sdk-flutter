@@ -13,6 +13,7 @@ import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/portal_client_impl.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart'
     as client;
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart'
@@ -21,6 +22,8 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_response_status.da
 import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
+import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
+    as portal;
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
@@ -42,46 +45,68 @@ final class AuthServiceImpl implements AuthService {
     required String url,
     required String appToken,
   }) async {
-    log.info('Attempting to init gRPC channel for: $url');
-    await _sharedPreferencesGateway.init();
-    await _sharedPreferencesGateway.saveAppToken(appToken);
-    final deviceId = await getOrGenerateDeviceId();
-    PackageInfo packageInfo = await PackageInfo.fromPlatform();
-    final uaData = await userAgentData();
+    try {
+      log.info('Attempting to init gRPC channel for: $url');
 
-    final userAgentString = buildUserAgent(
-      appName: packageInfo.appName,
-      appVersion: packageInfo.version,
-      platform: Platform.operatingSystem,
-      platformVersion: uaData.platformVersion,
-      model: uaData.model,
-      device: uaData.device,
-      architecture: uaData.architecture,
-    );
+      await _sharedPreferencesGateway.init();
+      await _sharedPreferencesGateway.saveAppToken(appToken);
+      final deviceId = await getOrGenerateDeviceId();
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      final uaData = await userAgentData();
 
-    final urlHelper = UrlHelper(url);
-    final secureConnection = urlHelper.isSecure();
-    final hostUrl = urlHelper.getUrl();
-    final port = urlHelper.getPort();
+      final userAgentString = buildUserAgent(
+        appName: packageInfo.appName,
+        appVersion: packageInfo.version,
+        platform: Platform.operatingSystem,
+        platformVersion: uaData.platformVersion,
+        model: uaData.model,
+        device: uaData.device,
+        architecture: uaData.architecture,
+      );
 
-    log.info(
-        'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
+      final urlHelper = UrlHelper(url);
+      final secureConnection = urlHelper.isSecure();
+      final hostUrl = urlHelper.getUrl();
+      final port = urlHelper.getPort();
 
-    await _grpcChannel.init(
-      url: hostUrl,
-      appToken: appToken,
-      deviceId: deviceId,
-      userAgent: userAgentString,
-      port: port,
-      secure: secureConnection,
-    );
+      log.info(
+          'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
 
-    return PortalClientImpl(
-      url: url,
-      appToken: appToken,
-      call: CallManager(),
-      chat: ChatManager(),
-    );
+      await _grpcChannel.init(
+        url: hostUrl,
+        appToken: appToken,
+        deviceId: deviceId,
+        userAgent: userAgentString,
+        port: port,
+        secure: secureConnection,
+      );
+
+      final String echoDataString = 'Channel init';
+      final List<int> echoDataBytes = echoDataString.codeUnits;
+      final echo = portal.Echo(data: echoDataBytes);
+      await _grpcChannel.customerStub.ping(echo);
+      log.info('Send initial ping to check channel validity');
+
+      return PortalClientImpl(
+        url: url,
+        appToken: appToken,
+        call: CallManager(),
+        chat: ChatManager(),
+      );
+    } on GrpcError catch (err) {
+      log.severe(
+          'Error occurred during gRPC channel initialization: ${err.message}');
+      return PortalClientImpl(
+        error: CallError(
+          errorMessage: err.message ?? '',
+          statusCode: err.code.toString(),
+        ),
+        url: url,
+        appToken: appToken,
+        call: CallManager(),
+        chat: ChatManager(),
+      );
+    }
   }
 
   @override

@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 
 abstract interface class Dialog {
+  CallError? get error;
+
   String get id;
 
   String get topMessage;
