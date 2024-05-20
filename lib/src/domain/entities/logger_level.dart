@@ -1,0 +1,1 @@
+enum LoggerLevel {  debug,  warning,  error,}
