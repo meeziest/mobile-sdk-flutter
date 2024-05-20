@@ -27,10 +27,9 @@ abstract interface class Dialog {
   Future<DialogMessageResponse> sendMessage({
     String mediaType,
     String mediaName,
-    required String dialogMessageContent,
+    Stream<List<int>> mediaData,
+    required String content,
     required String requestId,
-    required String messageType,
-    required Stream<List<int>> mediaData,
   });
 
   Future<List<DialogMessageResponse>> fetchMessages({

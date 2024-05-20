@@ -2,12 +2,13 @@ import 'dart:async';
 
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
+import 'package:logging/logging.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/call_options_builder.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
 
 @LazySingleton()
-final class GrpcChannel {
+class GrpcChannel {
   late CustomerClient _customerStub;
   late MediaStorageClient _mediaStorageStub;
   late ClientChannel _channel;
@@ -19,6 +20,7 @@ final class GrpcChannel {
   late String _appToken;
   late String _userAgent;
   final _streamControllerState = StreamController<ConnectionState>();
+  final Logger _logger = Logger('GrpcChannel');
 
   Future<void> init({
     required String url,
@@ -78,6 +80,7 @@ final class GrpcChannel {
     required bool secure,
   }) async {
     final completer = Completer<void>();
+
     _channel = ClientChannel(
       url,
       port: port,
@@ -86,18 +89,29 @@ final class GrpcChannel {
             ? ChannelCredentials.secure()
             : ChannelCredentials.insecure(),
         userAgent: userAgent,
+        idleTimeout: Duration(minutes: 5),
+        connectionTimeout: Duration(minutes: 50),
+        backoffStrategy: defaultBackoffStrategy,
         keepAlive: ClientKeepAliveOptions(
           pingInterval: Duration(seconds: 3),
           timeout: Duration(seconds: 2),
         ),
       ),
     );
-    channel.onConnectionStateChanged.listen((state) {
+
+    _channel.onConnectionStateChanged.listen((state) {
+      _logger.info('Connection state changed: $state');
       _streamControllerState.add(state);
+
+      if (state == ConnectionState.shutdown) {
+        _logger.warning(
+            'Connection has been shutdown. Attempting to reconnect...');
+        _reconnect();
+      }
     });
 
     _customerStub = CustomerClient(
-      channel,
+      _channel,
       options: CallOptionsBuilder()
           .setDeviceId(deviceId)
           .setClientToken(appToken)
@@ -105,14 +119,37 @@ final class GrpcChannel {
           .build(),
     );
     _mediaStorageStub = MediaStorageClient(
-      channel,
+      _channel,
       options: CallOptionsBuilder()
           .setDeviceId(deviceId)
           .setClientToken(appToken)
           .setAccessToken(_accessToken)
           .build(),
     );
+
     completer.complete();
     await completer.future;
+  }
+
+  Future<void> _reconnect() async {
+    final completer = Completer<void>();
+
+    while (!completer.isCompleted) {
+      try {
+        await _createChannel(
+          url: _url,
+          port: _port,
+          secure: _secure,
+          deviceId: _deviceId,
+          appToken: _appToken,
+          userAgent: _userAgent,
+        );
+        _logger.info('Reconnection successful');
+        completer.complete();
+      } catch (err) {
+        _logger.warning('Reconnection failed', err);
+        await Future.delayed(defaultBackoffStrategy(null));
+      }
+    }
   }
 }

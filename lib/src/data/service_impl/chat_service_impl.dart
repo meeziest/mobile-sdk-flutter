@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/error_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/messages_list_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/response_dialog_message_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
@@ -35,6 +36,18 @@ import 'package:webitel_portal_sdk/src/generated/portal/media.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 import 'package:webitel_portal_sdk/webitel_portal_sdk.dart';
 
+typedef SendMessageResponseHandler = Future<void> Function(
+  portal.Response response,
+  Completer<DialogMessageResponse> completer,
+  String userId,
+);
+
+typedef SendMessageErrorHandler = void Function(
+  Object error,
+  Completer<DialogMessageResponse> completer,
+  String requestId,
+);
+
 @LazySingleton(as: ChatService)
 final class ChatServiceImpl implements ChatService {
   final GrpcChannel _grpcChannel;
@@ -56,8 +69,10 @@ final class ChatServiceImpl implements ChatService {
     this._grpcConnect,
     this._sharedPreferencesGateway,
   ) {
-    log.info("Initializing Chat service...");
+    initListeners();
+  }
 
+  void initListeners() {
     listenToMessages();
     log.info("Message listener setup complete.");
 
@@ -69,8 +84,6 @@ final class ChatServiceImpl implements ChatService {
 
     onError();
     log.info("Error handling is configured.");
-
-    log.info("Chat service initialization complete.");
   }
 
   @override
@@ -78,12 +91,11 @@ final class ChatServiceImpl implements ChatService {
     final requestId = uuid.v4();
     log.info('Initiating fetch for chat dialogs with request ID: $requestId');
 
-    List<Dialog> dialogs = [];
     await _sharedPreferencesGateway.init();
     final chatDialogsRequest = dialog.ChatDialogsRequest();
 
     final request = portal.Request(
-      path: '/webitel.portal.ChatMessages/ChatDialogs',
+      path: Constants.fetchDialogsPath,
       data: Any.pack(chatDialogsRequest),
       id: requestId,
     );
@@ -108,20 +120,18 @@ final class ChatServiceImpl implements ChatService {
             'chatId',
             unpackedDialogMessages.data.first.id,
           );
-          for (var dialog in unpackedDialogMessages.data) {
-            await getControllerForChat(dialog.id);
-          }
-          for (var dialog in unpackedDialogMessages.data) {
-            final controller = _onNewMessageControllers[dialog.id]!; //TODO
 
-            dialogs.add(
-              DialogImpl(
-                topMessage: dialog.message.text,
-                id: dialog.id,
-                onNewMessage: controller.stream,
-              ),
+          final List<Future<Dialog>> dialogFutures =
+              unpackedDialogMessages.data.map((dialog) async {
+            await getControllerForChat(dialog.id);
+            return DialogImpl(
+              topMessage: dialog.message.text,
+              id: dialog.id,
+              onNewMessage: _onNewMessageControllers[dialog.id]!.stream,
             );
-          }
+          }).toList();
+
+          final dialogs = await Future.wait(dialogFutures);
 
           log.info('Fetched dialogs: ${dialogs.length}');
 
@@ -132,9 +142,14 @@ final class ChatServiceImpl implements ChatService {
           return [];
         }
       } else if (response.err.hasMessage()) {
-        log.warning('Failed to unpack chat list for request ID: $requestId');
-        final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
-        log.warning('Returned error list of dialogs: ${response.err.message}');
+        final (requestId, errorMessage) = (
+          response.id,
+          response.err.message,
+        );
+
+        log.warning('Failed to unpack chat list for request ID: $requestId '
+            '$errorMessage');
+        final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
         return [
           DialogImpl(
@@ -163,12 +178,11 @@ final class ChatServiceImpl implements ChatService {
     final requestId = uuid.v4();
     log.info('Initiating fetch for chat dialogs with request ID: $requestId');
 
-    List<Dialog> dialogs = [];
     await _sharedPreferencesGateway.init();
     final chatDialogsRequest = dialog.ChatDialogsRequest();
 
     final request = portal.Request(
-      path: '/webitel.portal.ChatMessages/ChatDialogs',
+      path: Constants.fetchDialogsPath,
       data: Any.pack(chatDialogsRequest),
       id: requestId,
     );
@@ -193,29 +207,35 @@ final class ChatServiceImpl implements ChatService {
             unpackedDialogMessages.data.first.id,
           );
 
-          for (var dialog in unpackedDialogMessages.data) {
+          final List<Future<Dialog>> dialogFutures =
+              unpackedDialogMessages.data.map((dialog) async {
             await getControllerForChat(dialog.id);
-          }
-          for (var dialog in unpackedDialogMessages.data) {
-            final controller = _onNewMessageControllers[dialog.id]!; //TODO
-            dialogs.add(
-              DialogImpl(
-                topMessage: dialog.message.text,
-                id: dialog.id,
-                onNewMessage: controller.stream,
-              ),
+            return DialogImpl(
+              topMessage: dialog.message.text,
+              id: dialog.id,
+              onNewMessage: _onNewMessageControllers[dialog.id]!.stream,
             );
-          }
+          }).toList();
+
+          // Await all futures to complete
+          final dialogs = await Future.wait(dialogFutures);
+
           log.info('Fetched dialogs: ${dialogs.length}');
+
           return dialogs.first;
         } else {
           log.info('No chat dialogs were returned in the response');
           return DialogImpl.initial();
         }
       } else if (response.err.hasMessage()) {
-        log.warning('Failed to unpack chat list for request ID: $requestId');
-        final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
-        log.warning('Returned error dialog: ${response.err.message}');
+        final (requestId, errorMessage) = (
+          response.id,
+          response.err.message,
+        );
+
+        log.warning('Failed to unpack chat list for request ID: $requestId '
+            '$errorMessage');
+        final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
         return DialogImpl(
           error: CallError(
@@ -281,42 +301,6 @@ final class ChatServiceImpl implements ChatService {
         return StreamController<DialogMessageResponse>.broadcast();
       },
     );
-  }
-
-  Future<void> downloadMediaFromOffset({
-    required String fileId,
-    required MediaFileResponse file,
-    required fixnum.Int64 offset,
-    required StreamController<MediaFileResponse> controller,
-    int retries = 5,
-  }) async {
-    for (int attempt = 0; attempt < retries; attempt++) {
-      try {
-        final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
-          GetFileRequest(
-            fileId: fileId,
-            offset: offset,
-          ),
-        );
-
-        await for (MediaFile mediaFile in resumedMedia) {
-          file.bytes.addAll(mediaFile.data);
-          offset += mediaFile.data.length;
-          log.info(
-              "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
-          controller.add(file);
-        }
-
-        log.info("Resumed and completed file download for '${file.name}'.");
-        return;
-      } on GrpcError catch (err) {
-        log.warning(
-            "GrpcError encountered while resuming download for '${file.name}': ${err.message}");
-        if (attempt == retries - 1) {
-          controller.addError(err);
-        }
-      }
-    }
   }
 
   @override
@@ -395,32 +379,63 @@ final class ChatServiceImpl implements ChatService {
     return controller;
   }
 
+  Future<void> downloadMediaFromOffset({
+    required String fileId,
+    required MediaFileResponse file,
+    required fixnum.Int64 offset,
+    required StreamController<MediaFileResponse> controller,
+    int retries = 5,
+  }) async {
+    for (int attempt = 0; attempt < retries; attempt++) {
+      try {
+        final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
+          GetFileRequest(
+            fileId: fileId,
+            offset: offset,
+          ),
+        );
+
+        await for (MediaFile mediaFile in resumedMedia) {
+          file.bytes.clear();
+          file.bytes.addAll(mediaFile.data);
+          offset += mediaFile.data.length;
+          log.info(
+              "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
+          controller.add(file);
+        }
+
+        log.info("Resumed and completed file download for '${file.name}'.");
+        return;
+      } on GrpcError catch (err) {
+        log.warning(
+            "GrpcError encountered while resuming download for '${file.name}': ${err.message}");
+        if (attempt == retries - 1) {
+          controller.addError(err);
+        }
+      }
+    }
+  }
+
   /// Listens for all messages from server
   Future<void> listenToMessages() async {
     await _sharedPreferencesGateway.init();
     final userId = await _sharedPreferencesGateway.readUserId();
     _grpcConnect.updateStream.listen((update) async {
-      log.info(
-          "Message Controllers length: ${_onNewMessageControllers.length}");
+      final chatId = update.message.chat.id;
+      final controller = _onNewMessageControllers[chatId];
 
-      if (_onNewMessageControllers.containsKey(update.message.chat.id)) {
-        final messageController =
-            _onNewMessageControllers[update.message.chat.id];
+      if (controller != null) {
         final messageType = MessageHelper.determineMessageTypeResponse(update);
 
-        log.info("Received message update of type: $messageType");
-
-        switch (messageType) {
-          case MessageType.outcomingMedia:
-            log.info(
-                "Processing ${messageType.toString()} message: ${update.message.text}");
-
-            final dialogMessage = ResponseDialogMessageBuilder()
+        final dialogMessage = switch (messageType) {
+          MessageType.outcomingMedia ||
+          MessageType.incomingMedia =>
+            ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
                 .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
-                .setChatId(update.message.chat.id)
+                .setChatId(chatId)
                 .setUpdate(update)
                 .setFile(
                   MediaFileResponse(
@@ -431,81 +446,21 @@ final class ChatServiceImpl implements ChatService {
                     size: update.message.file.size.toInt(),
                   ),
                 )
-                .build();
-            print(dialogMessage.file.name);
-
-            messageController?.add(dialogMessage);
-
-          case MessageType.incomingMedia:
-            final dialogMessage = ResponseDialogMessageBuilder()
+                .build(),
+          MessageType.outcomingMessage ||
+          MessageType.incomingMessage =>
+            ResponseDialogMessageBuilder()
                 .setDialogMessageContent(update.message.text)
                 .setRequestId(update.id)
                 .setMessageId(update.message.id.toInt())
                 .setUserUd(userId ?? '')
-                .setChatId(update.message.chat.id)
-                .setUpdate(update)
-                .setFile(
-                  MediaFileResponse(
-                    id: update.message.file.id,
-                    type: update.message.file.type,
-                    name: update.message.file.name,
-                    bytes: [],
-                    size: update.message.file.size.toInt(),
-                  ),
-                )
-                .build();
-
-            messageController?.add(dialogMessage);
-
-          case MessageType.outcomingMessage:
-            log.info(
-                "Processing ${messageType.toString()} message: ${update.message.text}");
-
-            final dialogMessage = ResponseDialogMessageBuilder()
-                .setDialogMessageContent(update.message.text)
-                .setRequestId(update.id)
-                .setMessageId(update.message.id.toInt())
-                .setUserUd(userId ?? '')
-                .setChatId(update.message.chat.id)
-                .setUpdate(update)
-                .setFile(
-                  MediaFileResponse(
-                    id: update.message.file.id,
-                    type: update.message.file.type,
-                    name: update.message.file.name,
-                    bytes: [],
-                    size: update.message.file.size.toInt(),
-                  ),
-                )
-                .build();
-
-            messageController?.add(dialogMessage);
-
-          case MessageType.incomingMessage:
-            log.info(
-                "Processing ${messageType.toString()} message: ${update.message.text}");
-
-            final dialogMessage = ResponseDialogMessageBuilder()
-                .setDialogMessageContent(update.message.text)
-                .setRequestId(update.id)
-                .setMessageId(update.message.id.toInt())
-                .setUserUd(userId ?? '')
-                .setChatId(update.message.chat.id)
+                .setChatId(chatId)
                 .setUpdate(update)
                 .setFile(MediaFileResponse.initial())
-                .setFile(
-                  MediaFileResponse(
-                    id: update.message.file.id,
-                    type: update.message.file.type,
-                    name: update.message.file.name,
-                    bytes: [],
-                    size: update.message.file.size.toInt(),
-                  ),
-                )
-                .build();
+                .build()
+        };
 
-            messageController?.add(dialogMessage);
-        }
+        controller.add(dialogMessage);
       }
     }, onError: (error) {
       log.severe("Error while listening to messages: $error");
@@ -533,12 +488,15 @@ final class ChatServiceImpl implements ChatService {
       );
 
       _grpcConnect.sendRequest(request);
-      return await _sendMessageResponse(message.requestId, userId ?? '')
-          .timeout(
-        const Duration(seconds: 5),
-      );
+
+      return await _sendMessageResponse(
+        message.requestId,
+        userId ?? '',
+        _handleSendMessageResponse,
+        _handleSendMessageError,
+      ).timeout(const Duration(seconds: 5));
     } on GrpcError catch (err) {
-      log.severe("GRPC Error on sendMessage: ${err.toString()}");
+      log.severe("GRPC Error on sendMessage: ${err.message}");
 
       return ErrorDialogMessageBuilder()
           .setDialogMessageContent(err.toString())
@@ -555,20 +513,21 @@ final class ChatServiceImpl implements ChatService {
   }
 
   //LISTEN FOR RESPONSE BY EQUAL REQUEST ID
+  // Method to send message and use the typedefs for handling responses and errors
   Future<DialogMessageResponse> _sendMessageResponse(
-      String requestId, String userId) {
+    String requestId,
+    String userId,
+    SendMessageResponseHandler handleResponse,
+    SendMessageErrorHandler handleError,
+  ) {
     final completer = Completer<DialogMessageResponse>();
     StreamSubscription<portal.Response>? streamSubscription;
 
     streamSubscription = _grpcConnect.responseStream
         .where((response) => response.id == requestId)
         .listen(
-          (response) => _handleSendMessageResponse(response, completer, userId),
-          onError: (error) => _handleSendMessageError(
-            error,
-            completer,
-            requestId,
-          ),
+          (response) => handleResponse(response, completer, userId),
+          onError: (error) => handleError(error, completer, requestId),
           onDone: () => streamSubscription?.cancel(),
           cancelOnError: true,
         );
@@ -584,49 +543,56 @@ final class ChatServiceImpl implements ChatService {
       final unpackedMessage = response.data.unpackInto(UpdateNewMessage());
       final messageType =
           MessageHelper.determineMessageTypeResponse(unpackedMessage);
-
       switch (messageType) {
         case MessageType.outcomingMessage:
-          log.info("Handled response for message type $messageType");
-
-          final dialogMessage = ResponseDialogMessageBuilder()
-              .setDialogMessageContent(unpackedMessage.message.text)
-              .setRequestId(unpackedMessage.id)
-              .setUserUd(userId)
-              .setMessageId(unpackedMessage.message.id.toInt())
-              .setChatId(unpackedMessage.message.chat.id)
-              .setUpdate(unpackedMessage)
-              .setFile(MediaFileResponse.initial())
-              .build();
-          completer.complete(dialogMessage);
+          log.info(
+              "Handled response for message type $MessageType.outcomingMessage");
+          completer.complete(
+            ResponseDialogMessageBuilder()
+                .setDialogMessageContent(unpackedMessage.message.text)
+                .setRequestId(unpackedMessage.id)
+                .setUserUd(userId)
+                .setMessageId(unpackedMessage.message.id.toInt())
+                .setChatId(unpackedMessage.message.chat.id)
+                .setUpdate(unpackedMessage)
+                .setFile(MediaFileResponse.initial())
+                .build(),
+          );
           break;
-
         case MessageType.outcomingMedia:
-          log.info("Handled response for message type $messageType");
-
-          final dialogMessage = ResponseDialogMessageBuilder()
-              .setDialogMessageContent(unpackedMessage.message.text)
-              .setRequestId(unpackedMessage.id)
-              .setMessageId(unpackedMessage.message.id.toInt())
-              .setUserUd(userId)
-              .setChatId(unpackedMessage.message.chat.id)
-              .setUpdate(unpackedMessage)
-              .setFile(
-                MediaFileResponse(
-                  id: unpackedMessage.message.file.id,
-                  type: unpackedMessage.message.file.type,
-                  name: unpackedMessage.message.file.name,
-                  size: unpackedMessage.message.file.size.toInt(),
-                ),
-              )
-              .build();
-          completer.complete(dialogMessage);
-
-        default:
+          log.info(
+              "Handled response for message type $MessageType.outcomingMedia");
+          completer.complete(
+            ResponseDialogMessageBuilder()
+                .setDialogMessageContent(unpackedMessage.message.text)
+                .setRequestId(unpackedMessage.id)
+                .setMessageId(unpackedMessage.message.id.toInt())
+                .setUserUd(userId)
+                .setChatId(unpackedMessage.message.chat.id)
+                .setUpdate(unpackedMessage)
+                .setFile(
+                  MediaFileResponse(
+                    id: unpackedMessage.message.file.id,
+                    type: unpackedMessage.message.file.type,
+                    name: unpackedMessage.message.file.name,
+                    size: unpackedMessage.message.file.size.toInt(),
+                  ),
+                )
+                .build(),
+          );
           break;
+        default:
+          log.warning("Unhandled message type: $messageType");
       }
     } else if (response.err.hasMessage()) {
-      final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
+      final (recordId, errorMessage) = (
+        response.id,
+        response.err.message,
+      );
+
+      log.warning(
+          'Failed to send Message for requestId: $recordId: $errorMessage');
+      final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
       completer.complete(
         DialogMessageResponse.error(
           requestId: response.id,
@@ -639,18 +605,19 @@ final class ChatServiceImpl implements ChatService {
     }
   }
 
+  // Method to handle send message error using the typedef
   void _handleSendMessageError(
     Object error,
     Completer<DialogMessageResponse> completer,
     String requestId,
   ) {
     final errorMessage =
-        error is GrpcError ? error.toString() : 'Unknown error occurred';
+        error is GrpcError ? error.message : 'Unknown error occurred';
     log.severe("Error on handling message response: $errorMessage");
 
     completer.complete(
       ErrorDialogMessageBuilder()
-          .setDialogMessageContent(errorMessage)
+          .setDialogMessageContent(errorMessage ?? '')
           .setRequestId(requestId)
           .build(),
     );
@@ -664,7 +631,7 @@ final class ChatServiceImpl implements ChatService {
     log.info("Building request for message type $messageType");
 
     final baseRequest = SendMessageRequest(
-      text: message.dialogMessageContent,
+      text: message.content,
     );
 
     if (messageType == MessageType.outcomingMedia) {
@@ -684,7 +651,7 @@ final class ChatServiceImpl implements ChatService {
     }
 
     return portal.Request(
-      path: '/webitel.portal.ChatMessages/SendMessage',
+      path: Constants.sendMessagePath,
       data: Any.pack(baseRequest),
       id: message.requestId,
     );
@@ -697,7 +664,7 @@ final class ChatServiceImpl implements ChatService {
     required String chatId,
   }) async {
     return await _fetchMessages(
-      path: '/webitel.portal.ChatMessages/ChatUpdates',
+      path: Constants.chatUpdatesPath,
       chatId: chatId,
       limit: limit,
       offset: offset,
@@ -711,7 +678,7 @@ final class ChatServiceImpl implements ChatService {
     required String chatId,
   }) async {
     return await _fetchMessages(
-      path: '/webitel.portal.ChatMessages/ChatHistory',
+      path: Constants.chatHistoryPath,
       chatId: chatId,
       limit: limit,
       offset: offset,
@@ -764,9 +731,14 @@ final class ChatServiceImpl implements ChatService {
             'Successfully fetched ${messages.length} messages for chatId: $chatId');
         return messages;
       } else if (response.err.hasMessage()) {
+        final (recordId, errorMessage) = (
+          response.id,
+          response.err.message,
+        );
+
         log.warning(
-            'Failed to unpack dialog messages for requestId: $requestId');
-        final statusCode = ErrorHelper.getCodeFromMessage(response.err.message);
+            'Failed to unpack dialog messages for requestId: $recordId: $errorMessage');
+        final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
         return [
           DialogMessageResponse.error(

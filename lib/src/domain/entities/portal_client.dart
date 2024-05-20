@@ -15,7 +15,7 @@ abstract interface class PortalClient {
   Future<PortalResponse> login({
     required String name,
     required String sub,
-    required String issuer,
+    required String issuer, //TODO ADD REMAINING FIELDS
   });
 
   Future<User> getUser();

@@ -93,9 +93,12 @@ final class AuthServiceImpl implements AuthService {
         call: CallManager(),
         chat: ChatManager(),
       );
-    } on GrpcError catch (err) {
+    } on GrpcError catch (err, trace) {
       log.severe(
-          'Error occurred during gRPC channel initialization: ${err.message}');
+        'Error occurred during gRPC channel initialization',
+        err.message,
+        trace,
+      );
       return PortalClientImpl(
         error: CallError(
           errorMessage: err.message ?? '',
@@ -151,15 +154,23 @@ final class AuthServiceImpl implements AuthService {
       _grpcChannel.setAccessToken(response.accessToken);
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } on GrpcError catch (err) {
-      log.severe('GRPC Error during login: ${err.toString()}');
+    } on GrpcError catch (err, trace) {
+      log.severe(
+        'GRPC Error during login',
+        err,
+        trace,
+      );
 
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
-    } catch (err) {
-      log.severe('Exception during login: ${err.toString()}');
+    } catch (err, trace) {
+      log.severe(
+        'Exception during login',
+        err,
+        trace,
+      );
 
       return res.PortalResponse(
         status: PortalResponseStatus.error,
@@ -182,8 +193,12 @@ final class AuthServiceImpl implements AuthService {
       log.info('Device registered successfully');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } catch (err) {
-      log.severe('Failed to register device: ${err.toString()}');
+    } catch (err, trace) {
+      log.severe(
+        'Failed to register device',
+        err,
+        trace,
+      );
 
       return res.PortalResponse(
         status: PortalResponseStatus.error,
@@ -200,8 +215,12 @@ final class AuthServiceImpl implements AuthService {
       log.info('Logged out successfully');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } catch (err) {
-      log.severe('Failed to logout: ${err.toString()}');
+    } catch (err, trace) {
+      log.severe(
+        'Failed to logout',
+        err,
+        trace,
+      );
 
       return res.PortalResponse(
         status: PortalResponseStatus.error,
@@ -250,9 +269,6 @@ final class AuthServiceImpl implements AuthService {
   @override
   Future<User> getUser() async {
     try {
-      String? deviceId = await _sharedPreferencesGateway.readDeviceId();
-      String? appToken = await _sharedPreferencesGateway.readAppToken();
-
       final token = await _grpcChannel.customerStub.inspect(InspectRequest());
 
       return User(
@@ -261,12 +277,9 @@ final class AuthServiceImpl implements AuthService {
         issuer: token.user.identity.iss,
         id: token.chat.user.id,
         tokenExpiration: token.expiresIn,
-        tokenType: token.tokenType,
-        appToken: appToken ?? '',
-        deviceId: deviceId ?? '',
       );
     } on GrpcError catch (err) {
-      log.severe('GRPC Error while getting user: ${err.toString()}');
+      log.severe('GRPC Error while getting user', err.message);
       rethrow;
     } catch (err) {
       log.severe('Exception while getting user: ${err.toString()}');

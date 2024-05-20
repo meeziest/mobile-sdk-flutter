@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:injectable/injectable.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
@@ -52,19 +51,17 @@ final class DialogImpl implements Dialog {
   Future<DialogMessageResponse> sendMessage({
     String? mediaType,
     String? mediaName,
-    required String dialogMessageContent,
+    Stream<List<int>>? mediaData,
+    required String content,
     required String requestId,
-    required String messageType,
-    required Stream<List<int>> mediaData,
   }) async {
     return await _chatService.sendMessage(
       chatId: id,
       message: DialogMessageRequest(
-        messageType: MessageHelper.fromStringToEnum(messageType),
-        dialogMessageContent: dialogMessageContent,
+        content: content,
         requestId: requestId,
         file: MediaFileRequest(
-          data: mediaData,
+          data: mediaData ?? Stream<List<int>>.empty(),
           name: mediaName ?? '',
           type: mediaType ?? '',
           requestId: requestId,

@@ -93,8 +93,8 @@ final class GrpcConnect {
       } else {
         log.warning('_response stream is null');
       }
-    } on GrpcError catch (err, stack) {
-      log.warning('GRPC Error: $err', err, stack);
+    } on GrpcError catch (err) {
+      log.warning('GRPC Error', err.message);
       _errorStreamController.add(
         CallError(
           statusCode: err.code.toString(),
@@ -104,7 +104,7 @@ final class GrpcConnect {
 
       handleConnectionClosure(err.message ?? '');
     } catch (err, stack) {
-      log.warning('Unexpected error: $err', err, stack);
+      log.warning('Unexpected error', err, stack);
       handleConnectionClosure(err.toString());
     }
   }
@@ -131,7 +131,7 @@ final class GrpcConnect {
     } catch (err) {
       connectClosed = true;
       _responseStream = null;
-      log.info(err);
+      log.warning(err);
     }
   }
 
