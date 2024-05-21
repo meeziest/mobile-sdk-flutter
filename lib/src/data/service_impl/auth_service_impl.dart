@@ -8,6 +8,7 @@ import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/token_request_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/uri_helper.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
@@ -19,7 +20,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart'
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart'
     as res;
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response_status.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
@@ -30,7 +31,7 @@ import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 @LazySingleton(as: AuthService)
-final class AuthServiceImpl implements AuthService {
+class AuthServiceImpl implements AuthService {
   final SharedPreferencesGateway _sharedPreferencesGateway;
   final GrpcChannel _grpcChannel;
   final log = CustomLogger.getLogger('AuthServiceImpl');
@@ -45,13 +46,13 @@ final class AuthServiceImpl implements AuthService {
     required String url,
     required String appToken,
   }) async {
-    try {
-      log.info('Attempting to init gRPC channel for: $url');
+    log.info('Attempting to init gRPC channel for: $url');
 
+    try {
       await _sharedPreferencesGateway.init();
       await _sharedPreferencesGateway.saveAppToken(appToken);
       final deviceId = await getOrGenerateDeviceId();
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      final packageInfo = await PackageInfo.fromPlatform();
       final uaData = await userAgentData();
 
       final userAgentString = buildUserAgent(
@@ -66,8 +67,7 @@ final class AuthServiceImpl implements AuthService {
 
       final urlHelper = UrlHelper(url);
       final secureConnection = urlHelper.isSecure();
-      final hostUrl = urlHelper.getUrl();
-      final port = urlHelper.getPort();
+      final (hostUrl, port) = (urlHelper.getUrl(), urlHelper.getPort());
 
       log.info(
           'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
@@ -81,10 +81,9 @@ final class AuthServiceImpl implements AuthService {
         secure: secureConnection,
       );
 
-      final String echoDataString = 'Channel init';
-      final List<int> echoDataBytes = echoDataString.codeUnits;
-      final echo = portal.Echo(data: echoDataBytes);
+      final echo = portal.Echo(data: 'Channel init'.codeUnits);
       await _grpcChannel.customerStub.ping(echo);
+
       log.info('Send initial ping to check channel validity');
 
       return PortalClientImpl(
@@ -93,12 +92,9 @@ final class AuthServiceImpl implements AuthService {
         call: CallManager(),
         chat: ChatManager(),
       );
-    } on GrpcError catch (err, trace) {
+    } on GrpcError catch (err) {
       log.severe(
-        'Error occurred during gRPC channel initialization',
-        err.message,
-        trace,
-      );
+          'Error occurred during gRPC channel initialization', err.message);
       return PortalClientImpl(
         error: CallError(
           errorMessage: err.message ?? '',
@@ -154,24 +150,14 @@ final class AuthServiceImpl implements AuthService {
       _grpcChannel.setAccessToken(response.accessToken);
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } on GrpcError catch (err, trace) {
-      log.severe(
-        'GRPC Error during login',
-        err,
-        trace,
-      );
-
+    } on GrpcError catch (err) {
+      log.severe('GRPC Error during login', err);
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
-    } catch (err, trace) {
-      log.severe(
-        'Exception during login',
-        err,
-        trace,
-      );
-
+    } catch (err) {
+      log.severe('Exception during login', err);
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
@@ -190,16 +176,12 @@ final class AuthServiceImpl implements AuthService {
               : DevicePush(fCM: pushToken),
         ),
       );
+
       log.info('Device registered successfully');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } catch (err, trace) {
-      log.severe(
-        'Failed to register device',
-        err,
-        trace,
-      );
-
+    } catch (err) {
+      log.severe('Failed to register device', err);
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to register device: ${err.toString()}',
@@ -215,13 +197,8 @@ final class AuthServiceImpl implements AuthService {
       log.info('Logged out successfully');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
-    } catch (err, trace) {
-      log.severe(
-        'Failed to logout',
-        err,
-        trace,
-      );
-
+    } catch (err) {
+      log.severe('Failed to logout', err);
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to logout: ${err.toString()}',
@@ -230,9 +207,9 @@ final class AuthServiceImpl implements AuthService {
   }
 
   Future<String> getOrGenerateDeviceId() async {
-    String? savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
+    final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
     if (savedDeviceId == null || savedDeviceId == 'null') {
-      final String deviceIdGenerated = Uuid().v4();
+      final deviceIdGenerated = const Uuid().v4();
       log.info('Generating new device ID: $deviceIdGenerated');
       await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
       return deviceIdGenerated;
@@ -255,35 +232,50 @@ final class AuthServiceImpl implements AuthService {
       sdkVersion: Constants.sdkVersion,
       appName: appName,
       version: appVersion,
-      platform: platform == 'android' ? 'Android' : platform,
+      platform: platform == 'android' ? Constants.androidPlatform : platform,
       platformVersion: platformVersion,
       model: model,
       device: device,
       architecture: architecture,
     ).build();
+
     log.info('Built user agent: $userAgentString');
 
     return userAgentString;
   }
 
   @override
-  Future<User> getUser() async {
+  Future<PortalUser> getUser() async {
     try {
       final token = await _grpcChannel.customerStub.inspect(InspectRequest());
 
-      return User(
+      return PortalUser(
         name: token.user.identity.name,
         sub: token.user.identity.sub,
         issuer: token.user.identity.iss,
         id: token.chat.user.id,
         tokenExpiration: token.expiresIn,
+        locale: token.user.identity.locale,
+        email: token.user.identity.email,
+        emailVerified: token.user.identity.emailVerified,
+        phoneNumber: token.user.identity.phoneNumber,
+        phoneNumberVerified: token.user.identity.phoneNumberVerified,
       );
     } on GrpcError catch (err) {
       log.severe('GRPC Error while getting user', err.message);
-      rethrow;
+      return PortalUser.error(
+        error: CallError(
+          errorMessage: err.message ?? '',
+          statusCode: ErrorHelper.getCodeFromMessage(err.message ?? ''),
+        ),
+      );
     } catch (err) {
       log.severe('Exception while getting user: ${err.toString()}');
-      rethrow;
+      return PortalUser.error(
+        error: CallError(
+          errorMessage: err.toString(),
+        ),
+      );
     }
   }
 }

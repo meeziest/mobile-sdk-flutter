@@ -5,14 +5,11 @@ import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
 class WebitelPortalSdk {
-  static WebitelPortalSdk? _instance;
+  static final WebitelPortalSdk _instance = WebitelPortalSdk._internal();
 
   WebitelPortalSdk._internal();
 
-  static WebitelPortalSdk get instance {
-    _instance ??= WebitelPortalSdk._internal();
-    return _instance!;
-  }
+  static WebitelPortalSdk get instance => _instance;
 
   Future<PortalClient> initClient({
     required String url,

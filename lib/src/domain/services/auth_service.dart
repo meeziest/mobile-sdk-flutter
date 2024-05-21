@@ -1,6 +1,6 @@
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 
 abstract interface class AuthService {
   Future<PortalResponse> logout();
@@ -23,5 +23,5 @@ abstract interface class AuthService {
     bool phoneNumberVerified,
   });
 
-  Future<User> getUser();
+  Future<PortalUser> getUser();
 }

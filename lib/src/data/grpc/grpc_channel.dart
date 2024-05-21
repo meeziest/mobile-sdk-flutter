@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
+import 'package:webitel_portal_sdk/src/backbone/backoff.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/call_options_builder.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
@@ -21,6 +22,7 @@ class GrpcChannel {
   late String _userAgent;
   final _streamControllerState = StreamController<ConnectionState>();
   final Logger _logger = Logger('GrpcChannel');
+  final Backoff _backoff = Backoff(maxAttempts: 10);
 
   Future<void> init({
     required String url,
@@ -59,13 +61,9 @@ class GrpcChannel {
     );
   }
 
-  CustomerClient get customerStub {
-    return _customerStub;
-  }
+  CustomerClient get customerStub => _customerStub;
 
-  MediaStorageClient get mediaStorageStub {
-    return _mediaStorageStub;
-  }
+  MediaStorageClient get mediaStorageStub => _mediaStorageStub;
 
   ClientChannel get channel => _channel;
 
@@ -79,8 +77,6 @@ class GrpcChannel {
     required String url,
     required bool secure,
   }) async {
-    final completer = Completer<void>();
-
     _channel = ClientChannel(
       url,
       port: port,
@@ -126,15 +122,12 @@ class GrpcChannel {
           .setAccessToken(_accessToken)
           .build(),
     );
-
-    completer.complete();
-    await completer.future;
   }
 
   Future<void> _reconnect() async {
-    final completer = Completer<void>();
+    _backoff.reset();
 
-    while (!completer.isCompleted) {
+    while (_backoff.shouldRetry()) {
       try {
         await _createChannel(
           url: _url,
@@ -145,11 +138,15 @@ class GrpcChannel {
           userAgent: _userAgent,
         );
         _logger.info('Reconnection successful');
-        completer.complete();
-      } catch (err) {
-        _logger.warning('Reconnection failed', err);
-        await Future.delayed(defaultBackoffStrategy(null));
+        return;
+      } on GrpcError catch (err) {
+        _backoff.increment();
+        _logger.warning('Reconnection attempt ${_backoff.attempt} failed', err);
+        final backoffDuration = _backoff.nextDelay();
+        _logger.info('Retrying in ${backoffDuration.inSeconds} seconds...');
+        await Future.delayed(backoffDuration);
       }
     }
+    _logger.severe('Max reconnection attempts reached.');
   }
 }

@@ -1,5 +1,3 @@
-
-
 class ErrorHelper {
   static String getCodeFromMessage(String message) {
     RegExp regExp = RegExp(r'"code":(\d+)');

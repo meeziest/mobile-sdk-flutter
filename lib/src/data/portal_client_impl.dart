@@ -3,7 +3,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/user.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
@@ -50,14 +50,24 @@ final class PortalClientImpl implements PortalClient {
     required String name,
     required String sub,
     required String issuer,
+    String? locale,
+    String? email,
+    bool? emailVerified,
+    String? phoneNumber,
+    bool? phoneNumberVerified,
   }) async {
     return await _authService.login(
       name: name,
       sub: sub,
       issuer: issuer,
+      locale: locale ?? '',
+      email: email ?? '',
+      emailVerified: emailVerified ?? false,
+      phoneNumber: phoneNumber ?? '',
+      phoneNumberVerified: phoneNumberVerified ?? false,
     );
   }
 
   @override
-  Future<User> getUser() async => _authService.getUser();
+  Future<PortalUser> getUser() async => _authService.getUser();
 }
