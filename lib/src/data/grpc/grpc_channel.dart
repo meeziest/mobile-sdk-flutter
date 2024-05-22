@@ -4,26 +4,60 @@ import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 import 'package:webitel_portal_sdk/src/backbone/backoff.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/call_options_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/call_options.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
 
+/// A singleton class to manage gRPC channel and client stubs.
 @LazySingleton()
 class GrpcChannel {
+  // Customer client stub.
   late CustomerClient _customerStub;
+
+  // Media storage client stub.
   late MediaStorageClient _mediaStorageStub;
+
+  // gRPC channel.
   late ClientChannel _channel;
+
+  // Access token for authentication.
   late String _accessToken = '';
+
+  // URL of the gRPC server.
   late String _url;
+
+  // Port of the gRPC server.
   late int _port;
+
+  // Indicates if the connection should be secure.
   late bool _secure;
+
+  // Device ID to be included in the metadata.
   late String _deviceId;
+
+  // Application token for authentication.
   late String _appToken;
+
+  // User agent string for the gRPC client.
   late String _userAgent;
+
+  // Stream controller for connection state changes.
   final _streamControllerState = StreamController<ConnectionState>();
+
+  // Logger for logging connection state changes and errors.
   final Logger _logger = Logger('GrpcChannel');
+
+  // Backoff strategy for reconnection attempts.
   final Backoff _backoff = Backoff(maxAttempts: 10);
 
+  /// Initializes the gRPC channel with the provided parameters.
+  ///
+  /// [url] The URL of the gRPC server.
+  /// [appToken] The application token for authentication.
+  /// [deviceId] The device ID to be included in the metadata.
+  /// [userAgent] The user agent string for the gRPC client.
+  /// [port] The port of the gRPC server.
+  /// [secure] Indicates if the connection should be secure.
   Future<void> init({
     required String url,
     required String appToken,
@@ -48,6 +82,9 @@ class GrpcChannel {
     );
   }
 
+  /// Sets the access token and reinitializes the channel.
+  ///
+  /// [accessToken] The new access token.
   Future<void> setAccessToken(String accessToken) async {
     _accessToken = accessToken;
 
@@ -61,14 +98,26 @@ class GrpcChannel {
     );
   }
 
+  /// Gets the customer client stub.
   CustomerClient get customerStub => _customerStub;
 
+  /// Gets the media storage client stub.
   MediaStorageClient get mediaStorageStub => _mediaStorageStub;
 
+  /// Gets the gRPC channel.
   ClientChannel get channel => _channel;
 
+  /// Gets the stream controller for connection state changes.
   StreamController<ConnectionState> get stateStream => _streamControllerState;
 
+  /// Creates and initializes the gRPC channel and client stubs.
+  ///
+  /// [deviceId] The device ID to be included in the metadata.
+  /// [appToken] The application token for authentication.
+  /// [userAgent] The user agent string for the gRPC client.
+  /// [port] The port of the gRPC server.
+  /// [url] The URL of the gRPC server.
+  /// [secure] Indicates if the connection should be secure.
   Future<void> _createChannel({
     required String deviceId,
     required String appToken,
@@ -95,6 +144,7 @@ class GrpcChannel {
       ),
     );
 
+    // Listen for connection state changes and handle reconnections.
     _channel.onConnectionStateChanged.listen((state) {
       _logger.info('Connection state changed: $state');
       _streamControllerState.add(state);
@@ -106,6 +156,7 @@ class GrpcChannel {
       }
     });
 
+    // Initialize customer client stub with call options.
     _customerStub = CustomerClient(
       _channel,
       options: CallOptionsBuilder()
@@ -114,6 +165,8 @@ class GrpcChannel {
           .setAccessToken(_accessToken)
           .build(),
     );
+
+    // Initialize media storage client stub with call options.
     _mediaStorageStub = MediaStorageClient(
       _channel,
       options: CallOptionsBuilder()
@@ -124,6 +177,7 @@ class GrpcChannel {
     );
   }
 
+  /// Attempts to reconnect to the gRPC server with exponential backoff strategy.
   Future<void> _reconnect() async {
     _backoff.reset();
 

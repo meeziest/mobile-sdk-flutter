@@ -1,1 +1,1 @@
-enum LoggerLevel {  debug,  warning,  error,}
+/// Enumeration representing different levels of logging.enum LoggerLevel {  /// Debug level for detailed and diagnostic information.  debug,  /// Warning level for potentially harmful situations.  warning,  /// Error level for error events that might still allow the application to continue running.  error,}

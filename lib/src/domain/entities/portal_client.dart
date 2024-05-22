@@ -5,29 +5,66 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
+/// Interface for the portal client, providing methods for authentication,
+/// device registration, user information retrieval, and access to chat and call managers.
 abstract interface class PortalClient {
+  /// Logs out the current user.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the logout operation.
   Future<PortalResponse> logout();
 
+  /// Retrieves the current communication channel.
+  ///
+  /// Returns a [Channel] representing the current communication channel.
   Future<Channel> getChannel();
 
+  /// Registers a device with a given push token.
+  ///
+  /// [pushToken] The push token to register the device with.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the registration.
   Future<PortalResponse> registerDevice({required String pushToken});
 
+  /// Logs in a user with the provided credentials and user information.
+  ///
+  /// [name] The name of the user.
+  /// [sub] The subject (user ID).
+  /// [issuer] The issuer of the credentials.
+  /// [locale] The locale of the user (optional).
+  /// [email] The email of the user (optional).
+  /// [emailVerified] Indicates if the email is verified (optional).
+  /// [phoneNumber] The phone number of the user (optional).
+  /// [phoneNumberVerified] Indicates if the phone number is verified (optional).
+  ///
+  /// Returns a [PortalResponse] indicating the result of the login operation.
   Future<PortalResponse> login({
     required String name,
     required String sub,
     required String issuer,
-    String locale,
-    String email,
-    bool emailVerified,
-    String phoneNumber,
-    bool phoneNumberVerified,
+    String? locale,
+    String? email,
+    bool? emailVerified,
+    String? phoneNumber,
+    bool? phoneNumberVerified,
   });
 
+  /// Retrieves the current user information.
+  ///
+  /// Returns a [PortalUser] representing the current user.
   Future<PortalUser> getUser();
 
+  /// Retrieves the last occurred error, if any.
+  ///
+  /// Returns a [CallError] if an error occurred, otherwise returns null.
   CallError? get error;
 
+  /// Provides access to the chat manager.
+  ///
+  /// Returns a [ChatManager] instance to manage chat operations.
   ChatManager get chat;
 
+  /// Provides access to the call manager.
+  ///
+  /// Returns a [CallManager] instance to manage call operations.
   CallManager get call;
 }

@@ -5,8 +5,8 @@ import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/token_request_builder.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/token_request.dart';
+import 'package:webitel_portal_sdk/src/backbone/builder/user_agent.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/error.dart';
 import 'package:webitel_portal_sdk/src/backbone/helper/uri.dart';
@@ -65,8 +65,8 @@ class AuthServiceImpl implements AuthService {
         iosDeviceInfo = await deviceInfo.iosInfo;
         operatingSystemVersion =
             UserAgentHelper.parseIOSVersion(Platform.operatingSystemVersion);
-        iosArchitecture = UserAgentHelper.parseArchitecture(
-            iosDeviceInfo.utsname.version);
+        iosArchitecture =
+            UserAgentHelper.parseArchitecture(iosDeviceInfo.utsname.version);
       } else if (Platform.isAndroid) {
         androidDeviceInfo = await deviceInfo.androidInfo;
         operatingSystemVersion = UserAgentHelper.parseAndroidVersion(
