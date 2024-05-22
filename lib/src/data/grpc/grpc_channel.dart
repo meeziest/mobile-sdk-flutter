@@ -87,6 +87,8 @@ class GrpcChannel {
   /// [accessToken] The new access token.
   Future<void> setAccessToken(String accessToken) async {
     _accessToken = accessToken;
+    _logger
+        .info('Setting new access token and reinitializing the gRPC channel.');
 
     await _createChannel(
       url: _url,
@@ -126,6 +128,19 @@ class GrpcChannel {
     required String url,
     required bool secure,
   }) async {
+    _logger.info('Creating gRPC channel with the following parameters:');
+
+    _logger.info('URL: $url');
+
+    _logger.info('Port: $port');
+
+    _logger.info('Secure: $secure');
+
+    _logger.info('Device ID: $deviceId');
+
+    _logger.info('User Agent: $userAgent');
+
+    // Create the gRPC channel with the specified options.
     _channel = ClientChannel(
       url,
       port: port,
@@ -147,6 +162,7 @@ class GrpcChannel {
     // Listen for connection state changes and handle reconnections.
     _channel.onConnectionStateChanged.listen((state) {
       _logger.info('Connection state changed: $state');
+
       _streamControllerState.add(state);
 
       if (state == ConnectionState.shutdown) {
@@ -166,6 +182,8 @@ class GrpcChannel {
           .build(),
     );
 
+    _logger.info('Customer client stub initialized successfully.');
+
     // Initialize media storage client stub with call options.
     _mediaStorageStub = MediaStorageClient(
       _channel,
@@ -175,11 +193,15 @@ class GrpcChannel {
           .setAccessToken(_accessToken)
           .build(),
     );
+
+    _logger.info('Media storage client stub initialized successfully.');
   }
 
   /// Attempts to reconnect to the gRPC server with exponential backoff strategy.
   Future<void> _reconnect() async {
     _backoff.reset();
+    _logger.info(
+        'Reconnection process started with exponential backoff strategy.');
 
     while (_backoff.shouldRetry()) {
       try {
@@ -191,16 +213,21 @@ class GrpcChannel {
           appToken: _appToken,
           userAgent: _userAgent,
         );
-        _logger.info('Reconnection successful');
+        _logger.info('Reconnection successful.');
+
         return;
       } on GrpcError catch (err) {
         _backoff.increment();
-        _logger.warning('Reconnection attempt ${_backoff.attempt} failed', err);
+        _logger.warning(
+            'Reconnection attempt ${_backoff.attempt} failed. Error: ${err.message}');
+
         final backoffDuration = _backoff.nextDelay();
+
         _logger.info('Retrying in ${backoffDuration.inSeconds} seconds...');
         await Future.delayed(backoffDuration);
       }
     }
-    _logger.severe('Max reconnection attempts reached.');
+    _logger.severe(
+        'Maximum reconnection attempts reached. Unable to reconnect to the gRPC server.');
   }
 }

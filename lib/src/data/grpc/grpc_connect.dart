@@ -86,10 +86,14 @@ final class GrpcConnect {
           connectClosed = false;
           _connectController.add(Connect(status: ConnectStatus.opened));
           final responseType = ResponseTypeHelper.determineResponseType(update);
-          log.info('Response type: $responseType');
+
+          log.info(
+              'Received a new response from the server with response type: $responseType');
 
           switch (responseType) {
             case ResponseType.response:
+              log.info('Processing response type: ${ResponseType.response}');
+
               _responseStreamController.add(
                 update.data.unpackInto(
                   portal.Response(),
@@ -98,14 +102,20 @@ final class GrpcConnect {
               break;
 
             case ResponseType.updateNewMessage:
+              log.info(
+                  'Processing response type: ${ResponseType.updateNewMessage}');
+
               final decodedUpdate = update.data.unpackInto(
                 UpdateNewMessage(),
               );
               _updateStreamController.add(decodedUpdate);
-              log.info(decodedUpdate.message.text);
+
+              log.info('New message received: ${decodedUpdate.message.text}');
               break;
 
             case ResponseType.error:
+              log.info('Processing response type: ${ResponseType.error}');
+
               final decodedResponse = update.data.unpackInto(
                 portal.Response(),
               );
@@ -118,24 +128,27 @@ final class GrpcConnect {
                   errorMessage: decodedResponse.err.message,
                 ),
               );
+              log.warning(
+                  'Error response received: ${decodedResponse.err.message}');
               break;
           }
         }
       } else {
-        log.warning('_response stream is null');
+        log.warning('Response stream is null, unable to listen to responses.');
       }
     } on GrpcError catch (err) {
-      log.warning('GRPC Error', err.message);
+      log.warning('GRPC Error encountered: ${err.message}');
+
       _errorStreamController.add(
         CallError(
           statusCode: err.code.toString(),
           errorMessage: err.message ?? '',
         ),
       );
-
       handleConnectionClosure(err.message ?? '');
     } catch (err, stack) {
-      log.warning('Unexpected error', err, stack);
+      log.warning('Unexpected error occurred: $err', stack);
+
       handleConnectionClosure(err.toString());
     }
   }
@@ -146,103 +159,128 @@ final class GrpcConnect {
   void handleConnectionClosure(String errorMessage) {
     connectClosed = true;
     _responseStream = null;
+
     _connectController.add(
       Connect(
         status: ConnectStatus.closed,
         errorMessage: errorMessage,
       ),
     );
+    log.info('Connection closed with error message: $errorMessage');
   }
 
   /// Establishes a connection to the gRPC server and listens for responses.
   Future<void> _connect() async {
     try {
+      log.info('Attempting to establish a connection to the gRPC server...');
+
       _responseStream = _grpcChannel.customerStub
           .connect(_requestStreamController.stream)
           .asBroadcastStream();
 
       await _responseStream?.isEmpty;
+
+      log.info(
+          'Connection established successfully. Listening to responses...');
       listenToResponses();
     } catch (err) {
       connectClosed = true;
       _responseStream = null;
-      log.warning(err);
+      log.warning('Error occurred while establishing the connection: $err');
     }
   }
 
-  /// Sends a ping message to the server to keep the connection alive.
+  /// Sends a ping message to the server
   Future<void> sendPingMessage() async {
     final String echoDataString = 'Bind';
     final List<int> echoDataBytes = echoDataString.codeUnits;
     final echo = portal.Echo(data: echoDataBytes);
+
     final request = portal.Request(
       path: '/webitel.portal.Customer/Ping',
       data: Any.pack(echo),
     );
+
     _requestStreamController.add(request);
-    log.info('Request added: ${request.path}');
+    log.info('Ping message sent to server. Request path: ${request.path}');
   }
 
   /// Sends a request to the server.
   ///
   /// [request] The request to be sent.
   Future<void> sendRequest(portal.Request request) async {
-    log.info('Starting to send request...');
+    log.info('Starting to send request to server...');
+
     if (connectClosed == true && _responseStream == null) {
       log.warning(
-          'Connection state is not ready or connection is closed. Attempting to reconnect...');
+          'Connection is closed or not ready. Attempting to reconnect...');
       await reconnect();
     }
+
     _requestStreamController.add(request);
-    log.info('Request added: ${request.path}');
+    log.info('Request added to the stream. Request path: ${request.path}');
   }
 
   /// Attempts to reconnect to the gRPC server with synchronized backoff strategy.
   Future<void> reconnect() async {
     if (_connectionState == ConnectionState.shutdown) {
-      log.info('Current connection state: $_connectionState');
+      log.info(
+          'Current connection state is shutdown. Reinitializing gRPC channel...');
+
       final accessToken = await _sharedPreferencesGateway.readAccessToken();
       await _grpcChannel.setAccessToken(accessToken ?? '');
-      log.info('Re-init gRPC Channel');
+
+      log.info('gRPC Channel reinitialized successfully.');
     }
+
     await _lock.synchronized(() async {
       _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
+        log.info('Sending periodic ping message to maintain connection...');
+
         sendPingMessage();
       });
       await _connect();
       _timer?.cancel();
-      log.info('Connected to gRPC Stream');
+
+      log.info('Reconnected to the gRPC Stream successfully.');
     });
   }
 
   /// Listens to the channel status and handles state changes.
   Future<void> listenToChannelStatus() async {
+    log.info('Starting to listen to channel status changes...');
+
     _grpcChannel.stateStream.stream.listen((state) async {
+      log.info('Channel status changed: $state');
+
       _channelStatus.add(
         ChannelStatusHelper.toChannelStatus(
           state.name,
         ),
       );
+
       if (state == ConnectionState.shutdown) {
         handleStreamCleanup();
+
         _connectController.add(
           Connect(
             errorMessage:
-                'Connect was closed due to the channel state change: $state',
+                'Connection was closed due to the channel state change: $state',
             status: ConnectStatus.opened,
           ),
         );
-        log.warning('Response stream canceled due to $state');
+        log.warning('Response stream canceled due to state: $state');
       } else if (state == ConnectionState.transientFailure) {
+        handleStreamCleanup();
+
         _connectController.add(
           Connect(
             errorMessage:
-                'Connect was closed due to the channel state change: $state',
+                'Connection was closed due to the channel state change: $state',
             status: ConnectStatus.opened,
           ),
         );
-        handleStreamCleanup();
-        log.warning('Response stream canceled due to $state');
+        log.warning('Response stream canceled due to state: $state');
       }
       _connectionState = state;
     });
@@ -252,6 +290,9 @@ final class GrpcConnect {
   void handleStreamCleanup() {
     _responseStream = null;
     connectClosed = true;
+
+    log.info(
+        'Stream cleanup completed. Response stream set to null and connection marked as closed.');
   }
 
   /// Gets the response stream controller's stream.
@@ -277,5 +318,7 @@ final class GrpcConnect {
     _connectController.close();
     _updateStreamController.close();
     _channelStatus.close();
+
+    log.info('Disposed all stream controllers and cleaned up resources.');
   }
 }

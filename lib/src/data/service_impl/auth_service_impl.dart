@@ -63,17 +63,19 @@ class AuthServiceImpl implements AuthService {
     required String url,
     required String appToken,
   }) async {
-    log.info('Attempting to init gRPC channel for: $url');
+    log.info(
+        'Initializing gRPC channel for the portal URL: $url with the provided app token.');
 
     try {
       // Initialize shared preferences and save the app token.
       await _sharedPreferencesGateway.init();
       await _sharedPreferencesGateway.saveAppToken(appToken);
 
-      // Get or generate a device ID.
+      // Retrieve or generate a unique device ID for this client instance.
       final deviceId = await getOrGenerateDeviceId();
       final packageInfo = await PackageInfo.fromPlatform();
 
+      // Initialize device information plugins to get platform-specific details.
       DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
       IosDeviceInfo? iosDeviceInfo;
       AndroidDeviceInfo? androidDeviceInfo;
@@ -86,15 +88,22 @@ class AuthServiceImpl implements AuthService {
             UserAgentHelper.parseIOSVersion(Platform.operatingSystemVersion);
         iosArchitecture =
             UserAgentHelper.parseArchitecture(iosDeviceInfo.utsname.version);
+
+        log.info(
+            'Retrieved iOS device information: Model - ${iosDeviceInfo.name}, Version - $operatingSystemVersion, Architecture - $iosArchitecture');
       } else if (Platform.isAndroid) {
         androidDeviceInfo = await deviceInfo.androidInfo;
         operatingSystemVersion = UserAgentHelper.parseAndroidVersion(
             Platform.operatingSystemVersion);
+
+        log.info(
+            'Retrieved Android device information: Model - ${androidDeviceInfo.model}, Version - $operatingSystemVersion');
       } else {
-        log.warning('Unknown platform type: ${Platform.operatingSystem}');
+        log.warning(
+            'Unknown platform type: ${Platform.operatingSystem}. Unable to retrieve device information.');
       }
 
-      // Build the user agent string.
+      // Build the user agent string based on the retrieved device and application information.
       final userAgentString = buildUserAgent(
         appName: packageInfo.appName,
         appVersion: packageInfo.version,
@@ -111,14 +120,17 @@ class AuthServiceImpl implements AuthService {
             : androidDeviceInfo?.supportedAbis.first ?? '',
       );
 
-      // Parse the URL and initialize the gRPC channel.
+      // Parse the URL and determine if a secure connection is required.
       final urlHelper = UrlHelper(url);
       final secureConnection = urlHelper.isSecure();
       final (hostUrl, port) = (urlHelper.getUrl(), urlHelper.getPort());
 
       log.info(
-          'Initializing GRPC connection with device ID: $deviceId and user agent: $userAgentString');
+          'Initializing gRPC connection to the host URL: $hostUrl with port: $port. Secure connection: $secureConnection');
 
+      log.info('Using device ID: $deviceId and user agent: $userAgentString');
+
+      // Initialize the gRPC channel with the specified parameters.
       await _grpcChannel.init(
         url: hostUrl,
         appToken: appToken,
@@ -128,12 +140,13 @@ class AuthServiceImpl implements AuthService {
         secure: secureConnection,
       );
 
-      // Send an initial ping to check the channel's validity.
+      // Send an initial ping to verify the connection.
       final echo = portal.Echo(data: 'Channel init'.codeUnits);
       await _grpcChannel.customerStub.ping(echo);
 
-      log.info('Send initial ping to check channel validity');
+      log.info('Initial ping sent successfully. The gRPC channel is valid.');
 
+      // Return an instance of PortalClientImpl to interact with the portal.
       return PortalClientImpl(
         url: url,
         appToken: appToken,
@@ -142,7 +155,10 @@ class AuthServiceImpl implements AuthService {
       );
     } on GrpcError catch (err) {
       log.severe(
-          'Error occurred during gRPC channel initialization', err.message);
+          'An error occurred during the initialization of the gRPC channel: ${err.message}',
+          err);
+
+      // Return an instance of PortalClientImpl with an error to indicate the failure.
       return PortalClientImpl(
         error: CallError(
           errorMessage: err.message ?? '',
@@ -179,8 +195,13 @@ class AuthServiceImpl implements AuthService {
     String? phoneNumber,
     bool? phoneNumberVerified,
   }) async {
+    log.info(
+        'Initiating login process for user: $name with subject: $sub and issuer: $issuer');
+
+    // Retrieve the application token from shared preferences.
     final appToken = await _sharedPreferencesGateway.readAppToken();
 
+    // Build the token request for the login operation.
     final request = TokenRequestBuilder()
         .setGrantType('identity')
         .setResponseType(['user', 'token', 'chat'])
@@ -200,24 +221,36 @@ class AuthServiceImpl implements AuthService {
         .build();
 
     try {
+      // Send the token request to the server.
       final response = await _grpcChannel.customerStub.token(request);
-      log.info(
-          'Logged in successfully, saving user ID and setting access token');
 
+      log.info(
+          'User logged in successfully. Saving user ID and setting access token.');
+
+      // Save the user ID and access token to shared preferences.
       await _sharedPreferencesGateway.saveUserId(response.chat.user.id);
       await _sharedPreferencesGateway.saveAccessToken(response.accessToken);
 
+      // Set the access token in the gRPC channel.
       _grpcChannel.setAccessToken(response.accessToken);
 
       return res.PortalResponse(status: PortalResponseStatus.success);
     } on GrpcError catch (err) {
-      log.severe('GRPC Error during login', err);
+      log.severe(
+          'A GRPC error occurred during the login process: ${err.message}',
+          err);
+
+      // Return a failure response indicating the login error.
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
       );
     } catch (err) {
-      log.severe('Exception during login', err);
+      log.severe(
+          'An exception occurred during the login process: ${err.toString()}',
+          err);
+
+      // Return a failure response indicating the login error.
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to login: ${err.toString()}',
@@ -232,8 +265,10 @@ class AuthServiceImpl implements AuthService {
   /// Returns a [PortalResponse] indicating the result of the registration.
   @override
   Future<res.PortalResponse> registerDevice({required String pushToken}) async {
-    log.info('Attempting to register device');
+    log.info('Attempting to register device with push token: $pushToken');
+
     try {
+      // Send the register device request to the server.
       await _grpcChannel.customerStub.registerDevice(
         RegisterDeviceRequest(
           push: Platform.isIOS
@@ -242,11 +277,15 @@ class AuthServiceImpl implements AuthService {
         ),
       );
 
-      log.info('Device registered successfully');
+      log.info('Device registered successfully with push token: $pushToken');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
     } catch (err) {
-      log.severe('Failed to register device', err);
+      log.severe(
+          'Failed to register device with push token: $pushToken. Error: ${err.toString()}',
+          err);
+
+      // Return a failure response indicating the device registration error.
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to register device: ${err.toString()}',
@@ -259,14 +298,20 @@ class AuthServiceImpl implements AuthService {
   /// Returns a [PortalResponse] indicating the result of the logout operation.
   @override
   Future<res.PortalResponse> logout() async {
-    log.info('Attempting to logout');
+    log.info('Attempting to logout the current user.');
+
     try {
+      // Send the logout request to the server.
       await _grpcChannel.customerStub.logout(LogoutRequest());
-      log.info('Logged out successfully');
+
+      log.info('User logged out successfully.');
 
       return res.PortalResponse(status: PortalResponseStatus.success);
     } catch (err) {
-      log.severe('Failed to logout', err);
+      log.severe(
+          'Failed to logout the current user. Error: ${err.toString()}', err);
+
+      // Return a failure response indicating the logout error.
       return res.PortalResponse(
         status: PortalResponseStatus.error,
         message: 'Failed to logout: ${err.toString()}',
@@ -279,8 +324,13 @@ class AuthServiceImpl implements AuthService {
   /// Returns a [PortalUser] representing the current user.
   @override
   Future<PortalUser> getUser() async {
+    log.info('Attempting to retrieve the current user information.');
+
     try {
+      // Send the inspect request to retrieve user information.
       final token = await _grpcChannel.customerStub.inspect(InspectRequest());
+
+      log.info('User information retrieved successfully.');
 
       return PortalUser(
         name: token.user.identity.name,
@@ -295,7 +345,10 @@ class AuthServiceImpl implements AuthService {
         phoneNumberVerified: token.user.identity.phoneNumberVerified,
       );
     } on GrpcError catch (err) {
-      log.severe('GRPC Error while getting user', err.message);
+      log.severe(
+          'A GRPC error occurred while retrieving user information: ${err.message}',
+          err);
+
       return PortalUser.error(
         error: CallError(
           errorMessage: err.message ?? '',
@@ -303,7 +356,10 @@ class AuthServiceImpl implements AuthService {
         ),
       );
     } catch (err) {
-      log.severe('Exception while getting user: ${err.toString()}');
+      log.severe(
+          'An exception occurred while retrieving user information: ${err.toString()}',
+          err);
+
       return PortalUser.error(
         error: CallError(
           errorMessage: err.toString(),
@@ -316,14 +372,23 @@ class AuthServiceImpl implements AuthService {
   ///
   /// Returns the device ID as a string.
   Future<String> getOrGenerateDeviceId() async {
+    log.info('Attempting to retrieve or generate a device ID.');
+
+    // Retrieve the saved device ID from shared preferences.
     final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
+
     if (savedDeviceId == null || savedDeviceId == 'null') {
+      // Generate a new device ID if none is saved.
       final deviceIdGenerated = const Uuid().v4();
-      log.info('Generating new device ID: $deviceIdGenerated');
+
+      log.info(
+          'No existing device ID found. Generating a new device ID: $deviceIdGenerated');
+
       await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
       return deviceIdGenerated;
     }
     log.info('Using existing device ID: $savedDeviceId');
+
     return savedDeviceId;
   }
 
@@ -347,6 +412,7 @@ class AuthServiceImpl implements AuthService {
     required String device,
     required String architecture,
   }) {
+    // Build the user agent string with the provided parameters.
     final userAgentString = UserAgentBuilder(
       sdkName: Constants.sdkName,
       sdkVersion: Constants.sdkVersion,
@@ -359,7 +425,7 @@ class AuthServiceImpl implements AuthService {
       architecture: architecture,
     ).build();
 
-    log.info('Built user agent: $userAgentString');
+    log.info('User agent string built successfully: $userAgentString');
 
     return userAgentString;
   }

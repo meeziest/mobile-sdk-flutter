@@ -36,12 +36,35 @@ import 'package:webitel_portal_sdk/src/generated/portal/media.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 import 'package:webitel_portal_sdk/webitel_portal_sdk.dart';
 
+/// Typedef for handling the response when a message is sent.
+///
+/// This typedef defines a function signature for handling the response from the
+/// server when a message is sent. It takes a [portal.Response], a [Completer] for
+/// the [DialogMessageResponse], and the [userId] of the user who sent the message.
+///
+/// [response] The response from the server.
+/// [completer] The completer for the dialog message response.
+/// [userId] The ID of the user who sent the message.
+///
+/// Returns a [Future] that completes when the handling is done.
 typedef SendMessageResponseHandler = Future<void> Function(
   portal.Response response,
   Completer<DialogMessageResponse> completer,
   String userId,
 );
 
+/// Typedef for handling errors that occur when a message is sent.
+///
+/// This typedef defines a function signature for handling errors that occur
+/// during the process of sending a message. It takes an [Object] representing the
+/// error, a [Completer] for the [DialogMessageResponse], and the [requestId] of
+/// the message that failed to send.
+///
+/// [error] The error that occurred.
+/// [completer] The completer for the dialog message response.
+/// [requestId] The ID of the request that failed.
+///
+/// This handler does not return any value.
 typedef SendMessageErrorHandler = void Function(
   Object error,
   Completer<DialogMessageResponse> completer,
@@ -106,6 +129,7 @@ final class ChatServiceImpl implements ChatService {
       () {
         log.info(
             'New StreamController for DialogMessageResponse created for chat ID: $chatId');
+
         return StreamController<DialogMessageResponse>.broadcast();
       },
     );
@@ -179,6 +203,7 @@ final class ChatServiceImpl implements ChatService {
 
         log.warning('Failed to unpack chat list for request ID: $requestId '
             '$errorMessage');
+
         final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
         return [
@@ -361,6 +386,7 @@ final class ChatServiceImpl implements ChatService {
             id: mediaFile.file.id,
           );
           controller.add(file);
+
           log.info(
               "Initialized file download for '${file.name}' with ID '${file.id}', expected size: ${file.size} bytes.");
         }
@@ -369,8 +395,10 @@ final class ChatServiceImpl implements ChatService {
           file.bytes.clear();
           file.bytes.addAll(mediaFile.data);
           offset += mediaFile.data.length;
+
           log.info(
               "Received ${mediaFile.data.length} bytes for file '${file.name}'; Total received: $offset bytes.");
+
           controller.add(file);
         }
       }
@@ -387,6 +415,7 @@ final class ChatServiceImpl implements ChatService {
     } on GrpcError catch (err) {
       log.warning(
           "GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
+
       if (file != null && offset < fixnum.Int64(file.size)) {
         log.info(
             "Attempting to resume file download for '${file.name}' from offset $offset.");
@@ -436,12 +465,13 @@ final class ChatServiceImpl implements ChatService {
           file.bytes.clear();
           file.bytes.addAll(mediaFile.data);
           offset += mediaFile.data.length;
+
           log.info(
               "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
           controller.add(file);
         }
-
         log.info("Resumed and completed file download for '${file.name}'.");
+
         return;
       } on GrpcError catch (err) {
         log.warning(
@@ -601,6 +631,7 @@ final class ChatServiceImpl implements ChatService {
       final unpackedMessage = response.data.unpackInto(UpdateNewMessage());
       final messageType =
           MessageHelper.determineMessageTypeResponse(unpackedMessage);
+
       switch (messageType) {
         case MessageType.outcomingMessage:
           log.info(
@@ -617,6 +648,7 @@ final class ChatServiceImpl implements ChatService {
                 .build(),
           );
           break;
+
         case MessageType.outcomingMedia:
           log.info(
               "Handled response for message type $MessageType.outcomingMedia");
@@ -651,6 +683,7 @@ final class ChatServiceImpl implements ChatService {
       log.warning(
           'Failed to send Message for requestId: $recordId: $errorMessage');
       final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
+
       completer.complete(
         DialogMessageResponse.error(
           requestId: response.id,
@@ -712,6 +745,7 @@ final class ChatServiceImpl implements ChatService {
           type: message.file.type,
         ),
       );
+
       baseRequest.file = file.File(
         id: uploadedFile.id,
         name: uploadedFile.name,
@@ -817,9 +851,9 @@ final class ChatServiceImpl implements ChatService {
             .setPeers(unpackedDialogMessages.peers);
 
         final messages = messagesBuilder.build();
-
         log.info(
             'Successfully fetched ${messages.length} messages for chatId: $chatId');
+
         return messages;
       } else if (response.err.hasMessage()) {
         final (recordId, errorMessage) = (
