@@ -10,43 +10,59 @@ import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_res
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
+/// Implementation of [Dialog] that provides functionalities for dialog operations.
 @LazySingleton(as: Dialog)
 final class DialogImpl implements Dialog {
+  /// The unique identifier for the dialog.
   @override
   final String id;
+
+  /// The top message in the dialog.
   @override
   final String topMessage;
+
+  /// The error associated with the dialog, if any.
   @override
   final CallError? error;
+
+  /// Stream for new messages in the dialog.
   @override
   final Stream<DialogMessageResponse> onNewMessage;
 
-// final StreamController<String> onMemberAdded;
-// final StreamController<String> onMemberRemoved;
-// final StreamController<String> onOperatorAdded;
-// final StreamController<String> onOperatorRemoved;
-// final StreamController<String> onMessageEdited;
-// final StreamController<String> onMessageDeleted;
-// final StreamController<String> onNewReaction;
-// final StreamController<String> onTyping;
-
+  // Dependency on the ChatService to handle chat-related operations.
   late final ChatService _chatService;
 
+  /// Constructor for initializing a [DialogImpl] instance.
+  ///
+  /// [id] The unique identifier for the dialog.
+  /// [topMessage] The top message in the dialog.
+  /// [onNewMessage] The stream for new messages in the dialog.
+  /// [error] The error associated with the dialog, if any.
   DialogImpl({
-    required this.topMessage,
     required this.id,
+    required this.topMessage,
     required this.onNewMessage,
     this.error,
   }) {
     _chatService = getIt.get<ChatService>();
   }
 
+  /// Named constructor for creating an initial/default instance of [DialogImpl].
   DialogImpl.initial()
       : id = 'default_id',
         topMessage = 'No messages yet',
         error = CallError(statusCode: '', errorMessage: ''),
         onNewMessage = Stream.empty();
 
+  /// Sends a message in the dialog.
+  ///
+  /// [mediaType] The type of the media (optional).
+  /// [mediaName] The name of the media (optional).
+  /// [mediaData] The stream of media data (optional).
+  /// [content] The content of the message.
+  /// [requestId] The unique identifier for the request.
+  ///
+  /// Returns a [Future] that completes with a [DialogMessageResponse].
   @override
   Future<DialogMessageResponse> sendMessage({
     String? mediaType,
@@ -70,6 +86,12 @@ final class DialogImpl implements Dialog {
     );
   }
 
+  /// Fetches messages in the dialog.
+  ///
+  /// [limit] The maximum number of messages to fetch (optional).
+  /// [offset] The offset from which to start fetching messages (optional).
+  ///
+  /// Returns a [Future] that completes with a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
@@ -82,6 +104,12 @@ final class DialogImpl implements Dialog {
     );
   }
 
+  /// Fetches updates in the dialog.
+  ///
+  /// [limit] The maximum number of updates to fetch (optional).
+  /// [offset] The offset from which to start fetching updates (optional).
+  ///
+  /// Returns a [Future] that completes with a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
@@ -94,6 +122,11 @@ final class DialogImpl implements Dialog {
     );
   }
 
+  /// Downloads a media file associated with a dialog.
+  ///
+  /// [fileId] The ID of the file to be downloaded.
+  ///
+  /// Returns a stream of [MediaFileResponse] representing the downloaded file.
   @override
   Stream<MediaFileResponse> downloadFile({required String fileId}) =>
       _chatService.downloadFile(fileId: fileId);

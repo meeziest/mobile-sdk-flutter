@@ -10,20 +10,38 @@ import 'package:webitel_portal_sdk/src/injection/injection.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
+/// Implementation of [PortalClient] that provides functionalities for portal client operations.
 @LazySingleton(as: PortalClient)
 final class PortalClientImpl implements PortalClient {
+  /// The URL of the portal.
   final String url;
+
+  /// The application token for authentication.
   final String appToken;
+
+  /// The manager for handling call operations.
   @override
   final CallManager call;
+
+  /// The error associated with the portal client, if any.
   @override
   final CallError? error;
+
+  /// The manager for handling chat operations.
   @override
   final ChatManager chat;
 
+  // Dependencies on the AuthService and ChatService to handle authentication and chat-related operations.
   late final AuthService _authService;
   late final ChatService _chatService;
 
+  /// Constructor for initializing a [PortalClientImpl] instance.
+  ///
+  /// [url] The URL of the portal.
+  /// [appToken] The application token for authentication.
+  /// [call] The manager for handling call operations.
+  /// [chat] The manager for handling chat operations.
+  /// [error] The error associated with the portal client, if any.
   PortalClientImpl({
     this.error,
     required this.url,
@@ -35,16 +53,39 @@ final class PortalClientImpl implements PortalClient {
     _chatService = getIt.get<ChatService>();
   }
 
+  /// Retrieves the current communication channel.
+  ///
+  /// Returns a [Future] that completes with a [Channel].
   @override
   Future<Channel> getChannel() async => _chatService.getChannel();
 
+  /// Logs out the current user.
+  ///
+  /// Returns a [Future] that completes with a [PortalResponse] indicating the result of the logout operation.
   @override
   Future<PortalResponse> logout() async => await _authService.logout();
 
+  /// Registers a device with the given push token.
+  ///
+  /// [pushToken] The push token for the device.
+  ///
+  /// Returns a [Future] that completes with a [PortalResponse] indicating the result of the registration operation.
   @override
   Future<PortalResponse> registerDevice({required String pushToken}) async =>
       await _authService.registerDevice(pushToken: pushToken);
 
+  /// Logs in a user with the provided credentials.
+  ///
+  /// [name] The name of the user.
+  /// [sub] The subject identifier.
+  /// [issuer] The issuer of the credentials.
+  /// [locale] The locale of the user (optional).
+  /// [email] The email of the user (optional).
+  /// [emailVerified] Whether the email is verified (optional).
+  /// [phoneNumber] The phone number of the user (optional).
+  /// [phoneNumberVerified] Whether the phone number is verified (optional).
+  ///
+  /// Returns a [Future] that completes with a [PortalResponse] indicating the result of the login operation.
   @override
   Future<PortalResponse> login({
     required String name,
@@ -68,6 +109,9 @@ final class PortalClientImpl implements PortalClient {
     );
   }
 
+  /// Retrieves the current user information.
+  ///
+  /// Returns a [Future] that completes with a [PortalUser].
   @override
   Future<PortalUser> getUser() async => _authService.getUser();
 }

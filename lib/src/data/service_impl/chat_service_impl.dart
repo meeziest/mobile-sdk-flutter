@@ -48,22 +48,21 @@ typedef SendMessageErrorHandler = void Function(
   String requestId,
 );
 
+/// Implementation of [ChatService] for handling chat operations.
 @LazySingleton(as: ChatService)
 final class ChatServiceImpl implements ChatService {
+  // Dependencies required for the chat service.
   final GrpcChannel _grpcChannel;
   final GrpcConnect _grpcConnect;
   final SharedPreferencesGateway _sharedPreferencesGateway;
 
+  // Utility instances.
   final uuid = Uuid();
   final log = CustomLogger.getLogger('ChatServiceImpl');
   final Map<String, StreamController<DialogMessageResponse>>
       _onNewMessageControllers = {};
 
-  // final Map<String, StreamController<void>> _onTypingControllers = {};
-  // final Map<String, StreamController<void>> _onMessageDeleted = {};
-  // final Map<String, StreamController<void>> _onMessageEdited = {};
-  // final Map<String, StreamController<void>> _onOperatorActions = {};
-
+  // Constructor for initializing the chat service with the required dependencies.
   ChatServiceImpl(
     this._grpcChannel,
     this._grpcConnect,
@@ -72,6 +71,7 @@ final class ChatServiceImpl implements ChatService {
     initListeners();
   }
 
+  /// Initializes various listeners for messages, connection status changes, and errors.
   void initListeners() {
     listenToMessages();
     log.info("Message listener setup complete.");
@@ -86,7 +86,11 @@ final class ChatServiceImpl implements ChatService {
     log.info("Error handling is configured.");
   }
 
-  //Get controller for specific chat by chatId or create one if absent
+  /// Get or create a [StreamController] for a specific chat by chatId.
+  ///
+  /// [chatId] The ID of the chat for which the controller is requested.
+  ///
+  /// Returns a [StreamController] for [DialogMessageResponse].
   Future<StreamController<DialogMessageResponse>> getControllerForChat(
     String chatId,
   ) async {
@@ -101,12 +105,15 @@ final class ChatServiceImpl implements ChatService {
       chatId,
       () {
         log.info(
-            'New StreamController for DialogMessageResponseEntity created for chat ID: $chatId');
+            'New StreamController for DialogMessageResponse created for chat ID: $chatId');
         return StreamController<DialogMessageResponse>.broadcast();
       },
     );
   }
 
+  /// Fetches a list of dialogs.
+  ///
+  /// Returns a list of [Dialog] instances.
   @override
   Future<List<Dialog>> fetchDialogs() async {
     final requestId = uuid.v4();
@@ -196,6 +203,9 @@ final class ChatServiceImpl implements ChatService {
     return [];
   }
 
+  /// Fetches a specific service dialog.
+  ///
+  /// Returns a [Dialog] instance representing the service dialog.
   @override
   Future<Dialog> fetchServiceDialog() async {
     final requestId = uuid.v4();
@@ -283,7 +293,12 @@ final class ChatServiceImpl implements ChatService {
   }
 
   /// Stream transformer that converts a stream of data chunks into a stream of UploadMedia messages.
-  /// Firstly adding name/type and then bytes
+  ///
+  /// [data] The stream of data chunks to be uploaded.
+  /// [name] The name of the media file.
+  /// [type] The type of the media file.
+  ///
+  /// Yields a stream of [UploadMedia] messages.
   Stream<UploadMedia> uploadMediaStream({
     required Stream<List<int>> data,
     required String name,
@@ -307,6 +322,11 @@ final class ChatServiceImpl implements ChatService {
     log.info('Completed streaming UploadMedia messages for file: $name');
   }
 
+  /// Downloads a media file associated with a dialog.
+  ///
+  /// [fileId] The ID of the file to be downloaded.
+  ///
+  /// Returns a stream of [MediaFileResponse] representing the downloaded file.
   @override
   Stream<MediaFileResponse> downloadFile({
     required String fileId,
@@ -316,6 +336,12 @@ final class ChatServiceImpl implements ChatService {
     return getFileController.stream;
   }
 
+  /// Fetches a media file from the server.
+  ///
+  /// [fileId] The ID of the file to be fetched.
+  /// [controller] The [StreamController] to manage the file download stream.
+  ///
+  /// Returns a [StreamController] for [MediaFileResponse].
   Future<StreamController<MediaFileResponse>> getFileFromServer({
     required String fileId,
     required StreamController<MediaFileResponse> controller,
@@ -383,6 +409,13 @@ final class ChatServiceImpl implements ChatService {
     return controller;
   }
 
+  /// Resumes downloading a media file from a given offset.
+  ///
+  /// [fileId] The ID of the file to be resumed.
+  /// [file] The [MediaFileResponse] representing the file.
+  /// [offset] The offset to resume the download from.
+  /// [controller] The [StreamController] to manage the file download stream.
+  /// [retries] The number of retry attempts (default is 5).
   Future<void> downloadMediaFromOffset({
     required String fileId,
     required MediaFileResponse file,
@@ -420,7 +453,7 @@ final class ChatServiceImpl implements ChatService {
     }
   }
 
-  /// Listens for all messages from server
+  /// Listens for all messages from the server.
   Future<void> listenToMessages() async {
     await _sharedPreferencesGateway.init();
     final userId = await _sharedPreferencesGateway.readUserId();
@@ -479,6 +512,11 @@ final class ChatServiceImpl implements ChatService {
   }
 
   /// Sends a message to the chat service and waits for a response.
+  ///
+  /// [message] The message to be sent.
+  /// [chatId] The ID of the chat to which the message is sent.
+  ///
+  /// Returns a [DialogMessageResponse] representing the sent message.
   @override
   Future<DialogMessageResponse> sendMessage({
     required DialogMessageRequest message,
@@ -521,8 +559,14 @@ final class ChatServiceImpl implements ChatService {
     }
   }
 
-  //LISTEN FOR RESPONSE BY EQUAL REQUEST ID
-  // Method to send message and use the typedefs for handling responses and errors
+  /// Sends a message and uses the typedefs for handling responses and errors.
+  ///
+  /// [requestId] The ID of the request.
+  /// [userId] The ID of the user.
+  /// [handleResponse] The handler for processing the response.
+  /// [handleError] The handler for processing errors.
+  ///
+  /// Returns a [Future] for [DialogMessageResponse].
   Future<DialogMessageResponse> _sendMessageResponse(
     String requestId,
     String userId,
@@ -543,6 +587,11 @@ final class ChatServiceImpl implements ChatService {
     return completer.future;
   }
 
+  /// Handles the response when a message is sent.
+  ///
+  /// [response] The response from the server.
+  /// [completer] The [Completer] for the [DialogMessageResponse].
+  /// [userId] The ID of the user.
   Future<void> _handleSendMessageResponse(
     portal.Response response,
     Completer<DialogMessageResponse> completer,
@@ -614,7 +663,11 @@ final class ChatServiceImpl implements ChatService {
     }
   }
 
-  // Method to handle send message error using the typedef
+  /// Handles the error when a message is sent.
+  ///
+  /// [error] The error that occurred.
+  /// [completer] The [Completer] for the [DialogMessageResponse].
+  /// [requestId] The ID of the request.
   void _handleSendMessageError(
     Object error,
     Completer<DialogMessageResponse> completer,
@@ -632,6 +685,13 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
+  /// Builds the request for sending a message.
+  ///
+  /// [message] The message to be sent.
+  /// [userId] The ID of the user.
+  /// [messageType] The type of the message.
+  ///
+  /// Returns a [Future] for [portal.Request].
   Future<portal.Request> _buildSendMessageRequest(
     DialogMessageRequest message,
     String userId,
@@ -666,6 +726,13 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
+  /// Fetches updates for a chat.
+  ///
+  /// [limit] The maximum number of updates to fetch.
+  /// [offset] The offset from which to start fetching updates.
+  /// [chatId] The ID of the chat for which updates are fetched.
+  ///
+  /// Returns a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
@@ -680,6 +747,13 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
+  /// Fetches messages for a chat.
+  ///
+  /// [limit] The maximum number of messages to fetch.
+  /// [offset] The offset from which to start fetching messages.
+  /// [chatId] The ID of the chat for which messages are fetched.
+  ///
+  /// Returns a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
@@ -694,6 +768,14 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
+  /// Fetches messages based on the given parameters.
+  ///
+  /// [path] The API path for fetching messages.
+  /// [chatId] The ID of the chat for which messages are fetched.
+  /// [limit] The maximum number of messages to fetch.
+  /// [offset] The offset from which to start fetching messages.
+  ///
+  /// Returns a list of [DialogMessageResponse].
   Future<List<DialogMessageResponse>> _fetchMessages({
     required String path,
     required String chatId,
@@ -772,26 +854,41 @@ final class ChatServiceImpl implements ChatService {
     }
   }
 
+  /// Reconnects to the chat stream.
+  ///
+  /// Returns a [Future] representing the asynchronous operation.
   @override
   Future<void> reconnectToStream() async {
     await _grpcConnect.reconnect();
   }
 
+  /// Gets the current communication channel.
+  ///
+  /// Returns a [Channel] representing the current communication channel.
   @override
   Future<Channel> getChannel() async {
     return ChannelImpl();
   }
 
+  /// Provides a stream controller for channel status changes.
+  ///
+  /// Returns a [StreamController] for [ChannelStatus].
   @override
   StreamController<ChannelStatus> onChannelStatusChange() {
     return _grpcConnect.chanelStatusStream;
   }
 
+  /// Provides a stream controller for connection status changes.
+  ///
+  /// Returns a [StreamController] for [Connect].
   @override
   StreamController<Connect> onConnectStreamStatusChange() {
     return _grpcConnect.connectStatusStream;
   }
 
+  /// Provides a stream controller for errors occurring in the chat service.
+  ///
+  /// Returns a [StreamController] for [CallError].
   @override
   StreamController<CallError> onError() {
     return _grpcConnect.errorStream;

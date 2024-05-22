@@ -31,17 +31,33 @@ import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
 import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
+/// Implementation of [AuthService] for handling authentication and user management.
 @LazySingleton(as: AuthService)
 class AuthServiceImpl implements AuthService {
+  // Shared preferences gateway for accessing and storing data locally.
   final SharedPreferencesGateway _sharedPreferencesGateway;
+
+  // gRPC channel for communicating with the server.
   final GrpcChannel _grpcChannel;
+
+  // Logger for logging messages and errors.
   final log = CustomLogger.getLogger('AuthServiceImpl');
 
+  /// Constructs an [AuthServiceImpl] instance with the given dependencies.
   AuthServiceImpl(
     this._grpcChannel,
     this._sharedPreferencesGateway,
   );
 
+  /// Initializes the portal client with the specified URL and app token.
+  ///
+  /// This method configures the gRPC channel, retrieves device information,
+  /// and sends an initial ping to check the channel's validity.
+  ///
+  /// [url] The URL of the portal.
+  /// [appToken] The application token for authentication.
+  ///
+  /// Returns a [PortalClient] instance for interacting with the portal.
   @override
   Future<client.PortalClient> initClient({
     required String url,
@@ -50,8 +66,11 @@ class AuthServiceImpl implements AuthService {
     log.info('Attempting to init gRPC channel for: $url');
 
     try {
+      // Initialize shared preferences and save the app token.
       await _sharedPreferencesGateway.init();
       await _sharedPreferencesGateway.saveAppToken(appToken);
+
+      // Get or generate a device ID.
       final deviceId = await getOrGenerateDeviceId();
       final packageInfo = await PackageInfo.fromPlatform();
 
@@ -75,6 +94,7 @@ class AuthServiceImpl implements AuthService {
         log.warning('Unknown platform type: ${Platform.operatingSystem}');
       }
 
+      // Build the user agent string.
       final userAgentString = buildUserAgent(
         appName: packageInfo.appName,
         appVersion: packageInfo.version,
@@ -91,6 +111,7 @@ class AuthServiceImpl implements AuthService {
             : androidDeviceInfo?.supportedAbis.first ?? '',
       );
 
+      // Parse the URL and initialize the gRPC channel.
       final urlHelper = UrlHelper(url);
       final secureConnection = urlHelper.isSecure();
       final (hostUrl, port) = (urlHelper.getUrl(), urlHelper.getPort());
@@ -107,6 +128,7 @@ class AuthServiceImpl implements AuthService {
         secure: secureConnection,
       );
 
+      // Send an initial ping to check the channel's validity.
       final echo = portal.Echo(data: 'Channel init'.codeUnits);
       await _grpcChannel.customerStub.ping(echo);
 
@@ -134,6 +156,18 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  /// Logs in a user with the provided credentials and user information.
+  ///
+  /// [name] The name of the user.
+  /// [sub] The subject (user ID).
+  /// [issuer] The issuer of the credentials.
+  /// [locale] The locale of the user (optional).
+  /// [email] The email of the user (optional).
+  /// [emailVerified] Indicates if the email is verified (optional).
+  /// [phoneNumber] The phone number of the user (optional).
+  /// [phoneNumberVerified] Indicates if the phone number is verified (optional).
+  ///
+  /// Returns a [PortalResponse] indicating the result of the login operation.
   @override
   Future<res.PortalResponse> login({
     required String name,
@@ -191,6 +225,11 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  /// Registers a device with a given push token.
+  ///
+  /// [pushToken] The push token to register the device with.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the registration.
   @override
   Future<res.PortalResponse> registerDevice({required String pushToken}) async {
     log.info('Attempting to register device');
@@ -215,6 +254,9 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  /// Logs out the current user.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the logout operation.
   @override
   Future<res.PortalResponse> logout() async {
     log.info('Attempting to logout');
@@ -232,44 +274,9 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
-  Future<String> getOrGenerateDeviceId() async {
-    final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
-    if (savedDeviceId == null || savedDeviceId == 'null') {
-      final deviceIdGenerated = const Uuid().v4();
-      log.info('Generating new device ID: $deviceIdGenerated');
-      await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
-      return deviceIdGenerated;
-    }
-    log.info('Using existing device ID: $savedDeviceId');
-    return savedDeviceId;
-  }
-
-  String buildUserAgent({
-    required String appName,
-    required String appVersion,
-    required String platform,
-    required String platformVersion,
-    required String model,
-    required String device,
-    required String architecture,
-  }) {
-    final userAgentString = UserAgentBuilder(
-      sdkName: Constants.sdkName,
-      sdkVersion: Constants.sdkVersion,
-      appName: appName,
-      version: appVersion,
-      platform: platform == 'android' ? Constants.androidPlatform : platform,
-      platformVersion: platformVersion,
-      model: model,
-      device: device,
-      architecture: architecture,
-    ).build();
-
-    log.info('Built user agent: $userAgentString');
-
-    return userAgentString;
-  }
-
+  /// Retrieves the current user information.
+  ///
+  /// Returns a [PortalUser] representing the current user.
   @override
   Future<PortalUser> getUser() async {
     try {
@@ -303,5 +310,57 @@ class AuthServiceImpl implements AuthService {
         ),
       );
     }
+  }
+
+  /// Retrieves or generates a device ID.
+  ///
+  /// Returns the device ID as a string.
+  Future<String> getOrGenerateDeviceId() async {
+    final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
+    if (savedDeviceId == null || savedDeviceId == 'null') {
+      final deviceIdGenerated = const Uuid().v4();
+      log.info('Generating new device ID: $deviceIdGenerated');
+      await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
+      return deviceIdGenerated;
+    }
+    log.info('Using existing device ID: $savedDeviceId');
+    return savedDeviceId;
+  }
+
+  /// Builds a user agent string for the SDK.
+  ///
+  /// [appName] The name of the application.
+  /// [appVersion] The version of the application.
+  /// [platform] The platform (e.g., android, ios).
+  /// [platformVersion] The version of the platform.
+  /// [model] The model of the device.
+  /// [device] The device name.
+  /// [architecture] The architecture of the device.
+  ///
+  /// Returns the user agent string.
+  String buildUserAgent({
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+  }) {
+    final userAgentString = UserAgentBuilder(
+      sdkName: Constants.sdkName,
+      sdkVersion: Constants.sdkVersion,
+      appName: appName,
+      version: appVersion,
+      platform: platform == 'android' ? Constants.androidPlatform : platform,
+      platformVersion: platformVersion,
+      model: model,
+      device: device,
+      architecture: architecture,
+    ).build();
+
+    log.info('Built user agent: $userAgentString');
+
+    return userAgentString;
   }
 }
