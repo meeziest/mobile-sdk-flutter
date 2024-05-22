@@ -66,7 +66,7 @@ class AuthServiceImpl implements AuthService {
         operatingSystemVersion =
             UserAgentHelper.parseIOSVersion(Platform.operatingSystemVersion);
         iosArchitecture = UserAgentHelper.parseArchitecture(
-            iosDeviceInfo.utsname.version ?? '');
+            iosDeviceInfo.utsname.version);
       } else if (Platform.isAndroid) {
         androidDeviceInfo = await deviceInfo.androidInfo;
         operatingSystemVersion = UserAgentHelper.parseAndroidVersion(
