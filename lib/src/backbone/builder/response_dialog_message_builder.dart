@@ -1,4 +1,4 @@
-import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/message.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';

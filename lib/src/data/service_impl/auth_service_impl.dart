@@ -1,15 +1,16 @@
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:ua_client_hints/ua_client_hints.dart';
 import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/token_request_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/user_agent_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/uri_helper.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/error.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/uri.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/user_agent.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
@@ -53,16 +54,41 @@ class AuthServiceImpl implements AuthService {
       await _sharedPreferencesGateway.saveAppToken(appToken);
       final deviceId = await getOrGenerateDeviceId();
       final packageInfo = await PackageInfo.fromPlatform();
-      final uaData = await userAgentData();
+
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+      IosDeviceInfo? iosDeviceInfo;
+      AndroidDeviceInfo? androidDeviceInfo;
+      String? operatingSystemVersion;
+      String? iosArchitecture;
+
+      if (Platform.isIOS) {
+        iosDeviceInfo = await deviceInfo.iosInfo;
+        operatingSystemVersion =
+            UserAgentHelper.parseIOSVersion(Platform.operatingSystemVersion);
+        iosArchitecture = UserAgentHelper.parseArchitecture(
+            iosDeviceInfo.utsname.version ?? '');
+      } else if (Platform.isAndroid) {
+        androidDeviceInfo = await deviceInfo.androidInfo;
+        operatingSystemVersion = UserAgentHelper.parseAndroidVersion(
+            Platform.operatingSystemVersion);
+      } else {
+        log.warning('Unknown platform type: ${Platform.operatingSystem}');
+      }
 
       final userAgentString = buildUserAgent(
         appName: packageInfo.appName,
         appVersion: packageInfo.version,
         platform: Platform.operatingSystem,
-        platformVersion: uaData.platformVersion,
-        model: uaData.model,
-        device: uaData.device,
-        architecture: uaData.architecture,
+        platformVersion: operatingSystemVersion ?? '',
+        model: Platform.isIOS
+            ? iosDeviceInfo?.name ?? ''
+            : androidDeviceInfo?.model ?? '',
+        device: Platform.isIOS
+            ? iosDeviceInfo?.model ?? ''
+            : androidDeviceInfo?.device ?? '',
+        architecture: Platform.isIOS
+            ? iosArchitecture ?? ''
+            : androidDeviceInfo?.supportedAbis.first ?? '',
       );
 
       final urlHelper = UrlHelper(url);

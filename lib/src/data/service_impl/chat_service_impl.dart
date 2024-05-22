@@ -9,8 +9,8 @@ import 'package:webitel_portal_sdk/src/backbone/builder/error_dialog_message_bui
 import 'package:webitel_portal_sdk/src/backbone/builder/messages_list_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/response_dialog_message_builder.dart';
 import 'package:webitel_portal_sdk/src/backbone/constants.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/error_helper.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/message_helper.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/error.dart';
+import 'package:webitel_portal_sdk/src/backbone/helper/message.dart';
 import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
@@ -86,6 +86,27 @@ final class ChatServiceImpl implements ChatService {
     log.info("Error handling is configured.");
   }
 
+  //Get controller for specific chat by chatId or create one if absent
+  Future<StreamController<DialogMessageResponse>> getControllerForChat(
+    String chatId,
+  ) async {
+    var controllerExists = _onNewMessageControllers.containsKey(chatId);
+    if (controllerExists) {
+      log.info('Retrieving existing controller for chat ID: $chatId');
+    } else {
+      log.info('No controller found for chat ID: $chatId, creating a new one.');
+    }
+
+    return _onNewMessageControllers.putIfAbsent(
+      chatId,
+      () {
+        log.info(
+            'New StreamController for DialogMessageResponseEntity created for chat ID: $chatId');
+        return StreamController<DialogMessageResponse>.broadcast();
+      },
+    );
+  }
+
   @override
   Future<List<Dialog>> fetchDialogs() async {
     final requestId = uuid.v4();
@@ -123,11 +144,13 @@ final class ChatServiceImpl implements ChatService {
 
           final List<Future<Dialog>> dialogFutures =
               unpackedDialogMessages.data.map((dialog) async {
-            await getControllerForChat(dialog.id);
+            final onNewMessageController =
+                await getControllerForChat(dialog.id);
+
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
-              onNewMessage: _onNewMessageControllers[dialog.id]!.stream,
+              onNewMessage: onNewMessageController.stream,
             );
           }).toList();
 
@@ -209,11 +232,13 @@ final class ChatServiceImpl implements ChatService {
 
           final List<Future<Dialog>> dialogFutures =
               unpackedDialogMessages.data.map((dialog) async {
-            await getControllerForChat(dialog.id);
+            final onNewMessageController =
+                await getControllerForChat(dialog.id);
+
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
-              onNewMessage: _onNewMessageControllers[dialog.id]!.stream,
+              onNewMessage: onNewMessageController.stream,
             );
           }).toList();
 
@@ -280,27 +305,6 @@ final class ChatServiceImpl implements ChatService {
     }
 
     log.info('Completed streaming UploadMedia messages for file: $name');
-  }
-
-  //Get controller for specific chat by chatId or create one if absent
-  Future<StreamController<DialogMessageResponse>> getControllerForChat(
-    String chatId,
-  ) async {
-    var controllerExists = _onNewMessageControllers.containsKey(chatId);
-    if (controllerExists) {
-      log.info('Retrieving existing controller for chat ID: $chatId');
-    } else {
-      log.info('No controller found for chat ID: $chatId, creating a new one.');
-    }
-
-    return _onNewMessageControllers.putIfAbsent(
-      chatId,
-      () {
-        log.info(
-            'New StreamController for DialogMessageResponseEntity created for chat ID: $chatId');
-        return StreamController<DialogMessageResponse>.broadcast();
-      },
-    );
   }
 
   @override
@@ -420,53 +424,58 @@ final class ChatServiceImpl implements ChatService {
   Future<void> listenToMessages() async {
     await _sharedPreferencesGateway.init();
     final userId = await _sharedPreferencesGateway.readUserId();
-    _grpcConnect.updateStream.listen((update) async {
-      final chatId = update.message.chat.id;
-      final controller = _onNewMessageControllers[chatId];
+    _grpcConnect.updateStream.listen(
+      (update) async {
+        final chatId = update.message.chat.id;
+        final controller = _onNewMessageControllers[chatId];
 
-      if (controller != null) {
-        final messageType = MessageHelper.determineMessageTypeResponse(update);
+        if (controller != null) {
+          final messageType =
+              MessageHelper.determineMessageTypeResponse(update);
 
-        final dialogMessage = switch (messageType) {
-          MessageType.outcomingMedia ||
-          MessageType.incomingMedia =>
-            ResponseDialogMessageBuilder()
-                .setDialogMessageContent(update.message.text)
-                .setRequestId(update.id)
-                .setMessageId(update.message.id.toInt())
-                .setUserUd(userId ?? '')
-                .setChatId(chatId)
-                .setUpdate(update)
-                .setFile(
-                  MediaFileResponse(
-                    id: update.message.file.id,
-                    type: update.message.file.type,
-                    name: update.message.file.name,
-                    bytes: [],
-                    size: update.message.file.size.toInt(),
-                  ),
-                )
-                .build(),
-          MessageType.outcomingMessage ||
-          MessageType.incomingMessage =>
-            ResponseDialogMessageBuilder()
-                .setDialogMessageContent(update.message.text)
-                .setRequestId(update.id)
-                .setMessageId(update.message.id.toInt())
-                .setUserUd(userId ?? '')
-                .setChatId(chatId)
-                .setUpdate(update)
-                .setFile(MediaFileResponse.initial())
-                .build()
-        };
+          final dialogMessage = switch (messageType) {
+            MessageType.outcomingMedia ||
+            MessageType.incomingMedia =>
+              ResponseDialogMessageBuilder()
+                  .setDialogMessageContent(update.message.text)
+                  .setRequestId(update.id)
+                  .setMessageId(update.message.id.toInt())
+                  .setUserUd(userId ?? '')
+                  .setChatId(chatId)
+                  .setUpdate(update)
+                  .setFile(
+                    MediaFileResponse(
+                      id: update.message.file.id,
+                      type: update.message.file.type,
+                      name: update.message.file.name,
+                      bytes: [],
+                      size: update.message.file.size.toInt(),
+                    ),
+                  )
+                  .build(),
+            MessageType.outcomingMessage ||
+            MessageType.incomingMessage =>
+              ResponseDialogMessageBuilder()
+                  .setDialogMessageContent(update.message.text)
+                  .setRequestId(update.id)
+                  .setMessageId(update.message.id.toInt())
+                  .setUserUd(userId ?? '')
+                  .setChatId(chatId)
+                  .setUpdate(update)
+                  .setFile(MediaFileResponse.initial())
+                  .build()
+          };
 
-        controller.add(dialogMessage);
-      }
-    }, onError: (error) {
-      log.severe("Error while listening to messages: $error");
-    }, onDone: () {
-      log.severe("Error while listening to messages: stream is done");
-    });
+          controller.add(dialogMessage);
+        }
+      },
+      onError: (error) {
+        log.severe("Error while listening to messages: $error");
+      },
+      onDone: () {
+        log.severe("Error while listening to messages: stream is done");
+      },
+    );
   }
 
   /// Sends a message to the chat service and waits for a response.
