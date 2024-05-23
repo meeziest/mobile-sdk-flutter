@@ -4,6 +4,7 @@ import 'package:fixnum/fixnum.dart' as fixnum;
 import 'package:grpc/grpc.dart';
 import 'package:grpc/grpc_or_grpcweb.dart';
 import 'package:injectable/injectable.dart';
+import 'package:retry/retry.dart';
 import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/error_dialog_message.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/messages_list_message.dart';
@@ -82,8 +83,17 @@ final class ChatServiceImpl implements ChatService {
   // Utility instances.
   final uuid = Uuid();
   final log = CustomLogger.getLogger('ChatServiceImpl');
+
+  /// A map to manage StreamControllers for new message events, indexed by chat ID.
+  /// Each chat ID maps to a StreamController that broadcasts[DialogMessageResponse] events.
   final Map<String, StreamController<DialogMessageResponse>>
       _onNewMessageControllers = {};
+
+  /// A map to manage StreamControllers for new member added events, indexed by chat ID.
+  /// Each chat ID maps to a StreamController that broadcasts [ChatMember]
+  /// events.
+  final Map<String, StreamController<PortalChatMember>>
+      _onMemberAddedControllers = {};
 
   // Constructor for initializing the chat service with the required dependencies.
   ChatServiceImpl(
@@ -97,6 +107,9 @@ final class ChatServiceImpl implements ChatService {
   /// Initializes various listeners for messages, connection status changes, and errors.
   void initListeners() {
     listenToMessages();
+
+    listenToNewMemberAdded();
+
     log.info("Message listener setup complete.");
 
     onConnectStreamStatusChange();
@@ -109,12 +122,40 @@ final class ChatServiceImpl implements ChatService {
     log.info("Error handling is configured.");
   }
 
+  /// Get or create a [StreamController] for a specific chat member by chatId.
+  ///
+  /// [chatId] The ID of the chat for which the controller is requested.
+  ///
+  /// Returns a [StreamController] for [ChatMember].
+  Future<StreamController<PortalChatMember>> getControllerForChatMember(
+    String chatId,
+  ) async {
+    var controllerExists = _onMemberAddedControllers.containsKey(chatId);
+    if (controllerExists) {
+      log.info(
+          'Retrieving existing controller for chat member with ID: $chatId');
+    } else {
+      log.info(
+          'No controller found for chat member with ID: $chatId, creating a new one.');
+    }
+
+    return _onMemberAddedControllers.putIfAbsent(
+      chatId,
+      () {
+        log.info(
+            'New StreamController for ChatMember created for chat ID: $chatId');
+
+        return StreamController<PortalChatMember>.broadcast();
+      },
+    );
+  }
+
   /// Get or create a [StreamController] for a specific chat by chatId.
   ///
   /// [chatId] The ID of the chat for which the controller is requested.
   ///
   /// Returns a [StreamController] for [DialogMessageResponse].
-  Future<StreamController<DialogMessageResponse>> getControllerForChat(
+  Future<StreamController<DialogMessageResponse>> getControllerForNewMessage(
     String chatId,
   ) async {
     var controllerExists = _onNewMessageControllers.containsKey(chatId);
@@ -176,12 +217,16 @@ final class ChatServiceImpl implements ChatService {
           final List<Future<Dialog>> dialogFutures =
               unpackedDialogMessages.data.map((dialog) async {
             final onNewMessageController =
-                await getControllerForChat(dialog.id);
+                await getControllerForNewMessage(dialog.id);
+
+            final onNewMemberAddedController =
+                await getControllerForChatMember(dialog.id);
 
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
+              onMemberAdded: onNewMemberAddedController.stream,
             );
           }).toList();
 
@@ -215,6 +260,7 @@ final class ChatServiceImpl implements ChatService {
             topMessage: 'ERROR',
             id: response.id,
             onNewMessage: Stream<DialogMessageResponse>.empty(),
+            onMemberAdded: Stream<PortalChatMember>.empty(),
           ),
         ];
       } else {
@@ -268,12 +314,16 @@ final class ChatServiceImpl implements ChatService {
           final List<Future<Dialog>> dialogFutures =
               unpackedDialogMessages.data.map((dialog) async {
             final onNewMessageController =
-                await getControllerForChat(dialog.id);
+                await getControllerForNewMessage(dialog.id);
+
+            final onNewMemberAddedController =
+                await getControllerForChatMember(dialog.id);
 
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
+              onMemberAdded: onNewMemberAddedController.stream,
             );
           }).toList();
 
@@ -305,6 +355,7 @@ final class ChatServiceImpl implements ChatService {
           topMessage: 'ERROR',
           id: response.id,
           onNewMessage: Stream<DialogMessageResponse>.empty(),
+          onMemberAdded: Stream<PortalChatMember>.empty(),
         );
       } else {
         log.warning('Failed to unpack chat list for request ID: $requestId');
@@ -317,36 +368,6 @@ final class ChatServiceImpl implements ChatService {
     return DialogImpl.initial();
   }
 
-  /// Stream transformer that converts a stream of data chunks into a stream of UploadMedia messages.
-  ///
-  /// [data] The stream of data chunks to be uploaded.
-  /// [name] The name of the media file.
-  /// [type] The type of the media file.
-  ///
-  /// Yields a stream of [UploadMedia] messages.
-  Stream<UploadMedia> uploadMediaStream({
-    required Stream<List<int>> data,
-    required String name,
-    required String type,
-  }) async* {
-    log.info(
-        'Starting to stream UploadMedia with file name: $name and type: $type');
-
-    yield UploadMedia(
-      file: InputFile(
-        name: name,
-        type: type,
-      ),
-    );
-
-    await for (var bytes in data) {
-      log.fine('Streaming data chunk of size: ${bytes.length} bytes.');
-      yield UploadMedia(data: bytes);
-    }
-
-    log.info('Completed streaming UploadMedia messages for file: $name');
-  }
-
   /// Downloads a media file associated with a dialog.
   ///
   /// [fileId] The ID of the file to be downloaded.
@@ -355,22 +376,18 @@ final class ChatServiceImpl implements ChatService {
   @override
   Stream<MediaFileResponse> downloadFile({
     required String fileId,
-  }) {
-    StreamController<MediaFileResponse> getFileController = StreamController();
-    getFileFromServer(fileId: fileId, controller: getFileController);
-    return getFileController.stream;
+  }) async* {
+    yield* _downloadFileFromServer(fileId: fileId);
   }
 
   /// Fetches a media file from the server.
   ///
   /// [fileId] The ID of the file to be fetched.
-  /// [controller] The [StreamController] to manage the file download stream.
   ///
-  /// Returns a [StreamController] for [MediaFileResponse].
-  Future<StreamController<MediaFileResponse>> getFileFromServer({
+  /// Returns a stream of [MediaFileResponse].
+  Stream<MediaFileResponse> _downloadFileFromServer({
     required String fileId,
-    required StreamController<MediaFileResponse> controller,
-  }) async {
+  }) async* {
     final mediaStream =
         _grpcChannel.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
     MediaFileResponse? file;
@@ -385,10 +402,11 @@ final class ChatServiceImpl implements ChatService {
             type: mediaFile.file.type,
             id: mediaFile.file.id,
           );
-          controller.add(file);
 
           log.info(
               "Initialized file download for '${file.name}' with ID '${file.id}', expected size: ${file.size} bytes.");
+
+          yield file;
         }
 
         if (file != null) {
@@ -399,7 +417,7 @@ final class ChatServiceImpl implements ChatService {
           log.info(
               "Received ${mediaFile.data.length} bytes for file '${file.name}'; Total received: $offset bytes.");
 
-          controller.add(file);
+          yield file;
         }
       }
 
@@ -420,22 +438,15 @@ final class ChatServiceImpl implements ChatService {
         log.info(
             "Attempting to resume file download for '${file.name}' from offset $offset.");
 
-        await downloadMediaFromOffset(
+        yield* _downloadMediaFromOffset(
           fileId: fileId,
           file: file,
           offset: offset,
-          controller: controller,
         );
       } else {
         log.warning("Failed to download file due to GrpcError: $err");
       }
-    } finally {
-      if (!controller.isClosed) {
-        controller.close();
-      }
     }
-
-    return controller;
   }
 
   /// Resumes downloading a media file from a given offset.
@@ -443,17 +454,13 @@ final class ChatServiceImpl implements ChatService {
   /// [fileId] The ID of the file to be resumed.
   /// [file] The [MediaFileResponse] representing the file.
   /// [offset] The offset to resume the download from.
-  /// [controller] The [StreamController] to manage the file download stream.
-  /// [retries] The number of retry attempts (default is 5).
-  Future<void> downloadMediaFromOffset({
+  Stream<MediaFileResponse> _downloadMediaFromOffset({
     required String fileId,
     required MediaFileResponse file,
     required fixnum.Int64 offset,
-    required StreamController<MediaFileResponse> controller,
-    int retries = 5,
-  }) async {
-    for (int attempt = 0; attempt < retries; attempt++) {
-      try {
+  }) async* {
+    await retry(
+      () async* {
         final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
           GetFileRequest(
             fileId: fileId,
@@ -468,19 +475,56 @@ final class ChatServiceImpl implements ChatService {
 
           log.info(
               "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
-          controller.add(file);
+
+          yield file;
         }
         log.info("Resumed and completed file download for '${file.name}'.");
+      },
+      retryIf: (err) => err is GrpcError,
+      onRetry: (err) => log.warning(
+        "Retrying due to GrpcError while resuming download for file (ID: '${file.id}', Size: ${file.size} bytes) from offset $offset: ${err.toString()}",
+      ),
+    );
+  }
 
-        return;
-      } on GrpcError catch (err) {
-        log.warning(
-            "GrpcError encountered while resuming download for '${file.name}': ${err.message}");
-        if (attempt == retries - 1) {
-          controller.addError(err);
+  /// Listens for new members added to the chat.
+  Future<void> listenToNewMemberAdded() async {
+    log.info("Initializing listener for new member added events.");
+
+    await _sharedPreferencesGateway.init();
+    final userId = await _sharedPreferencesGateway.readUserId();
+
+    log.info("User ID retrieved: $userId");
+
+    _grpcConnect.memberAddedStream.listen(
+      (member) async {
+        final chatId = member.chat.id;
+        log.info("New member added event received for chat ID: $chatId");
+
+        final onNewMemberAddedController = _onMemberAddedControllers[chatId];
+
+        if (onNewMemberAddedController != null) {
+          log.info("Adding new member to controller for chat ID: $chatId");
+
+          onNewMemberAddedController.add(
+            PortalChatMember(
+              chatId: member.chat.id,
+              memberId: member.join.first.id,
+              memberType: member.join.first.type,
+              memberName: member.join.first.name,
+            ),
+          );
+        } else {
+          log.warning("No controller found for chat ID: $chatId");
         }
-      }
-    }
+      },
+      onError: (error) {
+        log.severe("Error while listening to new member added events: $error");
+      },
+      onDone: () {
+        log.info("Listener for new member added events has completed.");
+      },
+    );
   }
 
   /// Listens for all messages from the server.
@@ -490,9 +534,9 @@ final class ChatServiceImpl implements ChatService {
     _grpcConnect.updateStream.listen(
       (update) async {
         final chatId = update.message.chat.id;
-        final controller = _onNewMessageControllers[chatId];
+        final onNewMessageController = _onNewMessageControllers[chatId];
 
-        if (controller != null) {
+        if (onNewMessageController != null) {
           final messageType =
               MessageHelper.determineMessageTypeResponse(update);
 
@@ -529,7 +573,7 @@ final class ChatServiceImpl implements ChatService {
                   .build()
           };
 
-          controller.add(dialogMessage);
+          onNewMessageController.add(dialogMessage);
         }
       },
       onError: (error) {
@@ -636,6 +680,7 @@ final class ChatServiceImpl implements ChatService {
         case MessageType.outcomingMessage:
           log.info(
               "Handled response for message type $MessageType.outcomingMessage");
+
           completer.complete(
             ResponseDialogMessageBuilder()
                 .setDialogMessageContent(unpackedMessage.message.text)
@@ -652,6 +697,7 @@ final class ChatServiceImpl implements ChatService {
         case MessageType.outcomingMedia:
           log.info(
               "Handled response for message type $MessageType.outcomingMedia");
+
           completer.complete(
             ResponseDialogMessageBuilder()
                 .setDialogMessageContent(unpackedMessage.message.text)
@@ -716,6 +762,37 @@ final class ChatServiceImpl implements ChatService {
           .setRequestId(requestId)
           .build(),
     );
+  }
+
+  /// Stream transformer that converts a stream of data chunks into a stream of UploadMedia messages.
+  ///
+  /// [data] The stream of data chunks to be uploaded.
+  /// [name] The name of the media file.
+  /// [type] The type of the media file.
+  ///
+  /// Yields a stream of [UploadMedia] messages.
+  Stream<UploadMedia> uploadMediaStream({
+    required Stream<List<int>> data,
+    required String name,
+    required String type,
+  }) async* {
+    log.info(
+        'Starting to stream UploadMedia with file name: $name and type: $type');
+
+    yield UploadMedia(
+      file: InputFile(
+        name: name,
+        type: type,
+      ),
+    );
+
+    await for (var bytes in data) {
+      log.info('Streaming data chunk of size: ${bytes.length} bytes.');
+
+      yield UploadMedia(data: bytes);
+    }
+
+    log.info('Completed streaming UploadMedia messages for file: $name');
   }
 
   /// Builds the request for sending a message.
@@ -885,6 +962,36 @@ final class ChatServiceImpl implements ChatService {
             'An error occurred while fetching messages for chatId: $chatId');
       }
       return [];
+    }
+  }
+
+  /// Sends a ping request to the server to check the connection status.
+  ///
+  /// This method creates an Echo request with the data 'Client ping' and sends it to the
+  /// server using the gRPC channel. It converts the server's response to a string and returns it.
+  /// If a gRPC error occurs, it logs the error and returns an error message.
+  ///
+  /// Returns a [Future<String>] that completes with the server's response as a string,
+  /// or an error message if the ping request fails.
+  @override
+  Future<String> ping() async {
+    try {
+      // Create an Echo request with the data 'Client ping'
+      final echo = portal.Echo(data: 'Client ping'.codeUnits);
+
+      // Send the ping request using the gRPC channel
+      final response = await _grpcChannel.customerStub.ping(echo);
+
+      // Convert the response to a string and return it
+      return String.fromCharCodes(response.data);
+    } on GrpcError catch (e) {
+      // Log and handle the gRPC error
+      log.severe('GRPC Error during ping', e);
+      return 'GRPC Error: ${e.message}';
+    } catch (e) {
+      // Log and handle any other errors
+      log.severe('Unexpected Error during ping', e);
+      return 'Unexpected Error: ${e.toString()}';
     }
   }
 

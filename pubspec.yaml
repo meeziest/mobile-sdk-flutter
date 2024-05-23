@@ -12,6 +12,7 @@ dependencies:
   get_it: ^7.7.0
   shared_preferences: ^2.2.3
   synchronized: ^3.1.0+1
+  retry: ^3.1.2
   fixnum: ^1.1.0
   logging: ^1.2.0
   injectable: ^2.4.1

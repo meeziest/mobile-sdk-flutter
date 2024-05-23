@@ -7,6 +7,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_mes
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
@@ -25,9 +26,13 @@ final class DialogImpl implements Dialog {
   @override
   final CallError? error;
 
-  /// Stream for new messages in the dialog.
+  /// Stream [DialogMessageResponse] for new messages in the dialog.
   @override
   final Stream<DialogMessageResponse> onNewMessage;
+
+  /// Stream [PortalChatMember] for new member added to the chat..
+  @override
+  final Stream<PortalChatMember> onMemberAdded;
 
   // Dependency on the ChatService to handle chat-related operations.
   late final ChatService _chatService;
@@ -42,6 +47,7 @@ final class DialogImpl implements Dialog {
     required this.id,
     required this.topMessage,
     required this.onNewMessage,
+    required this.onMemberAdded,
     this.error,
   }) {
     _chatService = getIt.get<ChatService>();
@@ -52,7 +58,8 @@ final class DialogImpl implements Dialog {
       : id = 'default_id',
         topMessage = 'No messages yet',
         error = CallError(statusCode: '', errorMessage: ''),
-        onNewMessage = Stream.empty();
+        onNewMessage = Stream.empty(),
+        onMemberAdded = Stream.empty();
 
   /// Sends a message in the dialog.
   ///

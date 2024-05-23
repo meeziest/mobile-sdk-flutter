@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
 
 /// Interface for dialog operations, providing methods to manage messages,
 /// download files, and handle dialog events.
@@ -27,6 +28,11 @@ abstract interface class Dialog {
   /// Returns a stream of [DialogMessageResponse] for new messages.
   Stream<DialogMessageResponse> get onNewMessage;
 
+  /// Stream of chat member added.
+  ///
+  /// Returns a stream of [ChatMember] for new member added..
+  Stream<PortalChatMember> get onMemberAdded;
+
   /// Downloads a media file associated with the dialog.
   ///
   /// [fileId] The unique identifier of the file to be downloaded.
@@ -35,7 +41,6 @@ abstract interface class Dialog {
   Stream<MediaFileResponse> downloadFile({required String fileId});
 
   // Uncomment the following StreamController properties if needed:
-  // StreamController<String> get onMemberAdded;
   // StreamController<String> get onMemberRemoved;
   // StreamController<String> get onOperatorAdded;
   // StreamController<String> get onOperatorRemoved;

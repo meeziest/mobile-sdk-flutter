@@ -40,6 +40,10 @@ final class GrpcConnect {
   final StreamController<UpdateNewMessage> _updateStreamController =
       StreamController<UpdateNewMessage>.broadcast();
 
+  // Stream controller new member added to the chat..
+  final StreamController<UpdateChatMember> _memberAddedStreamController =
+      StreamController<UpdateChatMember>.broadcast();
+
   // Stream controller for requests to the server.
   final StreamController<portal.Request> _requestStreamController =
       StreamController<portal.Request>.broadcast();
@@ -92,6 +96,7 @@ final class GrpcConnect {
 
           switch (responseType) {
             case ResponseType.response:
+              // [Processing a standard response]
               log.info('Processing response type: ${ResponseType.response}');
 
               _responseStreamController.add(
@@ -102,6 +107,7 @@ final class GrpcConnect {
               break;
 
             case ResponseType.updateNewMessage:
+              // [Processing a new message update]
               log.info(
                   'Processing response type: ${ResponseType.updateNewMessage}');
 
@@ -113,7 +119,21 @@ final class GrpcConnect {
               log.info('New message received: ${decodedUpdate.message.text}');
               break;
 
+            case ResponseType.memberAdded:
+              // [Processing a new member added update]
+              log.info('Processing response type: ${ResponseType.memberAdded}');
+
+              final decodedUpdate = update.data.unpackInto(
+                UpdateChatMember(),
+              );
+              _memberAddedStreamController.add(decodedUpdate);
+
+              log.info(
+                  'New chat member added: ${decodedUpdate.join.first.name}');
+              break;
+
             case ResponseType.error:
+              // [Processing an error response]
               log.info('Processing response type: ${ResponseType.error}');
 
               final decodedResponse = update.data.unpackInto(
@@ -145,28 +165,28 @@ final class GrpcConnect {
           errorMessage: err.message ?? '',
         ),
       );
-      handleConnectionClosure(err.message ?? '');
+      handleConnectionClosure(err: err.message ?? '');
     } catch (err, stack) {
       log.warning('Unexpected error occurred: $err', stack);
 
-      handleConnectionClosure(err.toString());
+      handleConnectionClosure(err: err.toString());
     }
   }
 
   /// Handles the closure of the connection, setting the appropriate flags and state.
   ///
   /// [errorMessage] The error message to be logged and included in the connection status.
-  void handleConnectionClosure(String errorMessage) {
+  void handleConnectionClosure({required String err}) {
     connectClosed = true;
     _responseStream = null;
 
     _connectController.add(
       Connect(
         status: ConnectStatus.closed,
-        errorMessage: errorMessage,
+        errorMessage: err,
       ),
     );
-    log.info('Connection closed with error message: $errorMessage');
+    log.info('Connection closed with error message: $err');
   }
 
   /// Establishes a connection to the gRPC server and listens for responses.
@@ -266,9 +286,10 @@ final class GrpcConnect {
           Connect(
             errorMessage:
                 'Connection was closed due to the channel state change: $state',
-            status: ConnectStatus.opened,
+            status: ConnectStatus.closed,
           ),
         );
+
         log.warning('Response stream canceled due to state: $state');
       } else if (state == ConnectionState.transientFailure) {
         handleStreamCleanup();
@@ -277,9 +298,22 @@ final class GrpcConnect {
           Connect(
             errorMessage:
                 'Connection was closed due to the channel state change: $state',
-            status: ConnectStatus.opened,
+            status: ConnectStatus.closed,
           ),
         );
+
+        log.warning('Response stream canceled due to state: $state');
+      } else if (state == ConnectionState.idle) {
+        handleStreamCleanup();
+
+        _connectController.add(
+          Connect(
+            errorMessage:
+                'Connection was closed due to the channel state change: $state',
+            status: ConnectStatus.closed,
+          ),
+        );
+
         log.warning('Response stream canceled due to state: $state');
       }
       _connectionState = state;
@@ -301,6 +335,10 @@ final class GrpcConnect {
 
   /// Gets the update stream controller's stream.
   Stream<UpdateNewMessage> get updateStream => _updateStreamController.stream;
+
+  /// Gets the new member added to the chat stream..
+  Stream<UpdateChatMember> get memberAddedStream =>
+      _memberAddedStreamController.stream;
 
   /// Gets the error stream controller.
   StreamController<CallError> get errorStream => _errorStreamController;

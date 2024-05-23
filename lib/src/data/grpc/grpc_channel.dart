@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
-import 'package:webitel_portal_sdk/src/backbone/backoff.dart';
+import 'package:retry/retry.dart';
 import 'package:webitel_portal_sdk/src/backbone/builder/call_options.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
@@ -46,9 +46,6 @@ class GrpcChannel {
 
   // Logger for logging connection state changes and errors.
   final Logger _logger = Logger('GrpcChannel');
-
-  // Backoff strategy for reconnection attempts.
-  final Backoff _backoff = Backoff(maxAttempts: 10);
 
   /// Initializes the gRPC channel with the provided parameters.
   ///
@@ -151,7 +148,6 @@ class GrpcChannel {
         userAgent: userAgent,
         idleTimeout: Duration(minutes: 5),
         connectionTimeout: Duration(minutes: 50),
-        backoffStrategy: defaultBackoffStrategy,
         keepAlive: ClientKeepAliveOptions(
           pingInterval: Duration(seconds: 3),
           timeout: Duration(seconds: 2),
@@ -162,12 +158,12 @@ class GrpcChannel {
     // Listen for connection state changes and handle reconnections.
     _channel.onConnectionStateChanged.listen((state) {
       _logger.info('Connection state changed: $state');
-
       _streamControllerState.add(state);
 
       if (state == ConnectionState.shutdown) {
         _logger.warning(
             'Connection has been shutdown. Attempting to reconnect...');
+
         _reconnect();
       }
     });
@@ -197,37 +193,30 @@ class GrpcChannel {
     _logger.info('Media storage client stub initialized successfully.');
   }
 
-  /// Attempts to reconnect to the gRPC server with exponential backoff strategy.
+  /// Attempts to reconnect to the gRPC server with retry strategy.
   Future<void> _reconnect() async {
-    _backoff.reset();
-    _logger.info(
-        'Reconnection process started with exponential backoff strategy.');
+    try {
+      await retry(
+        () async {
+          await _createChannel(
+            url: _url,
+            port: _port,
+            secure: _secure,
+            deviceId: _deviceId,
+            appToken: _appToken,
+            userAgent: _userAgent,
+          );
 
-    while (_backoff.shouldRetry()) {
-      try {
-        await _createChannel(
-          url: _url,
-          port: _port,
-          secure: _secure,
-          deviceId: _deviceId,
-          appToken: _appToken,
-          userAgent: _userAgent,
-        );
-        _logger.info('Reconnection successful.');
-
-        return;
-      } on GrpcError catch (err) {
-        _backoff.increment();
-        _logger.warning(
-            'Reconnection attempt ${_backoff.attempt} failed. Error: ${err.message}');
-
-        final backoffDuration = _backoff.nextDelay();
-
-        _logger.info('Retrying in ${backoffDuration.inSeconds} seconds...');
-        await Future.delayed(backoffDuration);
-      }
+          _logger.info(
+              'Reconnection successful with the following parameters: URL: $_url, Port: $_port, Secure: $_secure, Device ID: $_deviceId, User Agent: $_userAgent');
+        },
+        retryIf: (err) => err is GrpcError,
+        onRetry: (err) => _logger.warning(
+            'Retrying due to GrpcError while reconnecting to gRPC server: ${err.toString()}'),
+      );
+    } catch (e) {
+      _logger.severe(
+          'Maximum reconnection attempts reached. Unable to reconnect to the gRPC server. Error: $e');
     }
-    _logger.severe(
-        'Maximum reconnection attempts reached. Unable to reconnect to the gRPC server.');
   }
 }

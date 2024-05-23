@@ -386,6 +386,12 @@
       "languageVersion": "2.18"
     },
     {
+      "name": "retry",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/retry-3.1.2",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
       "name": "shared_preferences",
       "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/shared_preferences-2.2.3",
       "packageUri": "lib/",
@@ -584,7 +590,7 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-05-22T07:38:59.887136Z",
+  "generated": "2024-05-23T12:16:18.419316Z",
   "generator": "pub",
   "generatorVersion": "3.3.3"
 }

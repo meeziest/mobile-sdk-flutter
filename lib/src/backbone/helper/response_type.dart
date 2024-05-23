@@ -1,6 +1,7 @@
 import 'package:webitel_portal_sdk/src/domain/entities/response_type.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
+import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 
 /// Helper class to determine and handle different response types.
 final class ResponseTypeHelper {
@@ -29,6 +30,8 @@ final class ResponseTypeHelper {
       return ResponseType.response;
     } else if (update.data.canUnpackInto(UpdateNewMessage())) {
       return ResponseType.updateNewMessage;
+    } else if (update.data.canUnpackInto(UpdateChatMember())) {
+      return ResponseType.memberAdded;
     } else {
       throw Exception('Unknown type');
     }

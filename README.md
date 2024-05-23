@@ -64,3 +64,6 @@ Listen to upcoming/incoming messages in dialog:
 Download file:
 `await dialog.downloadFile(fileId: fileId);`
 
+Listen to newMemberAdded to the chat:
+`await dialog.onMemberAdded();`
+

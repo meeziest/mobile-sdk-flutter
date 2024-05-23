@@ -43,5 +43,16 @@ final class ChannelImpl implements Channel {
   ///
   /// Returns a [Future] that completes when the reconnection attempt is done.
   @override
-  Future<void> reconnectToStream() => _chatService.reconnectToStream();
+  Future<void> reconnectToStream() async => _chatService.reconnectToStream();
+
+  /// Sends a ping request to the server to check the connection status.
+  ///
+  /// This method creates an Echo request with the data 'Client ping' and sends it to the
+  /// server using the gRPC channel. It converts the server's response to a string and returns it.
+  /// If a gRPC error occurs, it logs the error and returns an error message.
+  ///
+  /// Returns a [Future<String>] that completes with the server's response as a string,
+  /// or an error message if the ping request fails.
+  @override
+  Future<String> ping() async => _chatService.ping();
 }

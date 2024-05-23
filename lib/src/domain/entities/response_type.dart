@@ -8,4 +8,7 @@ enum ResponseType {
 
   /// Represents an error response.
   error,
+
+  /// New member added
+  memberAdded,
 }

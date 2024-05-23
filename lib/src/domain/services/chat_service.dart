@@ -90,4 +90,9 @@ abstract interface class ChatService {
   ///
   /// Returns a [StreamController] for [CallError] occurrences.
   StreamController<CallError> onError();
+
+  /// Sends a ping request to the server to check connectivity.
+  ///
+  /// Returns a [Future] that completes with the ping response.
+  Future<String> ping();
 }
