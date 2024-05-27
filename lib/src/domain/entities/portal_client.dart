@@ -25,6 +25,11 @@ abstract interface class PortalClient {
   /// Returns a [PortalResponse] indicating the result of the registration.
   Future<PortalResponse> registerDevice({required String pushToken});
 
+  /// Unregisters a device from push notifications..
+  ///
+  /// Returns a [PortalResponse] indicating the result of the un-registration.
+  Future<PortalResponse> unregisterDevice();
+
   /// Logs in a user with the provided credentials and user information.
   ///
   /// [name] The name of the user.

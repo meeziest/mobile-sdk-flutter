@@ -34,6 +34,10 @@ final class DialogImpl implements Dialog {
   @override
   final Stream<PortalChatMember> onMemberAdded;
 
+  /// Stream [PortalChatMember] for member left  the chat..
+  @override
+  final Stream<PortalChatMember> onMemberLeft;
+
   // Dependency on the ChatService to handle chat-related operations.
   late final ChatService _chatService;
 
@@ -48,6 +52,7 @@ final class DialogImpl implements Dialog {
     required this.topMessage,
     required this.onNewMessage,
     required this.onMemberAdded,
+    required this.onMemberLeft,
     this.error,
   }) {
     _chatService = getIt.get<ChatService>();
@@ -59,6 +64,7 @@ final class DialogImpl implements Dialog {
         topMessage = 'No messages yet',
         error = CallError(statusCode: '', errorMessage: ''),
         onNewMessage = Stream.empty(),
+        onMemberLeft = Stream.empty(),
         onMemberAdded = Stream.empty();
 
   /// Sends a message in the dialog.

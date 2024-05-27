@@ -74,6 +74,14 @@ final class PortalClientImpl implements PortalClient {
   Future<PortalResponse> registerDevice({required String pushToken}) async =>
       await _authService.registerDevice(pushToken: pushToken);
 
+  /// Unregisters a device from push notifications..
+  ///
+  /// Returns a [Future] that completes with a [PortalResponse] indicating
+  /// the result of the un-registration operation.
+  @override
+  Future<PortalResponse> unregisterDevice() async =>
+      _authService.unregisterDevice();
+
   /// Logs in a user with the provided credentials.
   ///
   /// [name] The name of the user.

@@ -7,6 +7,11 @@ import "chat/messages/message.proto";
 // Media (file) storage
 service MediaStorage {
 
+  // Upload new media content.
+  // Continue incomplete upload.
+  rpc Upload(stream UploadRequest) returns (stream UploadProgress);
+
+  // Legacy.
   // Upload a file (without actually sending it to the chat)
   rpc UploadFile(stream UploadMedia) returns (webitel.chat.File);
 
@@ -20,6 +25,43 @@ message InputFile {
   string type = 4;
   // Filename
   string name = 5;
+}
+
+message UploadRequest {
+  // Input
+  oneof media {
+    // Continue incomplete upload ...
+    string pid = 1;
+    // Declaration of document metadata.
+    InputFile file = 2;
+    // Multipart(s) content data.
+    bytes part = 3;
+  }
+}
+
+message UploadProgress {
+
+  message Partial {
+    // Upload process id.
+    string pid = 1;
+    // Size of the saved data.
+    int64 size = 2;
+  }
+
+  message Complete {
+    // Saved document metadata.
+    webitel.chat.File file = 1;
+    // Hashsum variants of stored data. map[algo]hash
+    map<string,string> hash = 2;
+  }
+
+  // Output
+  oneof media {
+    // Operation progress start.
+    Partial part = 1;
+    // Operation complete stats.
+    Complete stat = 2;
+  }
 }
 
 message UploadMedia {

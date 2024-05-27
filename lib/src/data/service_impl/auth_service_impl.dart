@@ -293,6 +293,33 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  /// Unregisters a device.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the un-registration.
+  @override
+  Future<res.PortalResponse> unregisterDevice() async {
+    log.info('Attempting to unregister device');
+
+    try {
+      // Send the unregister device request to the server.
+      await _grpcChannel.customerStub.registerDevice(
+        RegisterDeviceRequest(push: null),
+      );
+
+      log.info('Device unregistered successfully');
+
+      return res.PortalResponse(status: PortalResponseStatus.success);
+    } catch (err) {
+      log.severe('Failed to unregister device. Error: ${err.toString()}', err);
+
+      // Return a failure response indicating the device un-registration error.
+      return res.PortalResponse(
+        status: PortalResponseStatus.error,
+        message: 'Failed to unregister device: ${err.toString()}',
+      );
+    }
+  }
+
   /// Logs out the current user.
   ///
   /// Returns a [PortalResponse] indicating the result of the logout operation.

@@ -26,6 +26,77 @@ const InputFile$json = {
 final $typed_data.Uint8List inputFileDescriptor = $convert.base64Decode(
     'CglJbnB1dEZpbGUSEgoEdHlwZRgEIAEoCVIEdHlwZRISCgRuYW1lGAUgASgJUgRuYW1l');
 
+@$core.Deprecated('Use uploadRequestDescriptor instead')
+const UploadRequest$json = {
+  '1': 'UploadRequest',
+  '2': [
+    {'1': 'pid', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'pid'},
+    {'1': 'file', '3': 2, '4': 1, '5': 11, '6': '.webitel.portal.InputFile', '9': 0, '10': 'file'},
+    {'1': 'part', '3': 3, '4': 1, '5': 12, '9': 0, '10': 'part'},
+  ],
+  '8': [
+    {'1': 'media'},
+  ],
+};
+
+/// Descriptor for `UploadRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List uploadRequestDescriptor = $convert.base64Decode(
+    'Cg1VcGxvYWRSZXF1ZXN0EhIKA3BpZBgBIAEoCUgAUgNwaWQSLwoEZmlsZRgCIAEoCzIZLndlYm'
+    'l0ZWwucG9ydGFsLklucHV0RmlsZUgAUgRmaWxlEhQKBHBhcnQYAyABKAxIAFIEcGFydEIHCgVt'
+    'ZWRpYQ==');
+
+@$core.Deprecated('Use uploadProgressDescriptor instead')
+const UploadProgress$json = {
+  '1': 'UploadProgress',
+  '2': [
+    {'1': 'part', '3': 1, '4': 1, '5': 11, '6': '.webitel.portal.UploadProgress.Partial', '9': 0, '10': 'part'},
+    {'1': 'stat', '3': 2, '4': 1, '5': 11, '6': '.webitel.portal.UploadProgress.Complete', '9': 0, '10': 'stat'},
+  ],
+  '3': [UploadProgress_Partial$json, UploadProgress_Complete$json],
+  '8': [
+    {'1': 'media'},
+  ],
+};
+
+@$core.Deprecated('Use uploadProgressDescriptor instead')
+const UploadProgress_Partial$json = {
+  '1': 'Partial',
+  '2': [
+    {'1': 'pid', '3': 1, '4': 1, '5': 9, '10': 'pid'},
+    {'1': 'size', '3': 2, '4': 1, '5': 3, '10': 'size'},
+  ],
+};
+
+@$core.Deprecated('Use uploadProgressDescriptor instead')
+const UploadProgress_Complete$json = {
+  '1': 'Complete',
+  '2': [
+    {'1': 'file', '3': 1, '4': 1, '5': 11, '6': '.webitel.chat.File', '10': 'file'},
+    {'1': 'hash', '3': 2, '4': 3, '5': 11, '6': '.webitel.portal.UploadProgress.Complete.HashEntry', '10': 'hash'},
+  ],
+  '3': [UploadProgress_Complete_HashEntry$json],
+};
+
+@$core.Deprecated('Use uploadProgressDescriptor instead')
+const UploadProgress_Complete_HashEntry$json = {
+  '1': 'HashEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 9, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 9, '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+/// Descriptor for `UploadProgress`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List uploadProgressDescriptor = $convert.base64Decode(
+    'Cg5VcGxvYWRQcm9ncmVzcxI8CgRwYXJ0GAEgASgLMiYud2ViaXRlbC5wb3J0YWwuVXBsb2FkUH'
+    'JvZ3Jlc3MuUGFydGlhbEgAUgRwYXJ0Ej0KBHN0YXQYAiABKAsyJy53ZWJpdGVsLnBvcnRhbC5V'
+    'cGxvYWRQcm9ncmVzcy5Db21wbGV0ZUgAUgRzdGF0Gi8KB1BhcnRpYWwSEAoDcGlkGAEgASgJUg'
+    'NwaWQSEgoEc2l6ZRgCIAEoA1IEc2l6ZRqyAQoIQ29tcGxldGUSJgoEZmlsZRgBIAEoCzISLndl'
+    'Yml0ZWwuY2hhdC5GaWxlUgRmaWxlEkUKBGhhc2gYAiADKAsyMS53ZWJpdGVsLnBvcnRhbC5VcG'
+    'xvYWRQcm9ncmVzcy5Db21wbGV0ZS5IYXNoRW50cnlSBGhhc2gaNwoJSGFzaEVudHJ5EhAKA2tl'
+    'eRgBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAFCBwoFbWVkaWE=');
+
 @$core.Deprecated('Use uploadMediaDescriptor instead')
 const UploadMedia$json = {
   '1': 'UploadMedia',

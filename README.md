@@ -44,6 +44,9 @@ Listen to changes in channel status:
 Listen to changes in connect status:
 `channel.onConnectStreamStatusChange.listen...`
 
+Reconnect to stream:
+`channel.reconnectToStream()...`
+
 ### Dialogs
 
 Fetch dialog:
@@ -66,4 +69,7 @@ Download file:
 
 Listen to newMemberAdded to the chat:
 `await dialog.onMemberAdded();`
+
+Listen to MemberLeft the chat:
+`await dialog.onMemberLeft();`
 

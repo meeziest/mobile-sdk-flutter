@@ -33,6 +33,11 @@ abstract interface class Dialog {
   /// Returns a stream of [ChatMember] for new member added..
   Stream<PortalChatMember> get onMemberAdded;
 
+  /// Stream of chat member left.
+  ///
+  /// Returns a stream of [PortalChatMember] for member left.
+  Stream<PortalChatMember> get onMemberLeft;
+
   /// Downloads a media file associated with the dialog.
   ///
   /// [fileId] The unique identifier of the file to be downloaded.

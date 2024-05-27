@@ -11,4 +11,7 @@ enum ResponseType {
 
   /// New member added
   memberAdded,
+
+  ///Member left
+  memberLeft,
 }

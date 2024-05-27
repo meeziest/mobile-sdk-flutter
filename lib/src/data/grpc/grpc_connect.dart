@@ -18,8 +18,10 @@ import 'package:webitel_portal_sdk/src/generated/google/protobuf/any.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
     as portal;
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
+import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 
-/// A singleton class to manage gRPC connections and handle communication with the server.
+/// A singleton class to manage gRPC bi-directional Connect stream and handle
+/// communication with the server.
 @LazySingleton()
 final class GrpcConnect {
   // The gRPC channel used to communicate with the server.
@@ -43,6 +45,10 @@ final class GrpcConnect {
   // Stream controller new member added to the chat..
   final StreamController<UpdateChatMember> _memberAddedStreamController =
       StreamController<UpdateChatMember>.broadcast();
+
+  // Stream controller member left the chat..
+  final StreamController<UpdateLeftMember> _memberLeftStreamController =
+      StreamController<UpdateLeftMember>.broadcast();
 
   // Stream controller for requests to the server.
   final StreamController<portal.Request> _requestStreamController =
@@ -110,38 +116,45 @@ final class GrpcConnect {
               // [Processing a new message update]
               log.info(
                   'Processing response type: ${ResponseType.updateNewMessage}');
-
               final decodedUpdate = update.data.unpackInto(
                 UpdateNewMessage(),
               );
-              _updateStreamController.add(decodedUpdate);
 
+              _updateStreamController.add(decodedUpdate);
               log.info('New message received: ${decodedUpdate.message.text}');
-              break;
 
             case ResponseType.memberAdded:
               // [Processing a new member added update]
               log.info('Processing response type: ${ResponseType.memberAdded}');
-
               final decodedUpdate = update.data.unpackInto(
                 UpdateChatMember(),
               );
-              _memberAddedStreamController.add(decodedUpdate);
 
+              _memberAddedStreamController.add(decodedUpdate);
               log.info(
                   'New chat member added: ${decodedUpdate.join.first.name}');
-              break;
+
+            case ResponseType.memberLeft:
+              // [Processing member left chat]
+              log.info('Processing response type: ${ResponseType.memberLeft}');
+              final decodedUpdate = update.data.unpackInto(
+                UpdateLeftMember(),
+              );
+
+              _memberLeftStreamController.add(decodedUpdate);
+              log.info('Member left chat: ${decodedUpdate.left.name}');
 
             case ResponseType.error:
               // [Processing an error response]
               log.info('Processing response type: ${ResponseType.error}');
-
               final decodedResponse = update.data.unpackInto(
                 portal.Response(),
               );
+
               _responseStreamController.add(decodedResponse);
               final code =
                   ErrorHelper.getCodeFromMessage(decodedResponse.err.message);
+
               _errorStreamController.add(
                 CallError(
                   statusCode: code,
@@ -150,7 +163,6 @@ final class GrpcConnect {
               );
               log.warning(
                   'Error response received: ${decodedResponse.err.message}');
-              break;
           }
         }
       } else {
@@ -168,7 +180,6 @@ final class GrpcConnect {
       handleConnectionClosure(err: err.message ?? '');
     } catch (err, stack) {
       log.warning('Unexpected error occurred: $err', stack);
-
       handleConnectionClosure(err: err.toString());
     }
   }
@@ -339,6 +350,10 @@ final class GrpcConnect {
   /// Gets the new member added to the chat stream..
   Stream<UpdateChatMember> get memberAddedStream =>
       _memberAddedStreamController.stream;
+
+  /// Gets the member left the chat stream..
+  Stream<UpdateLeftMember> get memberLeftStream =>
+      _memberLeftStreamController.stream;
 
   /// Gets the error stream controller.
   StreamController<CallError> get errorStream => _errorStreamController;

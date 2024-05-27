@@ -95,6 +95,12 @@ final class ChatServiceImpl implements ChatService {
   final Map<String, StreamController<PortalChatMember>>
       _onMemberAddedControllers = {};
 
+  /// A map to manage StreamControllers for member left events, indexed by chat ID.
+  /// Each chat ID maps to a StreamController that broadcasts [ChatMember]
+  /// events.
+  final Map<String, StreamController<PortalChatMember>>
+      _onMemberLeftControllers = {};
+
   // Constructor for initializing the chat service with the required dependencies.
   ChatServiceImpl(
     this._grpcChannel,
@@ -107,8 +113,8 @@ final class ChatServiceImpl implements ChatService {
   /// Initializes various listeners for messages, connection status changes, and errors.
   void initListeners() {
     listenToMessages();
-
     listenToNewMemberAdded();
+    listenToMemberLeft();
 
     log.info("Message listener setup complete.");
 
@@ -127,7 +133,7 @@ final class ChatServiceImpl implements ChatService {
   /// [chatId] The ID of the chat for which the controller is requested.
   ///
   /// Returns a [StreamController] for [ChatMember].
-  Future<StreamController<PortalChatMember>> getControllerForChatMember(
+  Future<StreamController<PortalChatMember>> getControllerForMemberAdded(
     String chatId,
   ) async {
     var controllerExists = _onMemberAddedControllers.containsKey(chatId);
@@ -145,6 +151,33 @@ final class ChatServiceImpl implements ChatService {
         log.info(
             'New StreamController for ChatMember created for chat ID: $chatId');
 
+        return StreamController<PortalChatMember>.broadcast();
+      },
+    );
+  }
+
+  /// Get or create a [StreamController] for a member left event by chatId.
+  ///
+  /// [chatId] The ID of the chat for which the controller is requested.
+  ///
+  /// Returns a [StreamController] for [PortalChatMember].
+  Future<StreamController<PortalChatMember>> getControllerForMemberLeft(
+    String chatId,
+  ) async {
+    var controllerExists = _onMemberLeftControllers.containsKey(chatId);
+    if (controllerExists) {
+      log.info(
+          'Retrieving existing controller for member left with ID: $chatId');
+    } else {
+      log.info(
+          'No controller found for member left with ID: $chatId, creating a new one.');
+    }
+
+    return _onMemberLeftControllers.putIfAbsent(
+      chatId,
+      () {
+        log.info(
+            'New StreamController for member left created for chat ID: $chatId');
         return StreamController<PortalChatMember>.broadcast();
       },
     );
@@ -220,13 +253,17 @@ final class ChatServiceImpl implements ChatService {
                 await getControllerForNewMessage(dialog.id);
 
             final onNewMemberAddedController =
-                await getControllerForChatMember(dialog.id);
+                await getControllerForMemberAdded(dialog.id);
+
+            final onMemberLeftController =
+                await getControllerForMemberLeft(dialog.id);
 
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
               onMemberAdded: onNewMemberAddedController.stream,
+              onMemberLeft: onMemberLeftController.stream,
             );
           }).toList();
 
@@ -261,6 +298,7 @@ final class ChatServiceImpl implements ChatService {
             id: response.id,
             onNewMessage: Stream<DialogMessageResponse>.empty(),
             onMemberAdded: Stream<PortalChatMember>.empty(),
+            onMemberLeft: Stream<PortalChatMember>.empty(),
           ),
         ];
       } else {
@@ -317,13 +355,17 @@ final class ChatServiceImpl implements ChatService {
                 await getControllerForNewMessage(dialog.id);
 
             final onNewMemberAddedController =
-                await getControllerForChatMember(dialog.id);
+                await getControllerForMemberAdded(dialog.id);
+
+            final onMemberLeftController =
+                await getControllerForMemberLeft(dialog.id);
 
             return DialogImpl(
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
               onMemberAdded: onNewMemberAddedController.stream,
+              onMemberLeft: onMemberLeftController.stream,
             );
           }).toList();
 
@@ -356,6 +398,7 @@ final class ChatServiceImpl implements ChatService {
           id: response.id,
           onNewMessage: Stream<DialogMessageResponse>.empty(),
           onMemberAdded: Stream<PortalChatMember>.empty(),
+          onMemberLeft: Stream<PortalChatMember>.empty(),
         );
       } else {
         log.warning('Failed to unpack chat list for request ID: $requestId');
@@ -523,6 +566,46 @@ final class ChatServiceImpl implements ChatService {
       },
       onDone: () {
         log.info("Listener for new member added events has completed.");
+      },
+    );
+  }
+
+  /// Listens for member left the chat.
+  Future<void> listenToMemberLeft() async {
+    log.info("Initializing listener for member left events.");
+
+    await _sharedPreferencesGateway.init();
+    final userId = await _sharedPreferencesGateway.readUserId();
+
+    log.info("User ID retrieved: $userId");
+
+    _grpcConnect.memberLeftStream.listen(
+      (member) async {
+        final chatId = member.chat.id;
+        log.info("Member left event received for chat ID: $chatId");
+
+        final onMemberLeftController = _onMemberLeftControllers[chatId];
+
+        if (onMemberLeftController != null) {
+          log.info("Adding member left to controller for chat ID: $chatId");
+
+          onMemberLeftController.add(
+            PortalChatMember(
+              chatId: member.chat.id,
+              memberId: member.left.id,
+              memberType: member.left.type,
+              memberName: member.left.name,
+            ),
+          );
+        } else {
+          log.warning("No controller found for chat ID: $chatId");
+        }
+      },
+      onError: (error) {
+        log.severe("Error while listening to member left events: $error");
+      },
+      onDone: () {
+        log.info("Listener for member left events has completed.");
       },
     );
   }
@@ -764,35 +847,57 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
-  /// Stream transformer that converts a stream of data chunks into a stream of UploadMedia messages.
+  /// Stream transformer that converts a stream of data chunks into a stream of UploadRequest messages.
   ///
   /// [data] The stream of data chunks to be uploaded.
   /// [name] The name of the media file.
   /// [type] The type of the media file.
+  /// [pid] The process ID for resuming incomplete uploads, if any.
   ///
-  /// Yields a stream of [UploadMedia] messages.
-  Stream<UploadMedia> uploadMediaStream({
+  /// Yields a stream of [UploadRequest] messages.
+  Stream<UploadRequest> uploadMediaStream({
     required Stream<List<int>> data,
     required String name,
     required String type,
+    String? pid,
+    int? offset,
   }) async* {
     log.info(
-        'Starting to stream UploadMedia with file name: $name and type: $type');
+        'Starting to stream UploadRequest with file name: $name and type: $type. Process ID: $pid, Offset: $offset');
 
-    yield UploadMedia(
-      file: InputFile(
-        name: name,
-        type: type,
-      ),
-    );
+    if (pid != null) {
+      // Resume incomplete upload
+      log.info('Resuming incomplete upload with Process ID: $pid');
 
-    await for (var bytes in data) {
-      log.info('Streaming data chunk of size: ${bytes.length} bytes.');
+      yield UploadRequest(pid: pid);
+    } else {
+      // Start new upload
+      log.info('Starting new upload for file: $name of type: $type');
 
-      yield UploadMedia(data: bytes);
+      yield UploadRequest(
+        file: InputFile(
+          name: name,
+          type: type,
+        ),
+      );
     }
 
-    log.info('Completed streaming UploadMedia messages for file: $name');
+    int currentOffset = offset ?? 0;
+
+    await for (var bytes in data) {
+      if (currentOffset > 0) {
+        log.info(
+            'Resuming from offset: $currentOffset, skipping already uploaded bytes');
+
+        bytes = bytes.sublist(currentOffset);
+        currentOffset = 0; // Reset offset after using it once
+      }
+      log.info('Streaming data chunk of size: ${bytes.length} bytes.');
+
+      yield UploadRequest(part: bytes);
+    }
+
+    log.info('Completed streaming UploadRequest messages for file: $name');
   }
 
   /// Builds the request for sending a message.
@@ -807,28 +912,64 @@ final class ChatServiceImpl implements ChatService {
     String userId,
     MessageType messageType,
   ) async {
-    log.info("Building request for message type $messageType");
+    log.info(
+        "Building request for sending a message. User ID: $userId, Message Type: $messageType, Message Content: ${message.content}");
 
     final baseRequest = SendMessageRequest(
       text: message.content,
     );
 
     if (messageType == MessageType.outcomingMedia) {
-      log.info("Uploading media for message.");
-      final uploadedFile = await _grpcChannel.mediaStorageStub.uploadFile(
-        uploadMediaStream(
-          data: message.file.data,
-          name: message.file.name,
-          type: message.file.type,
-        ),
-      );
+      log.info(
+          "Detected outgoing media message. Preparing to upload media file: ${message.file.name} of type: ${message.file.type}");
 
-      baseRequest.file = file.File(
-        id: uploadedFile.id,
-        name: uploadedFile.name,
-        type: uploadedFile.type,
-      );
+      String? pid;
+      int offset = 0;
+
+      final r = RetryOptions(maxAttempts: 3);
+
+      try {
+        await r.retry(
+          () async {
+            await for (var progress in _grpcChannel.mediaStorageStub.upload(
+              uploadMediaStream(
+                data: message.file.data,
+                name: message.file.name,
+                type: message.file.type,
+                pid: pid,
+                offset: offset,
+              ),
+            )) {
+              if (progress.hasPart()) {
+                pid = progress.part.pid;
+                offset = progress.part.size.toInt();
+
+                log.info(
+                    'Upload progress update: Process ID=$pid, Uploaded Size=$offset bytes');
+              } else if (progress.hasStat()) {
+                log.info(
+                    'Upload complete. File details - Name: ${progress.stat.file.name}, ID: ${progress.stat.file.id}, Type: ${progress.stat.file.type}');
+
+                baseRequest.file = file.File(
+                  id: progress.stat.file.id,
+                  name: progress.stat.file.name,
+                  type: progress.stat.file.type,
+                );
+              }
+            }
+          },
+          retryIf: (e) => e is GrpcError,
+          onRetry: (e) => log.warning(
+              'Encountered error during upload: $e. Retrying upload...'),
+        );
+      } catch (err) {
+        log.severe(
+            'Failed to upload media file: ${message.file.name} after 3 retry attempts. Error: $err');
+      }
     }
+
+    log.info(
+        'Sending message request to portal with path: ${Constants.sendMessagePath}');
 
     return portal.Request(
       path: Constants.sendMessagePath,
@@ -954,8 +1095,8 @@ final class ChatServiceImpl implements ChatService {
       } else {
         return [];
       }
-    } catch (e) {
-      if (e is TimeoutException) {
+    } catch (err) {
+      if (err is TimeoutException) {
         log.severe('Timeout while fetching messages for chatId: $chatId');
       } else {
         log.severe(
@@ -984,14 +1125,14 @@ final class ChatServiceImpl implements ChatService {
 
       // Convert the response to a string and return it
       return String.fromCharCodes(response.data);
-    } on GrpcError catch (e) {
+    } on GrpcError catch (err) {
       // Log and handle the gRPC error
-      log.severe('GRPC Error during ping', e);
-      return 'GRPC Error: ${e.message}';
-    } catch (e) {
+      log.severe('GRPC Error during ping', err);
+      return 'GRPC Error: ${err.message}';
+    } catch (err) {
       // Log and handle any other errors
-      log.severe('Unexpected Error during ping', e);
-      return 'Unexpected Error: ${e.toString()}';
+      log.severe('Unexpected Error during ping', err);
+      return 'Unexpected Error: ${err.toString()}';
     }
   }
 

@@ -125,17 +125,8 @@ class GrpcChannel {
     required String url,
     required bool secure,
   }) async {
-    _logger.info('Creating gRPC channel with the following parameters:');
-
-    _logger.info('URL: $url');
-
-    _logger.info('Port: $port');
-
-    _logger.info('Secure: $secure');
-
-    _logger.info('Device ID: $deviceId');
-
-    _logger.info('User Agent: $userAgent');
+    _logger.info(
+        'Creating gRPC channel with the following parameters: URL: $_url, Port: $_port, Secure: $_secure, Device ID: $_deviceId, User Agent: $_userAgent');
 
     // Create the gRPC channel with the specified options.
     _channel = ClientChannel(

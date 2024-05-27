@@ -22,6 +22,10 @@ export 'media.pb.dart';
 
 @$pb.GrpcServiceName('webitel.portal.MediaStorage')
 class MediaStorageClient extends $grpc.Client {
+  static final _$upload = $grpc.ClientMethod<$5.UploadRequest, $5.UploadProgress>(
+      '/webitel.portal.MediaStorage/Upload',
+      ($5.UploadRequest value) => value.writeToBuffer(),
+      ($core.List<$core.int> value) => $5.UploadProgress.fromBuffer(value));
   static final _$uploadFile = $grpc.ClientMethod<$5.UploadMedia, $6.File>(
       '/webitel.portal.MediaStorage/UploadFile',
       ($5.UploadMedia value) => value.writeToBuffer(),
@@ -37,6 +41,10 @@ class MediaStorageClient extends $grpc.Client {
       : super(channel, options: options,
         interceptors: interceptors);
 
+  $grpc.ResponseStream<$5.UploadProgress> upload($async.Stream<$5.UploadRequest> request, {$grpc.CallOptions? options}) {
+    return $createStreamingCall(_$upload, request, options: options);
+  }
+
   $grpc.ResponseFuture<$6.File> uploadFile($async.Stream<$5.UploadMedia> request, {$grpc.CallOptions? options}) {
     return $createStreamingCall(_$uploadFile, request, options: options).single;
   }
@@ -51,6 +59,13 @@ abstract class MediaStorageServiceBase extends $grpc.Service {
   $core.String get $name => 'webitel.portal.MediaStorage';
 
   MediaStorageServiceBase() {
+    $addMethod($grpc.ServiceMethod<$5.UploadRequest, $5.UploadProgress>(
+        'Upload',
+        upload,
+        true,
+        true,
+        ($core.List<$core.int> value) => $5.UploadRequest.fromBuffer(value),
+        ($5.UploadProgress value) => value.writeToBuffer()));
     $addMethod($grpc.ServiceMethod<$5.UploadMedia, $6.File>(
         'UploadFile',
         uploadFile,
@@ -71,6 +86,7 @@ abstract class MediaStorageServiceBase extends $grpc.Service {
     yield* getFile(call, await request);
   }
 
+  $async.Stream<$5.UploadProgress> upload($grpc.ServiceCall call, $async.Stream<$5.UploadRequest> request);
   $async.Future<$6.File> uploadFile($grpc.ServiceCall call, $async.Stream<$5.UploadMedia> request);
   $async.Stream<$5.MediaFile> getFile($grpc.ServiceCall call, $5.GetFileRequest request);
 }

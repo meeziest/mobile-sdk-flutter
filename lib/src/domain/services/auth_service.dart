@@ -17,6 +17,12 @@ abstract interface class AuthService {
   /// Returns a [PortalResponse] indicating the result of the registration.
   Future<PortalResponse> registerDevice({required String pushToken});
 
+  /// Unregisters a device.
+  ///
+  /// Returns a [PortalResponse] indicating the result of the un-registration
+  /// from push notifications.
+  Future<PortalResponse> unregisterDevice();
+
   /// Initializes the portal client with the specified URL and app token.
   ///
   /// [url] The URL of the portal.
