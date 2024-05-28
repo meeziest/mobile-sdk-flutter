@@ -29,6 +29,7 @@ final class ErrorDialogMessageBuilder {
       requestId: _requestId,
       peer: peerInfo,
       file: MediaFileResponse.initial(),
+      timestamp: 0,
     );
   }
 }

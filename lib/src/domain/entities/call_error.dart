@@ -1,4 +1,7 @@
+import 'package:injectable/injectable.dart';
+
 /// Represents an error that occurs during a call operation.
+@LazySingleton()
 class CallError {
   /// The status code of the error, if available.
   final String? statusCode;

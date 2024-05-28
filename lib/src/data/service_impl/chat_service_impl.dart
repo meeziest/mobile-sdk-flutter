@@ -136,7 +136,7 @@ final class ChatServiceImpl implements ChatService {
   Future<StreamController<PortalChatMember>> getControllerForMemberAdded(
     String chatId,
   ) async {
-    var controllerExists = _onMemberAddedControllers.containsKey(chatId);
+    final controllerExists = _onMemberAddedControllers.containsKey(chatId);
     if (controllerExists) {
       log.info(
           'Retrieving existing controller for chat member with ID: $chatId');
@@ -164,7 +164,7 @@ final class ChatServiceImpl implements ChatService {
   Future<StreamController<PortalChatMember>> getControllerForMemberLeft(
     String chatId,
   ) async {
-    var controllerExists = _onMemberLeftControllers.containsKey(chatId);
+    final controllerExists = _onMemberLeftControllers.containsKey(chatId);
     if (controllerExists) {
       log.info(
           'Retrieving existing controller for member left with ID: $chatId');
@@ -191,7 +191,7 @@ final class ChatServiceImpl implements ChatService {
   Future<StreamController<DialogMessageResponse>> getControllerForNewMessage(
     String chatId,
   ) async {
-    var controllerExists = _onNewMessageControllers.containsKey(chatId);
+    final controllerExists = _onNewMessageControllers.containsKey(chatId);
     if (controllerExists) {
       log.info('Retrieving existing controller for chat ID: $chatId');
     } else {
@@ -420,7 +420,7 @@ final class ChatServiceImpl implements ChatService {
   Stream<MediaFileResponse> downloadFile({
     required String fileId,
   }) async* {
-    yield* _downloadFileFromServer(fileId: fileId);
+    yield* _downloadMediaFromServer(fileId: fileId);
   }
 
   /// Fetches a media file from the server.
@@ -428,7 +428,7 @@ final class ChatServiceImpl implements ChatService {
   /// [fileId] The ID of the file to be fetched.
   ///
   /// Returns a stream of [MediaFileResponse].
-  Stream<MediaFileResponse> _downloadFileFromServer({
+  Stream<MediaFileResponse> _downloadMediaFromServer({
     required String fileId,
   }) async* {
     final mediaStream =
@@ -633,6 +633,7 @@ final class ChatServiceImpl implements ChatService {
                   .setUserUd(userId ?? '')
                   .setChatId(chatId)
                   .setUpdate(update)
+                  .setTimestamp(update.message.date.toInt())
                   .setFile(
                     MediaFileResponse(
                       id: update.message.file.id,
@@ -651,6 +652,7 @@ final class ChatServiceImpl implements ChatService {
                   .setMessageId(update.message.id.toInt())
                   .setUserUd(userId ?? '')
                   .setChatId(chatId)
+                  .setTimestamp(update.message.date.toInt())
                   .setUpdate(update)
                   .setFile(MediaFileResponse.initial())
                   .build()
@@ -741,6 +743,7 @@ final class ChatServiceImpl implements ChatService {
           onDone: () => streamSubscription?.cancel(),
           cancelOnError: true,
         );
+
     return completer.future;
   }
 
@@ -771,11 +774,11 @@ final class ChatServiceImpl implements ChatService {
                 .setUserUd(userId)
                 .setMessageId(unpackedMessage.message.id.toInt())
                 .setChatId(unpackedMessage.message.chat.id)
+                .setTimestamp(unpackedMessage.message.date.toInt())
                 .setUpdate(unpackedMessage)
                 .setFile(MediaFileResponse.initial())
                 .build(),
           );
-          break;
 
         case MessageType.outcomingMedia:
           log.info(
@@ -789,6 +792,7 @@ final class ChatServiceImpl implements ChatService {
                 .setUserUd(userId)
                 .setChatId(unpackedMessage.message.chat.id)
                 .setUpdate(unpackedMessage)
+                .setTimestamp(unpackedMessage.message.date.toInt())
                 .setFile(
                   MediaFileResponse(
                     id: unpackedMessage.message.file.id,
@@ -799,7 +803,7 @@ final class ChatServiceImpl implements ChatService {
                 )
                 .build(),
           );
-          break;
+
         default:
           log.warning("Unhandled message type: $messageType");
       }
@@ -855,7 +859,7 @@ final class ChatServiceImpl implements ChatService {
   /// [pid] The process ID for resuming incomplete uploads, if any.
   ///
   /// Yields a stream of [UploadRequest] messages.
-  Stream<UploadRequest> uploadMediaStream({
+  Stream<UploadRequest> _uploadMediaStream({
     required Stream<List<int>> data,
     required String name,
     required String type,
@@ -932,7 +936,7 @@ final class ChatServiceImpl implements ChatService {
         await r.retry(
           () async {
             await for (var progress in _grpcChannel.mediaStorageStub.upload(
-              uploadMediaStream(
+              _uploadMediaStream(
                 data: message.file.data,
                 name: message.file.name,
                 type: message.file.type,
@@ -958,9 +962,9 @@ final class ChatServiceImpl implements ChatService {
               }
             }
           },
-          retryIf: (e) => e is GrpcError,
-          onRetry: (e) => log.warning(
-              'Encountered error during upload: $e. Retrying upload...'),
+          retryIf: (err) => err is GrpcError,
+          onRetry: (err) => log.warning(
+              'Encountered error during upload: $err. Retrying upload...'),
         );
       } catch (err) {
         log.severe(

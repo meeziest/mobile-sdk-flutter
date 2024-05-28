@@ -16,6 +16,7 @@ final class ErrorMessageBuilder {
       requestId: '',
       peer: PeerInfo(id: '', name: '', type: ''),
       file: MediaFileResponse.initial(),
+      timestamp: 0,
     );
   }
 }

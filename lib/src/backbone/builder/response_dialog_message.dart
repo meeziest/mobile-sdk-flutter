@@ -8,6 +8,7 @@ final class ResponseDialogMessageBuilder {
   late String _dialogMessageContent;
   late String _requestId;
   late String _chatId;
+  late int _timestamp;
   late int _messageId;
   late String _userId;
   late UpdateNewMessage _update;
@@ -49,6 +50,11 @@ final class ResponseDialogMessageBuilder {
     return this;
   }
 
+  ResponseDialogMessageBuilder setTimestamp(int timestamp) {
+    _timestamp = timestamp;
+    return this;
+  }
+
   DialogMessageResponse build() {
     final sender =
         _update.message.from.id == _userId ? Sender.user : Sender.operator;
@@ -62,6 +68,7 @@ final class ResponseDialogMessageBuilder {
     );
 
     return DialogMessageResponse(
+      timestamp: _timestamp,
       sender: sender,
       messageType: messageType,
       chatId: _chatId,

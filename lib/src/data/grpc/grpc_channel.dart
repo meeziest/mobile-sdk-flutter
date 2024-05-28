@@ -205,9 +205,9 @@ class GrpcChannel {
         onRetry: (err) => _logger.warning(
             'Retrying due to GrpcError while reconnecting to gRPC server: ${err.toString()}'),
       );
-    } catch (e) {
+    } catch (err) {
       _logger.severe(
-          'Maximum reconnection attempts reached. Unable to reconnect to the gRPC server. Error: $e');
+          'Maximum reconnection attempts reached. Unable to reconnect to the gRPC server. Error: $err');
     }
   }
 }

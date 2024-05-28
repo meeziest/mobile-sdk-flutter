@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
@@ -8,6 +9,8 @@ import 'package:webitel_portal_sdk/src/injection/injection.dart';
 ///
 /// This class acts as a facade to interact with the underlying `ChatService`
 /// for handling chat-related functionalities within the portal SDK.
+
+@LazySingleton()
 class ChatManager {
   // Dependency on the ChatService to handle chat-related operations.
   late final ChatService _chatService;

@@ -21,6 +21,9 @@ class DialogMessageResponse {
   /// The peer information of the sender.
   final PeerInfo peer;
 
+  /// Timestamp of the message
+  final int timestamp;
+
   /// The sender of the message.
   final Sender? sender;
 
@@ -53,6 +56,7 @@ class DialogMessageResponse {
     this.sender,
     this.chatId,
     this.messageId,
+    required this.timestamp,
     required this.file,
     required this.requestId,
     required this.dialogMessageContent,
@@ -74,5 +78,6 @@ class DialogMessageResponse {
         messageType = null,
         chatId = null,
         dialogMessageContent = '',
+        timestamp = 0,
         messageId = null;
 }

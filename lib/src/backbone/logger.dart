@@ -47,8 +47,8 @@ final class CustomLogger {
         return Level.WARNING;
       case LoggerLevel.error:
         return Level.SEVERE;
-      default:
-        return Level.INFO;
+      case LoggerLevel.off:
+        return Level.OFF;
     }
   }
 }

@@ -172,6 +172,68 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  /// Retrieves or generates a device ID.
+  ///
+  /// Returns the device ID as a string.
+  Future<String> getOrGenerateDeviceId() async {
+    log.info('Attempting to retrieve or generate a device ID.');
+
+    // Retrieve the saved device ID from shared preferences.
+    final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
+
+    if (savedDeviceId == null || savedDeviceId == 'null') {
+      // Generate a new device ID if none is saved.
+      final deviceIdGenerated = const Uuid().v4();
+
+      log.info(
+          'No existing device ID found. Generating a new device ID: $deviceIdGenerated');
+
+      await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
+      return deviceIdGenerated;
+    }
+    log.info('Using existing device ID: $savedDeviceId');
+
+    return savedDeviceId;
+  }
+
+  /// Builds a user agent string for the SDK.
+  ///
+  /// [appName] The name of the application.
+  /// [appVersion] The version of the application.
+  /// [platform] The platform (e.g., android, ios).
+  /// [platformVersion] The version of the platform.
+  /// [model] The model of the device.
+  /// [device] The device name.
+  /// [architecture] The architecture of the device.
+  ///
+  /// Returns the user agent string.
+  String buildUserAgent({
+    required String appName,
+    required String appVersion,
+    required String platform,
+    required String platformVersion,
+    required String model,
+    required String device,
+    required String architecture,
+  }) {
+    // Build the user agent string with the provided parameters.
+    final userAgentString = UserAgentBuilder(
+      sdkName: Constants.sdkName,
+      sdkVersion: Constants.sdkVersion,
+      appName: appName,
+      version: appVersion,
+      platform: platform == 'android' ? Constants.androidPlatform : platform,
+      platformVersion: platformVersion,
+      model: model,
+      device: device,
+      architecture: architecture,
+    ).build();
+
+    log.info('User agent string built successfully: $userAgentString');
+
+    return userAgentString;
+  }
+
   /// Logs in a user with the provided credentials and user information.
   ///
   /// [name] The name of the user.
@@ -393,67 +455,5 @@ class AuthServiceImpl implements AuthService {
         ),
       );
     }
-  }
-
-  /// Retrieves or generates a device ID.
-  ///
-  /// Returns the device ID as a string.
-  Future<String> getOrGenerateDeviceId() async {
-    log.info('Attempting to retrieve or generate a device ID.');
-
-    // Retrieve the saved device ID from shared preferences.
-    final savedDeviceId = await _sharedPreferencesGateway.readDeviceId();
-
-    if (savedDeviceId == null || savedDeviceId == 'null') {
-      // Generate a new device ID if none is saved.
-      final deviceIdGenerated = const Uuid().v4();
-
-      log.info(
-          'No existing device ID found. Generating a new device ID: $deviceIdGenerated');
-
-      await _sharedPreferencesGateway.saveDeviceId(deviceIdGenerated);
-      return deviceIdGenerated;
-    }
-    log.info('Using existing device ID: $savedDeviceId');
-
-    return savedDeviceId;
-  }
-
-  /// Builds a user agent string for the SDK.
-  ///
-  /// [appName] The name of the application.
-  /// [appVersion] The version of the application.
-  /// [platform] The platform (e.g., android, ios).
-  /// [platformVersion] The version of the platform.
-  /// [model] The model of the device.
-  /// [device] The device name.
-  /// [architecture] The architecture of the device.
-  ///
-  /// Returns the user agent string.
-  String buildUserAgent({
-    required String appName,
-    required String appVersion,
-    required String platform,
-    required String platformVersion,
-    required String model,
-    required String device,
-    required String architecture,
-  }) {
-    // Build the user agent string with the provided parameters.
-    final userAgentString = UserAgentBuilder(
-      sdkName: Constants.sdkName,
-      sdkVersion: Constants.sdkVersion,
-      appName: appName,
-      version: appVersion,
-      platform: platform == 'android' ? Constants.androidPlatform : platform,
-      platformVersion: platformVersion,
-      model: model,
-      device: device,
-      architecture: architecture,
-    ).build();
-
-    log.info('User agent string built successfully: $userAgentString');
-
-    return userAgentString;
   }
 }

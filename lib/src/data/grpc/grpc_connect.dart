@@ -110,7 +110,6 @@ final class GrpcConnect {
                   portal.Response(),
                 ),
               );
-              break;
 
             case ResponseType.updateNewMessage:
               // [Processing a new message update]
@@ -178,8 +177,8 @@ final class GrpcConnect {
         ),
       );
       handleConnectionClosure(err: err.message ?? '');
-    } catch (err, stack) {
-      log.warning('Unexpected error occurred: $err', stack);
+    } catch (err) {
+      log.warning('Unexpected error occurred: $err');
       handleConnectionClosure(err: err.toString());
     }
   }
