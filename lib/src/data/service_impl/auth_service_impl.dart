@@ -24,8 +24,6 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_response_status.da
 import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
-import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
-    as portal;
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
 import 'package:webitel_portal_sdk/src/managers/call.dart';
@@ -140,13 +138,6 @@ class AuthServiceImpl implements AuthService {
         secure: secureConnection,
       );
 
-      // Send an initial ping to verify the connection.
-      final echo = portal.Echo(data: 'Channel init'.codeUnits);
-      await _grpcChannel.customerStub.ping(echo);
-
-      log.info('Initial ping sent successfully. The gRPC channel is valid.');
-
-      // Return an instance of PortalClientImpl to interact with the portal.
       return PortalClientImpl(
         url: url,
         appToken: appToken,
@@ -158,7 +149,6 @@ class AuthServiceImpl implements AuthService {
           'An error occurred during the initialization of the gRPC channel: ${err.message}',
           err);
 
-      // Return an instance of PortalClientImpl with an error to indicate the failure.
       return PortalClientImpl(
         error: CallError(
           errorMessage: err.message ?? '',
