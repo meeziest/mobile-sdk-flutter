@@ -25,6 +25,7 @@ final class ErrorDialogMessageBuilder {
     );
 
     return DialogMessageResponse(
+      input: false,
       dialogMessageContent: _dialogMessageContent,
       requestId: _requestId,
       peer: peerInfo,

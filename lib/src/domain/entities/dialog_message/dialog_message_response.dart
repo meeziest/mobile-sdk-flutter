@@ -1,4 +1,5 @@
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
@@ -28,7 +29,7 @@ class DialogMessageResponse {
   final Sender? sender;
 
   /// The type of the message.
-  final MessageType? messageType;
+  final MessageType? type;
 
   /// The unique identifier for the request.
   final String requestId;
@@ -39,6 +40,12 @@ class DialogMessageResponse {
   /// The ID of the message (optional).
   final int? messageId;
 
+  /// The check for input opened/closed..
+  final bool input;
+
+  /// The keyboard associated with the message (optional).
+  final Keyboard? keyboard;
+
   /// Constructs a [DialogMessageResponse] instance with the given details.
   ///
   /// [error] The error associated with the message (optional).
@@ -46,21 +53,24 @@ class DialogMessageResponse {
   /// [sender] The sender of the message (optional).
   /// [chatId] The ID of the chat where the message was sent (optional).
   /// [messageId] The ID of the message (optional).
+  /// [keyboard] The keyboard associated with the message (optional).
   /// [file] The media file associated with the message.
   /// [requestId] The unique identifier for the request.
   /// [dialogMessageContent] The content of the dialog message.
   /// [peer] The peer information of the sender.
   DialogMessageResponse({
     this.error,
-    this.messageType,
+    this.type,
     this.sender,
     this.chatId,
     this.messageId,
+    this.keyboard,
     required this.timestamp,
     required this.file,
     required this.requestId,
     required this.dialogMessageContent,
     required this.peer,
+    required this.input,
   });
 
   /// Named constructor for creating an error instance of [DialogMessageResponse].
@@ -75,9 +85,11 @@ class DialogMessageResponse {
   })  : file = MediaFileResponse.initial(),
         peer = PeerInfo.initial(),
         sender = null,
-        messageType = null,
+        input = false,
+        type = null,
         chatId = null,
         dialogMessageContent = '',
         timestamp = 0,
-        messageId = null;
+        messageId = null,
+        keyboard = null;
 }

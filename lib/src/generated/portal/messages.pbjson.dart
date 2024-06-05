@@ -111,6 +111,7 @@ const SendMessageRequest$json = {
     {'1': 'peer', '3': 1, '4': 1, '5': 11, '6': '.webitel.chat.Peer', '10': 'peer'},
     {'1': 'file', '3': 2, '4': 1, '5': 11, '6': '.webitel.chat.File', '10': 'file'},
     {'1': 'text', '3': 3, '4': 1, '5': 9, '10': 'text'},
+    {'1': 'postback', '3': 5, '4': 1, '5': 11, '6': '.webitel.chat.Postback', '10': 'postback'},
   ],
 };
 
@@ -118,7 +119,8 @@ const SendMessageRequest$json = {
 final $typed_data.Uint8List sendMessageRequestDescriptor = $convert.base64Decode(
     'ChJTZW5kTWVzc2FnZVJlcXVlc3QSDgoCaWQYBCABKAlSAmlkEiYKBHBlZXIYASABKAsyEi53ZW'
     'JpdGVsLmNoYXQuUGVlclIEcGVlchImCgRmaWxlGAIgASgLMhIud2ViaXRlbC5jaGF0LkZpbGVS'
-    'BGZpbGUSEgoEdGV4dBgDIAEoCVIEdGV4dA==');
+    'BGZpbGUSEgoEdGV4dBgDIAEoCVIEdGV4dBIyCghwb3N0YmFjaxgFIAEoCzIWLndlYml0ZWwuY2'
+    'hhdC5Qb3N0YmFja1IIcG9zdGJhY2s=');
 
 @$core.Deprecated('Use readHistoryRequestDescriptor instead')
 const ReadHistoryRequest$json = {

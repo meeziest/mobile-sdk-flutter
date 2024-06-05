@@ -10,4 +10,5 @@ export 'src/domain/entities/portal_client.dart';
 export 'src/domain/entities/portal_response.dart';
 export 'src/domain/entities/portal_response_status.dart';
 export 'src/domain/entities/portal_user.dart';
+export 'src/domain/entities/postback.dart';
 export 'src/webitel_portal_sdk.dart';

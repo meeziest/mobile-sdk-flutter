@@ -1,5 +1,6 @@
 import 'package:webitel_portal_sdk/src/backbone/helper/message.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
@@ -10,9 +11,11 @@ final class ResponseDialogMessageBuilder {
   late String _chatId;
   late int _timestamp;
   late int _messageId;
+  late bool _input;
   late String _userId;
   late UpdateNewMessage _update;
   late MediaFileResponse? _file;
+  Keyboard? _keyboard;
 
   ResponseDialogMessageBuilder setDialogMessageContent(
       String dialogMessageContent) {
@@ -55,11 +58,22 @@ final class ResponseDialogMessageBuilder {
     return this;
   }
 
+  ResponseDialogMessageBuilder setInput(bool input) {
+    _input = input;
+    return this;
+  }
+
+  ResponseDialogMessageBuilder setKeyboard(Keyboard keyboard) {
+    // Add a setter for Keyboard
+    _keyboard = keyboard;
+    return this;
+  }
+
   DialogMessageResponse build() {
     final sender =
         _update.message.from.id == _userId ? Sender.user : Sender.operator;
 
-    final messageType = MessageHelper.determineMessageTypeResponse(_update);
+    final type = MessageHelper.determineMessageTypeResponse(_update);
 
     final peerInfo = PeerInfo(
       id: _update.message.from.id,
@@ -68,9 +82,10 @@ final class ResponseDialogMessageBuilder {
     );
 
     return DialogMessageResponse(
+      input: _input,
       timestamp: _timestamp,
       sender: sender,
-      messageType: messageType,
+      type: type,
       chatId: _chatId,
       dialogMessageContent: _dialogMessageContent,
       requestId: _requestId,
@@ -84,6 +99,7 @@ final class ResponseDialogMessageBuilder {
             type: '',
             id: '',
           ),
+      keyboard: _keyboard,
     );
   }
 }

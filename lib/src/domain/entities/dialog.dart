@@ -4,6 +4,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
 
 /// Interface for dialog operations, providing methods to manage messages,
 /// download files, and handle dialog events.
@@ -68,6 +69,17 @@ abstract interface class Dialog {
     String? mediaName,
     Stream<List<int>>? mediaData,
     required String content,
+    required String requestId,
+  });
+
+  /// Sends a postback
+  ///
+  /// [postback] The postback object.
+  /// [requestId] The unique identifier for the message request.
+  ///
+  /// Returns a [DialogMessageResponse] indicating the result of the send operation.
+  Future<DialogMessageResponse> sendPostback({
+    required Postback postback,
     required String requestId,
   });
 

@@ -1,0 +1,1 @@
+enum ButtonType {  // URL to navigate to ..  url,  // Postback/Callback data.  code,    // Request to share contact info.  share,}

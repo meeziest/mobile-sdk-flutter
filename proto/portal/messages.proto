@@ -132,6 +132,9 @@ message SendMessageRequest {
   // Media text message.
   string text = 3;
 
+  // Postback. Quick Reply Button Click[ed].
+  webitel.chat.Postback postback = 5;
+
 }
 
 // 

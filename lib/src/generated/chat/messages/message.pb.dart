@@ -15,7 +15,10 @@ import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 import 'chat.pb.dart' as $9;
+import 'message.pbenum.dart';
 import 'peer.pb.dart' as $7;
+
+export 'message.pbenum.dart';
 
 /// Chat Message.
 class Message extends $pb.GeneratedMessage {
@@ -29,6 +32,8 @@ class Message extends $pb.GeneratedMessage {
     $core.String? text,
     File? file,
     $core.Map<$core.String, $core.String>? context,
+    ReplyMarkup? keyboard,
+    Postback? postback,
   }) {
     final $result = create();
     if (id != null) {
@@ -58,6 +63,12 @@ class Message extends $pb.GeneratedMessage {
     if (context != null) {
       $result.context.addAll(context);
     }
+    if (keyboard != null) {
+      $result.keyboard = keyboard;
+    }
+    if (postback != null) {
+      $result.postback = postback;
+    }
     return $result;
   }
   Message._() : super();
@@ -74,6 +85,8 @@ class Message extends $pb.GeneratedMessage {
     ..aOS(7, _omitFieldNames ? '' : 'text')
     ..aOM<File>(8, _omitFieldNames ? '' : 'file', subBuilder: File.create)
     ..m<$core.String, $core.String>(9, _omitFieldNames ? '' : 'context', entryClassName: 'Message.ContextEntry', keyFieldType: $pb.PbFieldType.OS, valueFieldType: $pb.PbFieldType.OS, packageName: const $pb.PackageName('webitel.chat'))
+    ..aOM<ReplyMarkup>(10, _omitFieldNames ? '' : 'keyboard', subBuilder: ReplyMarkup.create)
+    ..aOM<Postback>(11, _omitFieldNames ? '' : 'postback', subBuilder: Postback.create)
     ..hasRequiredFields = false
   ;
 
@@ -189,6 +202,30 @@ class Message extends $pb.GeneratedMessage {
   /// Context. Variables. Environment.
   @$pb.TagNumber(9)
   $core.Map<$core.String, $core.String> get context => $_getMap(8);
+
+  /// Keyboard. Buttons. Quick Replies.
+  @$pb.TagNumber(10)
+  ReplyMarkup get keyboard => $_getN(9);
+  @$pb.TagNumber(10)
+  set keyboard(ReplyMarkup v) { setField(10, v); }
+  @$pb.TagNumber(10)
+  $core.bool hasKeyboard() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearKeyboard() => clearField(10);
+  @$pb.TagNumber(10)
+  ReplyMarkup ensureKeyboard() => $_ensure(9);
+
+  /// Postback. Reply Button Click[ed].
+  @$pb.TagNumber(11)
+  Postback get postback => $_getN(10);
+  @$pb.TagNumber(11)
+  set postback(Postback v) { setField(11, v); }
+  @$pb.TagNumber(11)
+  $core.bool hasPostback() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearPostback() => clearField(11);
+  @$pb.TagNumber(11)
+  Postback ensurePostback() => $_ensure(10);
 }
 
 /// Media File.
@@ -286,6 +323,307 @@ class File extends $pb.GeneratedMessage {
   $core.bool hasName() => $_has(3);
   @$pb.TagNumber(5)
   void clearName() => clearField(5);
+}
+
+class ReplyMarkup extends $pb.GeneratedMessage {
+  factory ReplyMarkup({
+    $core.Iterable<ButtonRow>? buttons,
+    $core.bool? noInput,
+  }) {
+    final $result = create();
+    if (buttons != null) {
+      $result.buttons.addAll(buttons);
+    }
+    if (noInput != null) {
+      $result.noInput = noInput;
+    }
+    return $result;
+  }
+  ReplyMarkup._() : super();
+  factory ReplyMarkup.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory ReplyMarkup.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ReplyMarkup', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.chat'), createEmptyInstance: create)
+    ..pc<ButtonRow>(1, _omitFieldNames ? '' : 'buttons', $pb.PbFieldType.PM, subBuilder: ButtonRow.create)
+    ..aOB(2, _omitFieldNames ? '' : 'noInput')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  ReplyMarkup clone() => ReplyMarkup()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  ReplyMarkup copyWith(void Function(ReplyMarkup) updates) => super.copyWith((message) => updates(message as ReplyMarkup)) as ReplyMarkup;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ReplyMarkup create() => ReplyMarkup._();
+  ReplyMarkup createEmptyInstance() => create();
+  static $pb.PbList<ReplyMarkup> createRepeated() => $pb.PbList<ReplyMarkup>();
+  @$core.pragma('dart2js:noInline')
+  static ReplyMarkup getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ReplyMarkup>(create);
+  static ReplyMarkup? _defaultInstance;
+
+  /// Markup of button(s)
+  @$pb.TagNumber(1)
+  $core.List<ButtonRow> get buttons => $_getList(0);
+
+  /// An option used to block input to force
+  /// the user to respond with one of the buttons.
+  @$pb.TagNumber(2)
+  $core.bool get noInput => $_getBF(1);
+  @$pb.TagNumber(2)
+  set noInput($core.bool v) { $_setBool(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasNoInput() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNoInput() => clearField(2);
+}
+
+class ButtonRow extends $pb.GeneratedMessage {
+  factory ButtonRow({
+    $core.Iterable<Button>? row,
+  }) {
+    final $result = create();
+    if (row != null) {
+      $result.row.addAll(row);
+    }
+    return $result;
+  }
+  ButtonRow._() : super();
+  factory ButtonRow.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory ButtonRow.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'ButtonRow', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.chat'), createEmptyInstance: create)
+    ..pc<Button>(1, _omitFieldNames ? '' : 'row', $pb.PbFieldType.PM, subBuilder: Button.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  ButtonRow clone() => ButtonRow()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  ButtonRow copyWith(void Function(ButtonRow) updates) => super.copyWith((message) => updates(message as ButtonRow)) as ButtonRow;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ButtonRow create() => ButtonRow._();
+  ButtonRow createEmptyInstance() => create();
+  static $pb.PbList<ButtonRow> createRepeated() => $pb.PbList<ButtonRow>();
+  @$core.pragma('dart2js:noInline')
+  static ButtonRow getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<ButtonRow>(create);
+  static ButtonRow? _defaultInstance;
+
+  /// Button(s) in a row
+  @$pb.TagNumber(1)
+  $core.List<Button> get row => $_getList(0);
+}
+
+enum Button_Type {
+  url, 
+  code, 
+  share, 
+  notSet
+}
+
+class Button extends $pb.GeneratedMessage {
+  factory Button({
+    $core.String? text,
+    $core.String? url,
+    $core.String? code,
+    Button_Request? share,
+  }) {
+    final $result = create();
+    if (text != null) {
+      $result.text = text;
+    }
+    if (url != null) {
+      $result.url = url;
+    }
+    if (code != null) {
+      $result.code = code;
+    }
+    if (share != null) {
+      $result.share = share;
+    }
+    return $result;
+  }
+  Button._() : super();
+  factory Button.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Button.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static const $core.Map<$core.int, Button_Type> _Button_TypeByTag = {
+    2 : Button_Type.url,
+    3 : Button_Type.code,
+    4 : Button_Type.share,
+    0 : Button_Type.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Button', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.chat'), createEmptyInstance: create)
+    ..oo(0, [2, 3, 4])
+    ..aOS(1, _omitFieldNames ? '' : 'text')
+    ..aOS(2, _omitFieldNames ? '' : 'url')
+    ..aOS(3, _omitFieldNames ? '' : 'code')
+    ..e<Button_Request>(4, _omitFieldNames ? '' : 'share', $pb.PbFieldType.OE, defaultOrMaker: Button_Request.phone, valueOf: Button_Request.valueOf, enumValues: Button_Request.values)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Button clone() => Button()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Button copyWith(void Function(Button) updates) => super.copyWith((message) => updates(message as Button)) as Button;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Button create() => Button._();
+  Button createEmptyInstance() => create();
+  static $pb.PbList<Button> createRepeated() => $pb.PbList<Button>();
+  @$core.pragma('dart2js:noInline')
+  static Button getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Button>(create);
+  static Button? _defaultInstance;
+
+  Button_Type whichType() => _Button_TypeByTag[$_whichOneof(0)]!;
+  void clearType() => clearField($_whichOneof(0));
+
+  /// Caption to display.
+  @$pb.TagNumber(1)
+  $core.String get text => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set text($core.String v) { $_setString(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasText() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearText() => clearField(1);
+
+  /// URL to navigate to ..
+  @$pb.TagNumber(2)
+  $core.String get url => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set url($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasUrl() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUrl() => clearField(2);
+
+  /// Postback/Callback data.
+  @$pb.TagNumber(3)
+  $core.String get code => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set code($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasCode() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearCode() => clearField(3);
+
+  /// Request to share contact info.
+  @$pb.TagNumber(4)
+  Button_Request get share => $_getN(3);
+  @$pb.TagNumber(4)
+  set share(Button_Request v) { setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasShare() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearShare() => clearField(4);
+}
+
+/// Postback. Reply Button Click[ed].
+class Postback extends $pb.GeneratedMessage {
+  factory Postback({
+    $fixnum.Int64? mid,
+    $core.String? code,
+    $core.String? text,
+  }) {
+    final $result = create();
+    if (mid != null) {
+      $result.mid = mid;
+    }
+    if (code != null) {
+      $result.code = code;
+    }
+    if (text != null) {
+      $result.text = text;
+    }
+    return $result;
+  }
+  Postback._() : super();
+  factory Postback.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Postback.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Postback', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.chat'), createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'mid')
+    ..aOS(2, _omitFieldNames ? '' : 'code')
+    ..aOS(3, _omitFieldNames ? '' : 'text')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Postback clone() => Postback()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Postback copyWith(void Function(Postback) updates) => super.copyWith((message) => updates(message as Postback)) as Postback;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Postback create() => Postback._();
+  Postback createEmptyInstance() => create();
+  static $pb.PbList<Postback> createRepeated() => $pb.PbList<Postback>();
+  @$core.pragma('dart2js:noInline')
+  static Postback getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Postback>(create);
+  static Postback? _defaultInstance;
+
+  /// Message ID of the button.
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get mid => $_getI64(0);
+  @$pb.TagNumber(1)
+  set mid($fixnum.Int64 v) { $_setInt64(0, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasMid() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearMid() => clearField(1);
+
+  /// Data associated with the Button.
+  @$pb.TagNumber(2)
+  $core.String get code => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set code($core.String v) { $_setString(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasCode() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCode() => clearField(2);
+
+  /// Button's display caption.
+  @$pb.TagNumber(3)
+  $core.String get text => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set text($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasText() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearText() => clearField(3);
 }
 
 

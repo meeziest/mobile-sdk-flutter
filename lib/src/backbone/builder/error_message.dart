@@ -12,6 +12,7 @@ final class ErrorMessageBuilder {
 
   DialogMessageResponse build() {
     return DialogMessageResponse(
+      input: false,
       dialogMessageContent: _errorMessage,
       requestId: '',
       peer: PeerInfo(id: '', name: '', type: ''),

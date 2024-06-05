@@ -37,6 +37,7 @@ final class MessagesListMessageBuilder {
           _peers[peerIndex].id == _userId ? Sender.user : Sender.operator;
 
       return DialogMessageResponse(
+        input: message.keyboard.noInput,
         timestamp: message.date.toInt(),
         messageId: message.id.toInt(),
         chatId: _chatId,

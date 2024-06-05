@@ -8,6 +8,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
 
 /// Interface for the chat service, providing methods for fetching messages,
 /// sending messages, handling dialogs, and managing streams and errors.
@@ -47,6 +48,19 @@ abstract interface class ChatService {
   Future<DialogMessageResponse> sendMessage({
     required String chatId,
     required DialogMessageRequest message,
+  });
+
+  /// Sends a postback message in a chat.
+  ///
+  /// [chatId] The ID of the chat to send the postback to.
+  /// [postback] The postback to be sent.
+  /// [requestId] The [postback] id to be sent.
+  ///
+  /// Returns a [DialogMessageResponse] indicating the result of the send operation.
+  Future<DialogMessageResponse> sendPostback({
+    required String chatId,
+    required Postback postback,
+    required String requestId,
   });
 
   /// Fetches the service dialog.

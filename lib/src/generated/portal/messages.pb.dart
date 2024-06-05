@@ -483,6 +483,7 @@ class SendMessageRequest extends $pb.GeneratedMessage {
     $6.File? file,
     $core.String? text,
     $core.String? id,
+    $6.Postback? postback,
   }) {
     final $result = create();
     if (peer != null) {
@@ -497,6 +498,9 @@ class SendMessageRequest extends $pb.GeneratedMessage {
     if (id != null) {
       $result.id = id;
     }
+    if (postback != null) {
+      $result.postback = postback;
+    }
     return $result;
   }
   SendMessageRequest._() : super();
@@ -508,6 +512,7 @@ class SendMessageRequest extends $pb.GeneratedMessage {
     ..aOM<$6.File>(2, _omitFieldNames ? '' : 'file', subBuilder: $6.File.create)
     ..aOS(3, _omitFieldNames ? '' : 'text')
     ..aOS(4, _omitFieldNames ? '' : 'id')
+    ..aOM<$6.Postback>(5, _omitFieldNames ? '' : 'postback', subBuilder: $6.Postback.create)
     ..hasRequiredFields = false
   ;
 
@@ -581,6 +586,18 @@ class SendMessageRequest extends $pb.GeneratedMessage {
   $core.bool hasId() => $_has(3);
   @$pb.TagNumber(4)
   void clearId() => clearField(4);
+
+  /// Postback. Quick Reply Button Click[ed].
+  @$pb.TagNumber(5)
+  $6.Postback get postback => $_getN(4);
+  @$pb.TagNumber(5)
+  set postback($6.Postback v) { setField(5, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasPostback() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearPostback() => clearField(5);
+  @$pb.TagNumber(5)
+  $6.Postback ensurePostback() => $_ensure(4);
 }
 
 class ReadHistoryRequest extends $pb.GeneratedMessage {

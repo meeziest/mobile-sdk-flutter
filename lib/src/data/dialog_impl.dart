@@ -8,6 +8,7 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_mes
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
@@ -96,6 +97,24 @@ final class DialogImpl implements Dialog {
           requestId: requestId,
         ),
       ),
+    );
+  }
+
+  /// Sends a postback in the dialog.
+  ///
+  /// [postback] The postback object,
+  /// [requestId] The unique identifier for the request.
+  ///
+  /// Returns a [Future] that completes with a [DialogMessageResponse].
+  @override
+  Future<DialogMessageResponse> sendPostback({
+    required Postback postback,
+    required String requestId,
+  }) async {
+    return await _chatService.sendPostback(
+      chatId: id,
+      requestId: requestId,
+      postback: postback,
     );
   }
 

@@ -17,9 +17,7 @@ final class CustomLogger {
     Logger.root.onRecord.listen(
       (record) {
         if (record.level >= Logger.root.level) {
-          print(
-            '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}: ${record.error ?? ''}',
-          );
+          printLogRecord(record);
         }
       },
     );
@@ -49,6 +47,21 @@ final class CustomLogger {
         return Level.SEVERE;
       case LoggerLevel.off:
         return Level.OFF;
+    }
+  }
+
+  /// Prints the log record to the console, handling multi-line messages.
+  ///
+  /// [record] The log record to be printed.
+  static void printLogRecord(LogRecord record) {
+    final error = record.error ?? '';
+    final logMessage =
+        '${record.level.name}: ${record.time}: ${record.loggerName}: ${record.message}: $error';
+
+    // Split the log message into lines and print each line separately
+    final logLines = logMessage.split('\n');
+    for (final line in logLines) {
+      print(line);
     }
   }
 }

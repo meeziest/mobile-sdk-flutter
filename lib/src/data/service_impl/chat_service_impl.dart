@@ -18,10 +18,12 @@ import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/button.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
@@ -616,49 +618,75 @@ final class ChatServiceImpl implements ChatService {
     final userId = await _sharedPreferencesGateway.readUserId();
     _grpcConnect.updateStream.listen(
       (update) async {
-        final chatId = update.message.chat.id;
-        final onNewMessageController = _onNewMessageControllers[chatId];
+        try {
+          final chatId = update.message.chat.id;
+          final onNewMessageController = _onNewMessageControllers[chatId];
 
-        if (onNewMessageController != null) {
-          final messageType =
-              MessageHelper.determineMessageTypeResponse(update);
+          if (onNewMessageController != null) {
+            final messageType =
+                MessageHelper.determineMessageTypeResponse(update);
 
-          final dialogMessage = switch (messageType) {
-            MessageType.outcomingMedia ||
-            MessageType.incomingMedia =>
-              ResponseDialogMessageBuilder()
-                  .setDialogMessageContent(update.message.text)
-                  .setRequestId(update.id)
-                  .setMessageId(update.message.id.toInt())
-                  .setUserUd(userId ?? '')
-                  .setChatId(chatId)
-                  .setUpdate(update)
-                  .setTimestamp(update.message.date.toInt())
-                  .setFile(
-                    MediaFileResponse(
-                      id: update.message.file.id,
-                      type: update.message.file.type,
-                      name: update.message.file.name,
-                      bytes: [],
-                      size: update.message.file.size.toInt(),
-                    ),
-                  )
-                  .build(),
-            MessageType.outcomingMessage ||
-            MessageType.incomingMessage =>
-              ResponseDialogMessageBuilder()
-                  .setDialogMessageContent(update.message.text)
-                  .setRequestId(update.id)
-                  .setMessageId(update.message.id.toInt())
-                  .setUserUd(userId ?? '')
-                  .setChatId(chatId)
-                  .setTimestamp(update.message.date.toInt())
-                  .setUpdate(update)
-                  .setFile(MediaFileResponse.initial())
-                  .build()
-          };
+            log.info("Received message of type: $messageType in chat: $chatId");
 
-          onNewMessageController.add(dialogMessage);
+            Keyboard? keyboard;
+            if (update.message.keyboard.buttons.isNotEmpty) {
+              keyboard = Keyboard(
+                buttons: update.message.keyboard.buttons.map((buttonRow) {
+                  return buttonRow.row.map((button) {
+                    return Button(
+                      text: button.text,
+                      code: button.code,
+                      url: button.url,
+                    );
+                  }).toList();
+                }).toList(),
+              );
+            }
+
+            if (messageType == MessageType.button) {
+              final buttonDetails = keyboard?.buttons.map((buttonRow) {
+                    return buttonRow.map((button) {
+                      return 'Button(text: ${button.text}, code: ${button.code}, url: ${button.url})';
+                    }).join('\n');
+                  }).join('\n') ??
+                  '';
+
+              log.info(
+                  "Received a button message in chat: $chatId with buttons:\n$buttonDetails");
+            }
+
+            final dialogMessage = ResponseDialogMessageBuilder()
+                .setDialogMessageContent(update.message.text)
+                .setRequestId(update.id)
+                .setMessageId(update.message.id.toInt())
+                .setUserUd(userId ?? '')
+                .setChatId(chatId)
+                .setTimestamp(update.message.date.toInt())
+                .setUpdate(update)
+                .setFile(
+                  messageType == MessageType.media
+                      ? MediaFileResponse(
+                          id: update.message.file.id,
+                          type: update.message.file.type,
+                          name: update.message.file.name,
+                          bytes: [],
+                          size: update.message.file.size.toInt(),
+                        )
+                      : MediaFileResponse.initial(),
+                )
+                .setKeyboard(keyboard ?? Keyboard.initial())
+                .setInput(update.message.keyboard.noInput)
+                .build();
+
+            log.info(
+                "Built dialog message: ${dialogMessage.dialogMessageContent}");
+
+            onNewMessageController.add(dialogMessage);
+          } else {
+            log.warning("No message controller found for chat: $chatId");
+          }
+        } catch (e) {
+          log.severe("Exception while processing message: $e");
         }
       },
       onError: (error) {
@@ -763,9 +791,8 @@ final class ChatServiceImpl implements ChatService {
           MessageHelper.determineMessageTypeResponse(unpackedMessage);
 
       switch (messageType) {
-        case MessageType.outcomingMessage:
-          log.info(
-              "Handled response for message type $MessageType.outcomingMessage");
+        case MessageType.text:
+          log.info("Handled response for message type $MessageType.text");
 
           completer.complete(
             ResponseDialogMessageBuilder()
@@ -777,12 +804,12 @@ final class ChatServiceImpl implements ChatService {
                 .setTimestamp(unpackedMessage.message.date.toInt())
                 .setUpdate(unpackedMessage)
                 .setFile(MediaFileResponse.initial())
+                .setInput(unpackedMessage.message.keyboard.noInput)
                 .build(),
           );
 
-        case MessageType.outcomingMedia:
-          log.info(
-              "Handled response for message type $MessageType.outcomingMedia");
+        case MessageType.media:
+          log.info("Handled response for message type $MessageType.media");
 
           completer.complete(
             ResponseDialogMessageBuilder()
@@ -801,11 +828,12 @@ final class ChatServiceImpl implements ChatService {
                     size: unpackedMessage.message.file.size.toInt(),
                   ),
                 )
+                .setInput(unpackedMessage.message.keyboard.noInput)
                 .build(),
           );
 
-        default:
-          log.warning("Unhandled message type: $messageType");
+        case MessageType.button:
+          log.warning("Error response format: ${MessageType.button}");
       }
     } else if (response.err.hasMessage()) {
       final (recordId, errorMessage) = (
@@ -923,7 +951,7 @@ final class ChatServiceImpl implements ChatService {
       text: message.content,
     );
 
-    if (messageType == MessageType.outcomingMedia) {
+    if (messageType == MessageType.media) {
       log.info(
           "Detected outgoing media message. Preparing to upload media file: ${message.file.name} of type: ${message.file.type}");
 
@@ -1178,5 +1206,159 @@ final class ChatServiceImpl implements ChatService {
   @override
   StreamController<CallError> onError() {
     return _grpcConnect.errorStream;
+  }
+
+  @override
+  Future<DialogMessageResponse> sendPostback({
+    required String chatId,
+    required Postback postback,
+    required String requestId,
+  }) async {
+    try {
+      final userId = await _sharedPreferencesGateway.readUserId();
+
+      log.info("Sending postback for user $userId");
+
+      final request = await _buildSendPostbackRequest(
+        postback: postback,
+        userId: userId ?? '',
+        requestId: requestId,
+      );
+
+      _grpcConnect.sendRequest(request);
+
+      return await _sendPostbackResponse(
+        requestId,
+        userId ?? '',
+        _handleSendPostbackResponse,
+        _handleSendPostbackError,
+      ).timeout(const Duration(seconds: 5));
+    } on GrpcError catch (err) {
+      log.severe("GRPC Error on sendPostback: ${err.message}");
+
+      return ErrorDialogMessageBuilder()
+          .setDialogMessageContent(err.toString())
+          .setRequestId(postback.mid.toString())
+          .build();
+    } on TimeoutException {
+      log.warning("Timeout exception on sendPostback");
+
+      return ErrorDialogMessageBuilder()
+          .setDialogMessageContent('Postback was not sent due to timeout')
+          .setRequestId(postback.mid.toString())
+          .build();
+    }
+  }
+
+  Future<portal.Request> _buildSendPostbackRequest({
+    required Postback postback,
+    required String userId,
+    required String requestId,
+  }) async {
+    // Construct SendMessageRequest for postback
+
+    final sendMessageRequest = SendMessageRequest(
+      id: requestId,
+      postback: file.Postback(
+        mid: fixnum.Int64(postback.mid),
+        code: postback.code,
+        text: postback.text,
+      ),
+    );
+
+    return portal.Request(
+      path: Constants.sendMessagePath,
+      data: Any.pack(sendMessageRequest),
+      id: requestId,
+    );
+  }
+
+  Future<DialogMessageResponse> _sendPostbackResponse(
+    String requestId,
+    String userId,
+    SendMessageResponseHandler handleResponse,
+    SendMessageErrorHandler handleError,
+  ) {
+    final completer = Completer<DialogMessageResponse>();
+    StreamSubscription<portal.Response>? streamSubscription;
+
+    streamSubscription = _grpcConnect.responseStream
+        .where((response) => response.id == requestId)
+        .listen(
+          (response) => handleResponse(response, completer, userId),
+          onError: (error) => handleError(error, completer, requestId),
+          onDone: () => streamSubscription?.cancel(),
+          cancelOnError: true,
+        );
+
+    return completer.future;
+  }
+
+  Future<void> _handleSendPostbackResponse(
+    portal.Response response,
+    Completer<DialogMessageResponse> completer,
+    String userId,
+  ) async {
+    if (response.data.canUnpackInto(UpdateNewMessage())) {
+      final unpackedMessage = response.data.unpackInto(UpdateNewMessage());
+      final messageType =
+          MessageHelper.determineMessageTypeResponse(unpackedMessage);
+
+      if (messageType == MessageType.text) {
+        log.info(
+            "Handled response for message type $MessageType.outcomingMessage");
+
+        completer.complete(
+          ResponseDialogMessageBuilder()
+              .setDialogMessageContent(unpackedMessage.message.text)
+              .setRequestId(unpackedMessage.id)
+              .setUserUd(userId)
+              .setMessageId(unpackedMessage.message.id.toInt())
+              .setChatId(unpackedMessage.message.chat.id)
+              .setTimestamp(unpackedMessage.message.date.toInt())
+              .setInput(unpackedMessage.message.keyboard.noInput)
+              .setUpdate(unpackedMessage)
+              .setFile(MediaFileResponse.initial())
+              .setInput(unpackedMessage.message.keyboard.noInput)
+              .build(),
+        );
+      }
+    } else if (response.err.hasMessage()) {
+      final (recordId, errorMessage) = (
+        response.id,
+        response.err.message,
+      );
+
+      log.warning(
+          'Failed to send postback for requestId: $recordId: $errorMessage');
+      final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
+
+      completer.complete(
+        DialogMessageResponse.error(
+          requestId: response.id,
+          error: CallError(
+            statusCode: statusCode,
+            errorMessage: response.err.message,
+          ),
+        ),
+      );
+    }
+  }
+
+  void _handleSendPostbackError(
+    Object error,
+    Completer<DialogMessageResponse> completer,
+    String requestId,
+  ) {
+    final errorMessage =
+        error is GrpcError ? error.message : 'Unknown error occurred';
+    log.severe("Error on handling postback response: $errorMessage");
+
+    completer.complete(
+      ErrorDialogMessageBuilder()
+          .setDialogMessageContent(errorMessage ?? '')
+          .setRequestId(requestId)
+          .build(),
+    );
   }
 }
