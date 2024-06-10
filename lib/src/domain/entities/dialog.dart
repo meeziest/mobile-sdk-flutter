@@ -46,14 +46,20 @@ abstract interface class Dialog {
   /// Returns a stream of [MediaFileResponse] for the downloaded file.
   Stream<MediaFileResponse> downloadFile({required String fileId});
 
-  // Uncomment the following StreamController properties if needed:
-  // StreamController<String> get onMemberRemoved;
-  // StreamController<String> get onOperatorAdded;
-  // StreamController<String> get onOperatorRemoved;
-  // StreamController<String> get onMessageEdited;
-  // StreamController<String> get onMessageDeleted;
-  // StreamController<String> get onNewReaction;
-  // StreamController<String> get onTyping;
+  /// Pauses the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be paused.
+  Future<void> pauseDownload({required String fileId});
+
+  /// Resumes the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be resumed.
+  Stream<MediaFileResponse> resumeDownload({required String fileId});
+
+  /// Cancels the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be canceled.
+  Future<void> cancelDownload({required String fileId});
 
   /// Sends a message in the dialog.
   ///

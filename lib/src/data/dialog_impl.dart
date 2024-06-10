@@ -35,7 +35,7 @@ final class DialogImpl implements Dialog {
   @override
   final Stream<PortalChatMember> onMemberAdded;
 
-  /// Stream [PortalChatMember] for member left  the chat..
+  /// Stream [PortalChatMember] for member left the chat..
   @override
   final Stream<PortalChatMember> onMemberLeft;
 
@@ -162,4 +162,32 @@ final class DialogImpl implements Dialog {
   @override
   Stream<MediaFileResponse> downloadFile({required String fileId}) =>
       _chatService.downloadFile(fileId: fileId);
+
+  /// Pauses the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be paused.
+  ///
+  /// Calls the pauseDownload method in the ChatService.
+  @override
+  Future<void> pauseDownload({required String fileId}) =>
+      _chatService.pauseDownload(fileId: fileId);
+
+  /// Resumes the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be resumed.
+  ///
+  /// Calls the resumeDownload method in the ChatService.
+  /// Returns a stream of [MediaFileResponse] representing the resumed download.
+  @override
+  Stream<MediaFileResponse> resumeDownload({required String fileId}) =>
+      _chatService.resumeDownload(fileId: fileId);
+
+  /// Cancels the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be canceled.
+  ///
+  /// Calls the cancelDownload method in the ChatService.
+  @override
+  Future<void> cancelDownload({required String fileId}) =>
+      _chatService.cancelDownload(fileId: fileId);
 }

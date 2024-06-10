@@ -90,6 +90,21 @@ abstract interface class ChatService {
   /// Returns a stream of [MediaFileResponse] for the downloaded file.
   Stream<MediaFileResponse> downloadFile({required String fileId});
 
+  /// Pauses the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be paused.
+  Future<void> pauseDownload({required String fileId});
+
+  /// Resumes the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be resumed.
+  Stream<MediaFileResponse> resumeDownload({required String fileId});
+
+  /// Cancels the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be canceled.
+  Future<void> cancelDownload({required String fileId});
+
   /// Provides a stream controller for channel status changes.
   ///
   /// Returns a [StreamController] for [ChannelStatus] changes.

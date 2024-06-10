@@ -264,10 +264,16 @@ final class GrpcConnect {
     }
 
     await _lock.synchronized(() async {
+      int pingCount = 0;
       _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
-        log.info('Sending periodic ping message to maintain connection...');
+        if (pingCount < 5) {
+          log.info('Sending periodic ping message to maintain connection...');
 
-        sendPingMessage();
+          await sendPingMessage();
+          pingCount++;
+        } else {
+          _timer?.cancel();
+        }
       });
       await _connect();
       _timer?.cancel();

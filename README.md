@@ -78,6 +78,15 @@ Listen to upcoming/incoming messages in dialog:
 Download file:
 `await dialog.downloadFile(fileId: fileId);`
 
+Cancel downloading file:
+`await dialog.cancelDownload(fileId: fileId);`
+
+Pause downloading file:
+`await dialog.pauseDownload(fileId: fileId);`
+
+Resume downloading file:
+`await dialog.resumeDownload(fileId: fileId);`
+
 Listen to newMemberAdded to the chat:
 `await dialog.onMemberAdded();`
 

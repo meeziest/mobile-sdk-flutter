@@ -1,0 +1,1 @@
+// Enum to represent the state of a download processenum DownloadState {  active,  paused,  canceled,}
