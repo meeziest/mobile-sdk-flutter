@@ -1,6 +1,7 @@
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/sender.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/peer.pb.dart';
 

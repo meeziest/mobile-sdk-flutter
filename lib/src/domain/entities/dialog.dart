@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
 
@@ -43,23 +43,8 @@ abstract interface class Dialog {
   ///
   /// [fileId] The unique identifier of the file to be downloaded.
   ///
-  /// Returns a stream of [MediaFileResponse] for the downloaded file.
-  Stream<MediaFileResponse> downloadFile({required String fileId});
-
-  /// Pauses the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be paused.
-  Future<void> pauseDownload({required String fileId});
-
-  /// Resumes the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be resumed.
-  Stream<MediaFileResponse> resumeDownload({required String fileId});
-
-  /// Cancels the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be canceled.
-  Future<void> cancelDownload({required String fileId});
+  /// Returns a stream of [Download] object.
+  Download downloadFile({required String fileId, int? offset});
 
   /// Sends a message in the dialog.
   ///

@@ -24,7 +24,7 @@ import '../data/service_impl/chat_service_impl.dart' as _i21;
 import '../domain/entities/call_error.dart' as _i9;
 import '../domain/entities/channel.dart' as _i15;
 import '../domain/entities/dialog.dart' as _i10;
-import '../domain/entities/dialog_message/dialog_message_response.dart' as _i13;
+import '../domain/entities/dialog_message_response.dart' as _i13;
 import '../domain/entities/portal_chat_member.dart' as _i14;
 import '../domain/entities/portal_client.dart' as _i7;
 import '../domain/services/auth_service.dart' as _i17;

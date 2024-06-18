@@ -1,5 +1,5 @@
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_request.dart';
 
 final class RequestDialogMessageBuilder {
   late String _content;

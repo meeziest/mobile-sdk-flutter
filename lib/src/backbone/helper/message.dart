@@ -1,4 +1,4 @@
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pb.dart';
 

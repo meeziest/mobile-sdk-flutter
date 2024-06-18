@@ -3,10 +3,11 @@ import 'dart:async';
 import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
@@ -160,34 +161,9 @@ final class DialogImpl implements Dialog {
   ///
   /// Returns a stream of [MediaFileResponse] representing the downloaded file.
   @override
-  Stream<MediaFileResponse> downloadFile({required String fileId}) =>
-      _chatService.downloadFile(fileId: fileId);
-
-  /// Pauses the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be paused.
-  ///
-  /// Calls the pauseDownload method in the ChatService.
-  @override
-  Future<void> pauseDownload({required String fileId}) =>
-      _chatService.pauseDownload(fileId: fileId);
-
-  /// Resumes the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be resumed.
-  ///
-  /// Calls the resumeDownload method in the ChatService.
-  /// Returns a stream of [MediaFileResponse] representing the resumed download.
-  @override
-  Stream<MediaFileResponse> resumeDownload({required String fileId}) =>
-      _chatService.resumeDownload(fileId: fileId);
-
-  /// Cancels the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be canceled.
-  ///
-  /// Calls the cancelDownload method in the ChatService.
-  @override
-  Future<void> cancelDownload({required String fileId}) =>
-      _chatService.cancelDownload(fileId: fileId);
+  Download downloadFile({required String fileId, int? offset}) =>
+      _chatService.downloadFile(
+        fileId: fileId,
+        offset: offset,
+      );
 }

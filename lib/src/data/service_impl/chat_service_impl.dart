@@ -16,15 +16,17 @@ import 'package:webitel_portal_sdk/src/backbone/logger.dart';
 import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
+import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/button.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/dialog.pb.dart'
@@ -84,6 +86,7 @@ final class ChatServiceImpl implements ChatService {
 
   // Utility instances.
   final uuid = Uuid();
+
   final log = CustomLogger.getLogger('ChatServiceImpl');
 
   /// A map to manage StreamControllers for new message events, indexed by chat ID.
@@ -100,22 +103,6 @@ final class ChatServiceImpl implements ChatService {
   /// Each chat ID maps to a StreamController that broadcasts [PortalChatMember] events.
   final Map<String, StreamController<PortalChatMember>>
       _onMemberLeftControllers = {};
-
-  /// A map to manage StreamSubscriptions for downloading media files, indexed by file ID.
-  /// Each file ID maps to a StreamSubscription that handles the stream of [MediaFile] for the download.
-  final Map<String, StreamSubscription<MediaFile>> _downloadSubscriptions = {};
-
-  /// A map to manage StreamControllers for media file responses, indexed by file ID.
-  /// Each file ID maps to a StreamController that broadcasts [MediaFileResponse] events.
-  final Map<String, StreamController<MediaFileResponse>> _downloadControllers =
-      {};
-
-  /// A map to track the download offsets for media files, indexed by file ID.
-  /// Each file ID maps to an offset value of type [fixnum.Int64] representing the current download position.
-  final Map<String, fixnum.Int64> _downloadOffsets = {};
-
-  /// A set to keep track of paused downloads, storing file IDs of paused downloads.
-  final Set<String> _pausedDownloads = {};
 
   // Constructor for initializing the chat service with the required dependencies.
   ChatServiceImpl(
@@ -431,74 +418,46 @@ final class ChatServiceImpl implements ChatService {
   ///
   /// [fileId] The ID of the file to be downloaded.
   ///
-  /// Returns a stream of [MediaFileResponse] representing the downloaded file.
+  /// Returns a [Download] object representing the download operation.
   @override
-  Stream<MediaFileResponse> downloadFile({
+  Download downloadFile({
     required String fileId,
-  }) async* {
-    yield* _downloadMediaFromServer(fileId: fileId);
-  }
+    int? offset,
+  }) {
+    StreamController<MediaFileResponse> controller;
+    DownloadImpl download;
 
-  /// Pauses the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be paused.
-  @override
-  Future<void> pauseDownload({required String fileId}) async {
-    final subscription = _downloadSubscriptions[fileId];
-    if (subscription != null) {
-      await subscription.cancel();
-      _pausedDownloads.add(fileId);
-
-      log.info("Paused download for file ID: $fileId");
-    }
-  }
-
-  /// Resumes the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be resumed.
-  /// Resumes the download of a media file.
-
-  @override
-  Stream<MediaFileResponse> resumeDownload({required String fileId}) async* {
-    // Check if the offset exists for the given fileId
-    final offset = _downloadOffsets[fileId];
-    if (offset == null) {
-      log.warning(
-          "No offset found for file ID: $fileId. Cannot resume download.");
-      return;
-    }
-
-    log.info("Resuming download for file ID: $fileId from offset: $offset");
-
-    yield* _resumeDownload(
+    controller = StreamController<MediaFileResponse>();
+    download = DownloadImpl(
       fileId: fileId,
-      offset: offset,
+      offset: offset ?? 0,
+      onData: controller,
     );
+
+    _downloadMediaFromServer(
+      fileId: fileId,
+      offset: fixnum.Int64(offset ?? 0),
+      controller: controller,
+      download: download,
+    );
+
+    return download;
   }
 
-  Stream<MediaFileResponse> _resumeDownload({
+  void _downloadMediaFromServer({
     required String fileId,
     required fixnum.Int64 offset,
-  }) async* {
-    log.info("Resuming download for file ID: $fileId from offset: $offset");
-
-    // Start fetching the file from the given offset
+    required StreamController<MediaFileResponse> controller,
+    required DownloadImpl download,
+  }) {
     final mediaStream = _grpcChannel.mediaStorageStub.getFile(
-      GetFileRequest(
-        fileId: fileId,
-        offset: offset,
-      ),
+      GetFileRequest(fileId: fileId, offset: offset),
     );
 
     MediaFileResponse? file;
-    final controller = StreamController<MediaFileResponse>();
-    _downloadControllers[fileId] = controller;
-
-    // Listen to the mediaStream and process the incoming data
     final subscription = mediaStream.listen(
       (mediaFile) {
         if (file == null) {
-          // Initialize the file details when the first chunk is received
           file = MediaFileResponse(
             size: mediaFile.file.size.toInt(),
             name: mediaFile.file.name,
@@ -506,115 +465,21 @@ final class ChatServiceImpl implements ChatService {
             id: mediaFile.file.id,
           );
           controller.add(file!);
+
           log.info(
               "Initialized download for file '${file!.name}' with ID '${file!.id}', expected size: ${file!.size} bytes.");
         }
 
-        // Add the received bytes to the file
         file!.bytes.clear();
         file!.bytes.addAll(mediaFile.data);
         offset += mediaFile.data.length;
 
-        // Update the download offset for resuming later if needed
-        _downloadOffsets[fileId] = offset;
+        download.updateOffset(offset.toInt());
+
         controller.add(file!);
 
         log.info(
             "Received ${mediaFile.data.length} bytes for file '${file!.name}'; Total received: $offset bytes.");
-      },
-      onError: (err) {
-        controller.addError(err);
-
-        log.severe(
-            "Error while resuming download for file ID: $fileId, Error: $err");
-      },
-      onDone: () {
-        controller.close();
-
-        // Remove the download offset if the download is complete
-        if (offset == fixnum.Int64(file!.size)) {
-          _downloadOffsets.remove(fileId);
-        }
-
-        log.info(
-            "Completed resuming download for file ID: $fileId, Total bytes received: $offset.");
-      },
-      cancelOnError: true,
-    );
-
-    // Store the subscription to manage the download process
-    _downloadSubscriptions[fileId] = subscription;
-
-    // Yield each value as it is added to the controller
-    await for (var value in controller.stream) {
-      yield value;
-    }
-  }
-
-  /// Cancels the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be canceled.
-  @override
-  Future<void> cancelDownload({required String fileId}) async {
-    final subscription = _downloadSubscriptions[fileId];
-    if (subscription != null) {
-      await subscription.cancel();
-      _downloadSubscriptions.remove(fileId);
-      _downloadControllers.remove(fileId);
-      _downloadOffsets.remove(fileId);
-      _pausedDownloads.remove(fileId);
-
-      log.info("Canceled download for file ID: $fileId");
-    }
-  }
-
-  /// Fetches a media file from the server.
-  ///
-  /// [fileId] The ID of the file to be fetched.
-  ///
-  /// Returns a stream of [MediaFileResponse].
-  Stream<MediaFileResponse> _downloadMediaFromServer({
-    required String fileId,
-  }) async* {
-    final mediaStream =
-        _grpcChannel.mediaStorageStub.getFile(GetFileRequest(fileId: fileId));
-    MediaFileResponse? file;
-    fixnum.Int64 offset = fixnum.Int64(0);
-
-    // StreamController to manage and yield values asynchronously
-    final controller = StreamController<MediaFileResponse>();
-
-    final subscription = mediaStream.listen(
-      (mediaFile) {
-        if (mediaFile.file.name.isNotEmpty && file == null) {
-          file = MediaFileResponse(
-            size: mediaFile.file.size.toInt(),
-            name: mediaFile.file.name,
-            type: mediaFile.file.type,
-            id: mediaFile.file.id,
-          );
-
-          log.info(
-              "Initialized file download for '${file!.name}' with ID '${file!.id}', expected size: ${file!.size} bytes.");
-
-          if (file != null) {
-            controller.add(file!);
-          }
-        }
-
-        if (file != null) {
-          file!.bytes.clear();
-          file!.bytes.addAll(mediaFile.data);
-          offset += mediaFile.data.length;
-
-          log.info(
-              "Received ${mediaFile.data.length} bytes for file '${file!.name}'; Total received: $offset bytes.");
-
-          _downloadOffsets[fileId] = offset; // Update offset
-          _downloadControllers[fileId] = controller; // Store controller
-
-          controller.add(file!);
-        }
       },
       onError: (err) async {
         log.warning(
@@ -628,54 +493,39 @@ final class ChatServiceImpl implements ChatService {
             fileId: fileId,
             file: file!,
             offset: offset,
+            controller: controller,
+            download: download,
           )) {
             controller.add(resumedFile);
           }
         } else {
           log.warning("Failed to download file due to GrpcError: $err");
+
           controller.addError(err);
+          controller.close();
         }
       },
       onDone: () {
-        if (file != null) {
-          if (offset == fixnum.Int64(file!.size)) {
-            log.info(
-                "Successfully downloaded file '${file!.name}' with full size: ${file!.size} bytes.");
-            _downloadOffsets
-                .remove(fileId); // Remove offset if download is complete
-            _downloadSubscriptions
-                .remove(fileId); // Remove subscription if download is complete
-            _downloadControllers
-                .remove(fileId); // Remove controller if download is complete
-          } else {
-            log.warning(
-                "Downloaded file '${file!.name}' has a size mismatch. Expected: ${file!.size} bytes, Received: $offset bytes.");
-          }
+        if (file != null && offset.toInt() == file!.size) {
+          log.info(
+              "Completed download for file ID: $fileId, Total bytes received: $offset.");
+          controller.close();
+        } else {
+          log.warning(
+              "Download not complete for file ID: $fileId, total bytes received: $offset.");
         }
-
-        controller.close();
       },
       cancelOnError: true,
     );
-
-    // Store the subscription to manage the download process
-    _downloadSubscriptions[fileId] = subscription;
-
-    // Yield each value as it is added to the controller
-    await for (var value in controller.stream) {
-      yield value;
-    }
+    download.setSubscription(subscription);
   }
 
-  /// Resumes downloading a media file from a given offset.
-  ///
-  /// [fileId] The ID of the file to be resumed.
-  /// [file] The [MediaFileResponse] representing the file.
-  /// [offset] The offset to resume the download from.
   Stream<MediaFileResponse> _downloadMediaFromOffset({
     required String fileId,
     required MediaFileResponse file,
     required fixnum.Int64 offset,
+    required StreamController<MediaFileResponse> controller,
+    required DownloadImpl download,
   }) async* {
     await retry(
       () async* {
@@ -694,14 +544,56 @@ final class ChatServiceImpl implements ChatService {
           log.info(
               "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
 
+          download.updateOffset(offset.toInt());
+          controller.add(file);
+
           yield file;
         }
         log.info("Resumed and completed file download for '${file.name}'.");
+        controller.close();
       },
       retryIf: (err) => err is GrpcError,
       onRetry: (err) => log.warning(
         "Retrying due to GrpcError while resuming download for file (ID: '${file.id}', Size: ${file.size} bytes) from offset $offset: ${err.toString()}",
       ),
+    );
+  }
+
+  /// Pauses the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be paused.
+  @override
+  Future<void> pauseDownload({
+    required String fileId,
+    required StreamSubscription<MediaFile> subscription,
+  }) async {
+    await subscription.cancel();
+
+    log.info("Paused download for file ID: $fileId");
+  }
+
+  /// Resumes the download of a media file.
+  ///
+  /// [fileId] The ID of the file to be resumed.
+  @override
+  Future<void> resumeDownload({
+    required String fileId,
+    required StreamController<MediaFileResponse> controller,
+    required int offset,
+  }) async {
+    log.info("Resuming download for file ID: $fileId from offset: $offset");
+
+    final download = DownloadImpl(
+      fileId: fileId,
+      offset: offset.toInt(),
+      onData: controller,
+    );
+
+    _downloadMediaFromServer(
+      fileId: fileId,
+      offset: fixnum.Int64(offset),
+      controller: controller,
+      download: download,
     );
   }
 
@@ -805,13 +697,23 @@ final class ChatServiceImpl implements ChatService {
             if (update.message.keyboard.buttons.isNotEmpty) {
               keyboard = Keyboard(
                 buttons: update.message.keyboard.buttons.map((buttonRow) {
-                  return buttonRow.row.map((button) {
-                    return Button(
-                      text: button.text,
-                      code: button.code,
-                      url: button.url,
-                    );
-                  }).toList();
+                  return buttonRow.row
+                      .map((button) {
+                        if (button.share.name.isNotEmpty) {
+                          //TODO placeholder - need to be implemented later
+                          // Skip the button if it has a share type
+                          log.warning(
+                              'Skipping button with share type - ${button.text}');
+                          return null;
+                        }
+                        return Button(
+                          text: button.text,
+                          code: button.code,
+                          url: button.url,
+                        );
+                      })
+                      .whereType<Button>()
+                      .toList();
                 }).toList(),
               );
             }

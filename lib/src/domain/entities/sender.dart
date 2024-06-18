@@ -1,0 +1,1 @@
+/// Enumeration of possible senders of a dialog message.enum Sender {  user,  operator,  bot,}

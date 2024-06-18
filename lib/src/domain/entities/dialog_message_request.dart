@@ -1,4 +1,4 @@
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_request.dart';
 
 /// Represents a request to send a dialog message, which may include a media file.
 class DialogMessageRequest {

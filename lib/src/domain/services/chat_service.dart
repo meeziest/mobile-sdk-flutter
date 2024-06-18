@@ -5,10 +5,12 @@ import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message/dialog_message_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
+import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
 
 /// Interface for the chat service, providing methods for fetching messages,
 /// sending messages, handling dialogs, and managing streams and errors.
@@ -88,22 +90,24 @@ abstract interface class ChatService {
   /// [fileId] The unique identifier of the file to be downloaded.
   ///
   /// Returns a stream of [MediaFileResponse] for the downloaded file.
-  Stream<MediaFileResponse> downloadFile({required String fileId});
+  Download downloadFile({required String fileId, int? offset});
 
   /// Pauses the download of a media file.
   ///
   /// [fileId] The ID of the file to be paused.
-  Future<void> pauseDownload({required String fileId});
+  Future<void> pauseDownload({
+    required String fileId,
+    required StreamSubscription<MediaFile> subscription,
+  });
 
   /// Resumes the download of a media file.
   ///
   /// [fileId] The ID of the file to be resumed.
-  Stream<MediaFileResponse> resumeDownload({required String fileId});
-
-  /// Cancels the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be canceled.
-  Future<void> cancelDownload({required String fileId});
+  Future<void> resumeDownload({
+    required String fileId,
+    required StreamController<MediaFileResponse> controller,
+    required int offset,
+  });
 
   /// Provides a stream controller for channel status changes.
   ///

@@ -1,11 +1,9 @@
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
-
-/// Enumeration of possible senders of a dialog message.
-enum Sender { user, operator, bot }
+import 'package:webitel_portal_sdk/src/domain/entities/sender.dart';
 
 /// Represents a response for a dialog message, including the message content,
 /// associated media file, sender information, and any potential errors.
