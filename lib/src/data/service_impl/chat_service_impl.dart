@@ -417,6 +417,7 @@ final class ChatServiceImpl implements ChatService {
   /// Downloads a media file associated with a dialog.
   ///
   /// [fileId] The ID of the file to be downloaded.
+  /// [offset] The starting point for the download (in bytes).
   ///
   /// Returns a [Download] object representing the download operation.
   @override
@@ -424,16 +425,21 @@ final class ChatServiceImpl implements ChatService {
     required String fileId,
     int? offset,
   }) {
+    // Initialize the StreamController for media file responses
     StreamController<MediaFileResponse> controller;
+    // Create a new DownloadImpl object to manage the download
     DownloadImpl download;
 
+    // Initialize the StreamController
     controller = StreamController<MediaFileResponse>();
+    // Initialize the DownloadImpl with the fileId, offset, and controller
     download = DownloadImpl(
       fileId: fileId,
       offset: offset ?? 0,
       onData: controller,
     );
 
+    // Start the media download from the server
     _downloadMediaFromServer(
       fileId: fileId,
       offset: fixnum.Int64(offset ?? 0),
@@ -444,20 +450,62 @@ final class ChatServiceImpl implements ChatService {
     return download;
   }
 
+  /// Initiates the download of media from the server.
+  ///
+  /// [fileId] The ID of the file to be downloaded.
+  /// [offset] The starting point for the download (in bytes).
+  /// [controller] The StreamController for media file responses.
+  /// [download] The DownloadImpl object managing the download.
   void _downloadMediaFromServer({
     required String fileId,
     required fixnum.Int64 offset,
     required StreamController<MediaFileResponse> controller,
     required DownloadImpl download,
   }) {
+    // Create the media stream from the gRPC call
     final mediaStream = _grpcChannel.mediaStorageStub.getFile(
-      GetFileRequest(fileId: fileId, offset: offset),
+      GetFileRequest(
+        fileId: fileId,
+        offset: offset,
+      ),
     );
 
+    // Set up the subscription to handle the media stream
+    final subscription = _setupSubscription(
+      mediaStream: mediaStream,
+      fileId: fileId,
+      offset: offset,
+      controller: controller,
+      download: download,
+    );
+
+    // Assign the subscription to the download object
+    download.setSubscription(subscription);
+  }
+
+  /// Sets up the subscription to handle the media stream.
+  ///
+  /// [mediaStream] The response stream of media files from the server.
+  /// [fileId] The ID of the file being downloaded.
+  /// [offset] The starting point for the download (in bytes).
+  /// [controller] The StreamController for media file responses.
+  /// [download] The DownloadImpl object managing the download.
+  ///
+  /// Returns the StreamSubscription for the media stream.
+  StreamSubscription<MediaFile> _setupSubscription({
+    required ResponseStream<MediaFile> mediaStream,
+    required String fileId,
+    required fixnum.Int64 offset,
+    required StreamController<MediaFileResponse> controller,
+    required DownloadImpl download,
+  }) {
     MediaFileResponse? file;
-    final subscription = mediaStream.listen(
+
+    // Listen to the media stream
+    return mediaStream.listen(
       (mediaFile) {
         if (file == null) {
+          // Initialize the MediaFileResponse object when the first chunk is received
           file = MediaFileResponse(
             size: mediaFile.file.size.toInt(),
             name: mediaFile.file.name,
@@ -470,12 +518,15 @@ final class ChatServiceImpl implements ChatService {
               "Initialized download for file '${file!.name}' with ID '${file!.id}', expected size: ${file!.size} bytes.");
         }
 
+        // Add the received data to the file
         file!.bytes.clear();
         file!.bytes.addAll(mediaFile.data);
         offset += mediaFile.data.length;
 
+        // Update the download offset
         download.updateOffset(offset.toInt());
 
+        // Add the file to the controller
         controller.add(file!);
 
         log.info(
@@ -485,6 +536,7 @@ final class ChatServiceImpl implements ChatService {
         log.warning(
             "GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
 
+        // Attempt to resume the download if it was interrupted
         if (file != null && offset < fixnum.Int64(file!.size)) {
           log.info(
               "Attempting to resume file download for '${file!.name}' from offset $offset.");
@@ -506,20 +558,29 @@ final class ChatServiceImpl implements ChatService {
         }
       },
       onDone: () {
+        // Close the controller when the download is complete
         if (file != null && offset.toInt() == file!.size) {
           log.info(
               "Completed download for file ID: $fileId, Total bytes received: $offset.");
-          controller.close();
         } else {
           log.warning(
               "Download not complete for file ID: $fileId, total bytes received: $offset.");
         }
+        controller.close();
       },
       cancelOnError: true,
     );
-    download.setSubscription(subscription);
   }
 
+  /// Resumes the download of media from the server if it was interrupted.
+  ///
+  /// [fileId] The ID of the file being downloaded.
+  /// [file] The MediaFileResponse object representing the file being downloaded.
+  /// [offset] The current offset in bytes of the download.
+  /// [controller] The StreamController for media file responses.
+  /// [download] The DownloadImpl object managing the download.
+  ///
+  /// Returns a stream of MediaFileResponse objects.
   Stream<MediaFileResponse> _downloadMediaFromOffset({
     required String fileId,
     required MediaFileResponse file,
@@ -529,6 +590,7 @@ final class ChatServiceImpl implements ChatService {
   }) async* {
     await retry(
       () async* {
+        // Create the resumed media stream from the gRPC call
         final resumedMedia = _grpcChannel.mediaStorageStub.getFile(
           GetFileRequest(
             fileId: fileId,
@@ -536,6 +598,7 @@ final class ChatServiceImpl implements ChatService {
           ),
         );
 
+        // Listen to the resumed media stream
         await for (MediaFile mediaFile in resumedMedia) {
           file.bytes.clear();
           file.bytes.addAll(mediaFile.data);
@@ -545,11 +608,14 @@ final class ChatServiceImpl implements ChatService {
               "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
 
           download.updateOffset(offset.toInt());
+
           controller.add(file);
 
           yield file;
         }
+
         log.info("Resumed and completed file download for '${file.name}'.");
+
         controller.close();
       },
       retryIf: (err) => err is GrpcError,
@@ -562,11 +628,13 @@ final class ChatServiceImpl implements ChatService {
   /// Pauses the download of a media file.
   ///
   /// [fileId] The ID of the file to be paused.
+  /// [subscription] The StreamSubscription managing the download stream.
   @override
   Future<void> pauseDownload({
     required String fileId,
     required StreamSubscription<MediaFile> subscription,
   }) async {
+    // Cancel the subscription to pause the download
     await subscription.cancel();
 
     log.info("Paused download for file ID: $fileId");
@@ -575,19 +643,17 @@ final class ChatServiceImpl implements ChatService {
   /// Resumes the download of a media file.
   ///
   /// [fileId] The ID of the file to be resumed.
+  /// [controller] The StreamController for media file responses.
+  /// [offset] The point at which to resume the download (in bytes).
+  /// [download] The DownloadImpl object managing the download.
   @override
   Future<void> resumeDownload({
     required String fileId,
     required StreamController<MediaFileResponse> controller,
     required int offset,
+    required DownloadImpl download,
   }) async {
     log.info("Resuming download for file ID: $fileId from offset: $offset");
-
-    final download = DownloadImpl(
-      fileId: fileId,
-      offset: offset.toInt(),
-      onData: controller,
-    );
 
     _downloadMediaFromServer(
       fileId: fileId,

@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel_status.dart';
@@ -107,6 +108,7 @@ abstract interface class ChatService {
     required String fileId,
     required StreamController<MediaFileResponse> controller,
     required int offset,
+    required DownloadImpl download,
   });
 
   /// Provides a stream controller for channel status changes.
