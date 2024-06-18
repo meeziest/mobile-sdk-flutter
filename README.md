@@ -75,17 +75,17 @@ Fetch updates | set limit/offset (reversed to **fetchMessages**) for dialog:
 Listen to upcoming/incoming messages in dialog:
 `await dialog.listenToMessages();`
 
-Download file:
-`await dialog.downloadFile(fileId: fileId);`
+Retrieve download object:
+`final download = dialog.downloadFile(fileId: fileId);`
 
-Cancel downloading file:
-`await dialog.cancelDownload(fileId: fileId);`
+Listen to file data:
+`download.onData.listen;`
 
 Pause downloading file:
-`await dialog.pauseDownload(fileId: fileId);`
+`await download.pause();`
 
 Resume downloading file:
-`await dialog.resumeDownload(fileId: fileId);`
+`await download.resume();`
 
 Listen to newMemberAdded to the chat:
 `await dialog.onMemberAdded();`
