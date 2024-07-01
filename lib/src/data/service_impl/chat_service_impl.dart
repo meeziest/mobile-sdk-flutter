@@ -778,7 +778,7 @@ final class ChatServiceImpl implements ChatService {
                           );
                         } else {
                           log.warning(
-                              'Skipping button with empty code - ${button.text}');
+                              'Skipping button with empty code - ${button.share.name}');
                           return null;
                         }
                       })
