@@ -195,6 +195,7 @@ final class ChatServiceImpl implements ChatService {
     String chatId,
   ) async {
     final controllerExists = _onNewMessageControllers.containsKey(chatId);
+
     if (controllerExists) {
       log.info('Retrieving existing controller for chat ID: $chatId');
     } else {
@@ -610,7 +611,6 @@ final class ChatServiceImpl implements ChatService {
           download.updateOffset(offset.toInt());
 
           controller.add(file);
-
           yield file;
         }
 
@@ -761,27 +761,33 @@ final class ChatServiceImpl implements ChatService {
 
             Keyboard? keyboard;
             if (update.message.keyboard.buttons.isNotEmpty) {
+              log.info(
+                  'Buttons found in keyboard: ${update.message.keyboard.buttons}');
               keyboard = Keyboard(
                 buttons: update.message.keyboard.buttons.map((buttonRow) {
+                  log.info('Processing button row: $buttonRow');
                   return buttonRow.row
                       .map((button) {
-                        if (button.share.name.isNotEmpty) {
-                          //TODO placeholder - need to be implemented later
-                          // Skip the button if it has a share type
+                        log.info('Processing button: $button');
+                        // Check if the code or url property is not empty
+                        if (button.code.isNotEmpty || button.url.isNotEmpty) {
+                          return Button(
+                            text: button.text,
+                            code: button.code,
+                            url: button.url,
+                          );
+                        } else {
                           log.warning(
-                              'Skipping button with share type - ${button.text}');
+                              'Skipping button with empty code - ${button.text}');
                           return null;
                         }
-                        return Button(
-                          text: button.text,
-                          code: button.code,
-                          url: button.url,
-                        );
                       })
                       .whereType<Button>()
                       .toList();
                 }).toList(),
               );
+            } else {
+              log.warning('No buttons found in keyboard.');
             }
 
             if (messageType == MessageType.button) {

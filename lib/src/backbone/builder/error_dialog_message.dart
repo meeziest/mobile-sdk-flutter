@@ -1,3 +1,4 @@
+import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
@@ -25,8 +26,11 @@ final class ErrorDialogMessageBuilder {
     );
 
     return DialogMessageResponse(
+      error: CallError(
+        errorMessage: _dialogMessageContent,
+      ),
       input: false,
-      dialogMessageContent: _dialogMessageContent,
+      dialogMessageContent: '',
       requestId: _requestId,
       peer: peerInfo,
       file: MediaFileResponse.initial(),
