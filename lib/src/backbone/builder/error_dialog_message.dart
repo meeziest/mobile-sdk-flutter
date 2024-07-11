@@ -30,6 +30,7 @@ final class ErrorDialogMessageBuilder {
         errorMessage: _dialogMessageContent,
       ),
       input: false,
+      messageId: 0,
       dialogMessageContent: '',
       requestId: _requestId,
       peer: peerInfo,

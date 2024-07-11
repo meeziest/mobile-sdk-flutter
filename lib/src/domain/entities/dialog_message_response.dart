@@ -36,7 +36,7 @@ class DialogMessageResponse {
   final String? chatId;
 
   /// The ID of the message (optional).
-  final int? messageId;
+  final int messageId;
 
   /// The check for input opened/closed..
   final bool input;
@@ -61,8 +61,8 @@ class DialogMessageResponse {
     this.type,
     this.sender,
     this.chatId,
-    this.messageId,
     this.keyboard,
+    required this.messageId,
     required this.timestamp,
     required this.file,
     required this.requestId,
@@ -88,6 +88,6 @@ class DialogMessageResponse {
         chatId = null,
         dialogMessageContent = '',
         timestamp = 0,
-        messageId = null,
+        messageId = 0,
         keyboard = null;
 }
