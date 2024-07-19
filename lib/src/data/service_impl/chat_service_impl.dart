@@ -22,12 +22,9 @@ import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/button.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/dialog.pb.dart'
     as dialog;
@@ -1055,11 +1052,12 @@ final class ChatServiceImpl implements ChatService {
       log.info('Starting new upload for file: $name of type: $type');
 
       yield UploadRequest(
+          new_2: UploadRequest_Start(
         file: InputFile(
           name: name,
           type: type,
         ),
-      );
+      ));
     }
 
     int currentOffset = offset ?? 0;

@@ -28,38 +28,58 @@ message InputFile {
 }
 
 message UploadRequest {
+  // Start Request
+  message Start {
+    // Fileinfo header.
+    InputFile file = 1;
+    // Confirm receipt ?
+    //
+    // If true, in response to the transfer of each part,
+    // you will receive an acknowledgement of receipt
+    // in the form of the total size of the stored data.
+    //
+    // This setting will be associated with upload process
+    // and cannot be changed later.
+    bool progress = 2;
+  }
+  // Abort Request
+  message Abort {
+    // No Options
+  }
   // Input
-  oneof media {
-    // Continue incomplete upload ...
+  oneof data {
+    // Continue upload ...
     string pid = 1;
-    // Declaration of document metadata.
-    InputFile file = 2;
-    // Multipart(s) content data.
+    // Start NEW upload ...
+    Start new = 2;
+    // Multipart(s) data ...
     bytes part = 3;
+    // Abort upload progress !?
+    Abort kill = 4;
   }
 }
 
 message UploadProgress {
-
+  // Partial state
   message Partial {
-    // Upload process id.
+    // Upload process unique ID.
+    // You can use this ID to continue an interrupted upload
     string pid = 1;
-    // Size of the saved data.
+    // Total size of saved data.
     int64 size = 2;
   }
-
+  // Uploaded file info.
   message Complete {
     // Saved document metadata.
     webitel.chat.File file = 1;
     // Hashsum variants of stored data. map[algo]hash
     map<string,string> hash = 2;
   }
-
   // Output
-  oneof media {
-    // Operation progress start.
+  oneof data {
+    // Partial progress. Start/ACK.
     Partial part = 1;
-    // Operation complete stats.
+    // Upload complete. Result.
     Complete stat = 2;
   }
 }

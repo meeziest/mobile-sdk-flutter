@@ -82,28 +82,142 @@ class InputFile extends $pb.GeneratedMessage {
   void clearName() => clearField(5);
 }
 
-enum UploadRequest_Media {
+/// Start Request
+class UploadRequest_Start extends $pb.GeneratedMessage {
+  factory UploadRequest_Start({
+    InputFile? file,
+    $core.bool? progress,
+  }) {
+    final $result = create();
+    if (file != null) {
+      $result.file = file;
+    }
+    if (progress != null) {
+      $result.progress = progress;
+    }
+    return $result;
+  }
+  UploadRequest_Start._() : super();
+  factory UploadRequest_Start.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory UploadRequest_Start.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UploadRequest.Start', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
+    ..aOM<InputFile>(1, _omitFieldNames ? '' : 'file', subBuilder: InputFile.create)
+    ..aOB(2, _omitFieldNames ? '' : 'progress')
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  UploadRequest_Start clone() => UploadRequest_Start()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  UploadRequest_Start copyWith(void Function(UploadRequest_Start) updates) => super.copyWith((message) => updates(message as UploadRequest_Start)) as UploadRequest_Start;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UploadRequest_Start create() => UploadRequest_Start._();
+  UploadRequest_Start createEmptyInstance() => create();
+  static $pb.PbList<UploadRequest_Start> createRepeated() => $pb.PbList<UploadRequest_Start>();
+  @$core.pragma('dart2js:noInline')
+  static UploadRequest_Start getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UploadRequest_Start>(create);
+  static UploadRequest_Start? _defaultInstance;
+
+  /// Fileinfo header.
+  @$pb.TagNumber(1)
+  InputFile get file => $_getN(0);
+  @$pb.TagNumber(1)
+  set file(InputFile v) { setField(1, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasFile() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFile() => clearField(1);
+  @$pb.TagNumber(1)
+  InputFile ensureFile() => $_ensure(0);
+
+  ///  Confirm receipt ?
+  ///
+  ///  If true, in response to the transfer of each part,
+  ///  you will receive an acknowledgement of receipt
+  ///  in the form of the total size of the stored data.
+  ///
+  ///  This setting will be associated with upload process
+  ///  and cannot be changed later.
+  @$pb.TagNumber(2)
+  $core.bool get progress => $_getBF(1);
+  @$pb.TagNumber(2)
+  set progress($core.bool v) { $_setBool(1, v); }
+  @$pb.TagNumber(2)
+  $core.bool hasProgress() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearProgress() => clearField(2);
+}
+
+/// Abort Request
+class UploadRequest_Abort extends $pb.GeneratedMessage {
+  factory UploadRequest_Abort() => create();
+  UploadRequest_Abort._() : super();
+  factory UploadRequest_Abort.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory UploadRequest_Abort.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UploadRequest.Abort', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  UploadRequest_Abort clone() => UploadRequest_Abort()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  UploadRequest_Abort copyWith(void Function(UploadRequest_Abort) updates) => super.copyWith((message) => updates(message as UploadRequest_Abort)) as UploadRequest_Abort;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UploadRequest_Abort create() => UploadRequest_Abort._();
+  UploadRequest_Abort createEmptyInstance() => create();
+  static $pb.PbList<UploadRequest_Abort> createRepeated() => $pb.PbList<UploadRequest_Abort>();
+  @$core.pragma('dart2js:noInline')
+  static UploadRequest_Abort getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UploadRequest_Abort>(create);
+  static UploadRequest_Abort? _defaultInstance;
+}
+
+enum UploadRequest_Data {
   pid, 
-  file, 
+  new_2, 
   part, 
+  kill, 
   notSet
 }
 
 class UploadRequest extends $pb.GeneratedMessage {
   factory UploadRequest({
     $core.String? pid,
-    InputFile? file,
+    UploadRequest_Start? new_2,
     $core.List<$core.int>? part,
+    UploadRequest_Abort? kill,
   }) {
     final $result = create();
     if (pid != null) {
       $result.pid = pid;
     }
-    if (file != null) {
-      $result.file = file;
+    if (new_2 != null) {
+      $result.new_2 = new_2;
     }
     if (part != null) {
       $result.part = part;
+    }
+    if (kill != null) {
+      $result.kill = kill;
     }
     return $result;
   }
@@ -111,17 +225,19 @@ class UploadRequest extends $pb.GeneratedMessage {
   factory UploadRequest.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
   factory UploadRequest.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static const $core.Map<$core.int, UploadRequest_Media> _UploadRequest_MediaByTag = {
-    1 : UploadRequest_Media.pid,
-    2 : UploadRequest_Media.file,
-    3 : UploadRequest_Media.part,
-    0 : UploadRequest_Media.notSet
+  static const $core.Map<$core.int, UploadRequest_Data> _UploadRequest_DataByTag = {
+    1 : UploadRequest_Data.pid,
+    2 : UploadRequest_Data.new_2,
+    3 : UploadRequest_Data.part,
+    4 : UploadRequest_Data.kill,
+    0 : UploadRequest_Data.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UploadRequest', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
-    ..oo(0, [1, 2, 3])
+    ..oo(0, [1, 2, 3, 4])
     ..aOS(1, _omitFieldNames ? '' : 'pid')
-    ..aOM<InputFile>(2, _omitFieldNames ? '' : 'file', subBuilder: InputFile.create)
+    ..aOM<UploadRequest_Start>(2, _omitFieldNames ? '' : 'new', subBuilder: UploadRequest_Start.create)
     ..a<$core.List<$core.int>>(3, _omitFieldNames ? '' : 'part', $pb.PbFieldType.OY)
+    ..aOM<UploadRequest_Abort>(4, _omitFieldNames ? '' : 'kill', subBuilder: UploadRequest_Abort.create)
     ..hasRequiredFields = false
   ;
 
@@ -146,10 +262,10 @@ class UploadRequest extends $pb.GeneratedMessage {
   static UploadRequest getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UploadRequest>(create);
   static UploadRequest? _defaultInstance;
 
-  UploadRequest_Media whichMedia() => _UploadRequest_MediaByTag[$_whichOneof(0)]!;
-  void clearMedia() => clearField($_whichOneof(0));
+  UploadRequest_Data whichData() => _UploadRequest_DataByTag[$_whichOneof(0)]!;
+  void clearData() => clearField($_whichOneof(0));
 
-  /// Continue incomplete upload ...
+  /// Continue upload ...
   @$pb.TagNumber(1)
   $core.String get pid => $_getSZ(0);
   @$pb.TagNumber(1)
@@ -159,19 +275,19 @@ class UploadRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearPid() => clearField(1);
 
-  /// Declaration of document metadata.
+  /// Start NEW upload ...
   @$pb.TagNumber(2)
-  InputFile get file => $_getN(1);
+  UploadRequest_Start get new_2 => $_getN(1);
   @$pb.TagNumber(2)
-  set file(InputFile v) { setField(2, v); }
+  set new_2(UploadRequest_Start v) { setField(2, v); }
   @$pb.TagNumber(2)
-  $core.bool hasFile() => $_has(1);
+  $core.bool hasNew_2() => $_has(1);
   @$pb.TagNumber(2)
-  void clearFile() => clearField(2);
+  void clearNew_2() => clearField(2);
   @$pb.TagNumber(2)
-  InputFile ensureFile() => $_ensure(1);
+  UploadRequest_Start ensureNew_2() => $_ensure(1);
 
-  /// Multipart(s) content data.
+  /// Multipart(s) data ...
   @$pb.TagNumber(3)
   $core.List<$core.int> get part => $_getN(2);
   @$pb.TagNumber(3)
@@ -180,8 +296,21 @@ class UploadRequest extends $pb.GeneratedMessage {
   $core.bool hasPart() => $_has(2);
   @$pb.TagNumber(3)
   void clearPart() => clearField(3);
+
+  /// Abort upload progress !?
+  @$pb.TagNumber(4)
+  UploadRequest_Abort get kill => $_getN(3);
+  @$pb.TagNumber(4)
+  set kill(UploadRequest_Abort v) { setField(4, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasKill() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearKill() => clearField(4);
+  @$pb.TagNumber(4)
+  UploadRequest_Abort ensureKill() => $_ensure(3);
 }
 
+/// Partial state
 class UploadProgress_Partial extends $pb.GeneratedMessage {
   factory UploadProgress_Partial({
     $core.String? pid,
@@ -227,7 +356,8 @@ class UploadProgress_Partial extends $pb.GeneratedMessage {
   static UploadProgress_Partial getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UploadProgress_Partial>(create);
   static UploadProgress_Partial? _defaultInstance;
 
-  /// Upload process id.
+  /// Upload process unique ID.
+  /// You can use this ID to continue an interrupted upload
   @$pb.TagNumber(1)
   $core.String get pid => $_getSZ(0);
   @$pb.TagNumber(1)
@@ -237,7 +367,7 @@ class UploadProgress_Partial extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearPid() => clearField(1);
 
-  /// Size of the saved data.
+  /// Total size of saved data.
   @$pb.TagNumber(2)
   $fixnum.Int64 get size => $_getI64(1);
   @$pb.TagNumber(2)
@@ -248,6 +378,7 @@ class UploadProgress_Partial extends $pb.GeneratedMessage {
   void clearSize() => clearField(2);
 }
 
+/// Uploaded file info.
 class UploadProgress_Complete extends $pb.GeneratedMessage {
   factory UploadProgress_Complete({
     $6.File? file,
@@ -310,7 +441,7 @@ class UploadProgress_Complete extends $pb.GeneratedMessage {
   $core.Map<$core.String, $core.String> get hash => $_getMap(1);
 }
 
-enum UploadProgress_Media {
+enum UploadProgress_Data {
   part, 
   stat, 
   notSet
@@ -334,10 +465,10 @@ class UploadProgress extends $pb.GeneratedMessage {
   factory UploadProgress.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
   factory UploadProgress.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  static const $core.Map<$core.int, UploadProgress_Media> _UploadProgress_MediaByTag = {
-    1 : UploadProgress_Media.part,
-    2 : UploadProgress_Media.stat,
-    0 : UploadProgress_Media.notSet
+  static const $core.Map<$core.int, UploadProgress_Data> _UploadProgress_DataByTag = {
+    1 : UploadProgress_Data.part,
+    2 : UploadProgress_Data.stat,
+    0 : UploadProgress_Data.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UploadProgress', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
     ..oo(0, [1, 2])
@@ -367,10 +498,10 @@ class UploadProgress extends $pb.GeneratedMessage {
   static UploadProgress getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UploadProgress>(create);
   static UploadProgress? _defaultInstance;
 
-  UploadProgress_Media whichMedia() => _UploadProgress_MediaByTag[$_whichOneof(0)]!;
-  void clearMedia() => clearField($_whichOneof(0));
+  UploadProgress_Data whichData() => _UploadProgress_DataByTag[$_whichOneof(0)]!;
+  void clearData() => clearField($_whichOneof(0));
 
-  /// Operation progress start.
+  /// Partial progress. Start/ACK.
   @$pb.TagNumber(1)
   UploadProgress_Partial get part => $_getN(0);
   @$pb.TagNumber(1)
@@ -382,7 +513,7 @@ class UploadProgress extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   UploadProgress_Partial ensurePart() => $_ensure(0);
 
-  /// Operation complete stats.
+  /// Upload complete. Result.
   @$pb.TagNumber(2)
   UploadProgress_Complete get stat => $_getN(1);
   @$pb.TagNumber(2)

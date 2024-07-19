@@ -31,19 +31,37 @@ const UploadRequest$json = {
   '1': 'UploadRequest',
   '2': [
     {'1': 'pid', '3': 1, '4': 1, '5': 9, '9': 0, '10': 'pid'},
-    {'1': 'file', '3': 2, '4': 1, '5': 11, '6': '.webitel.portal.InputFile', '9': 0, '10': 'file'},
+    {'1': 'new', '3': 2, '4': 1, '5': 11, '6': '.webitel.portal.UploadRequest.Start', '9': 0, '10': 'new'},
     {'1': 'part', '3': 3, '4': 1, '5': 12, '9': 0, '10': 'part'},
+    {'1': 'kill', '3': 4, '4': 1, '5': 11, '6': '.webitel.portal.UploadRequest.Abort', '9': 0, '10': 'kill'},
   ],
+  '3': [UploadRequest_Start$json, UploadRequest_Abort$json],
   '8': [
-    {'1': 'media'},
+    {'1': 'data'},
   ],
+};
+
+@$core.Deprecated('Use uploadRequestDescriptor instead')
+const UploadRequest_Start$json = {
+  '1': 'Start',
+  '2': [
+    {'1': 'file', '3': 1, '4': 1, '5': 11, '6': '.webitel.portal.InputFile', '10': 'file'},
+    {'1': 'progress', '3': 2, '4': 1, '5': 8, '10': 'progress'},
+  ],
+};
+
+@$core.Deprecated('Use uploadRequestDescriptor instead')
+const UploadRequest_Abort$json = {
+  '1': 'Abort',
 };
 
 /// Descriptor for `UploadRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List uploadRequestDescriptor = $convert.base64Decode(
-    'Cg1VcGxvYWRSZXF1ZXN0EhIKA3BpZBgBIAEoCUgAUgNwaWQSLwoEZmlsZRgCIAEoCzIZLndlYm'
-    'l0ZWwucG9ydGFsLklucHV0RmlsZUgAUgRmaWxlEhQKBHBhcnQYAyABKAxIAFIEcGFydEIHCgVt'
-    'ZWRpYQ==');
+    'Cg1VcGxvYWRSZXF1ZXN0EhIKA3BpZBgBIAEoCUgAUgNwaWQSNwoDbmV3GAIgASgLMiMud2ViaX'
+    'RlbC5wb3J0YWwuVXBsb2FkUmVxdWVzdC5TdGFydEgAUgNuZXcSFAoEcGFydBgDIAEoDEgAUgRw'
+    'YXJ0EjkKBGtpbGwYBCABKAsyIy53ZWJpdGVsLnBvcnRhbC5VcGxvYWRSZXF1ZXN0LkFib3J0SA'
+    'BSBGtpbGwaUgoFU3RhcnQSLQoEZmlsZRgBIAEoCzIZLndlYml0ZWwucG9ydGFsLklucHV0Rmls'
+    'ZVIEZmlsZRIaCghwcm9ncmVzcxgCIAEoCFIIcHJvZ3Jlc3MaBwoFQWJvcnRCBgoEZGF0YQ==');
 
 @$core.Deprecated('Use uploadProgressDescriptor instead')
 const UploadProgress$json = {
@@ -54,7 +72,7 @@ const UploadProgress$json = {
   ],
   '3': [UploadProgress_Partial$json, UploadProgress_Complete$json],
   '8': [
-    {'1': 'media'},
+    {'1': 'data'},
   ],
 };
 
@@ -95,7 +113,7 @@ final $typed_data.Uint8List uploadProgressDescriptor = $convert.base64Decode(
     'NwaWQSEgoEc2l6ZRgCIAEoA1IEc2l6ZRqyAQoIQ29tcGxldGUSJgoEZmlsZRgBIAEoCzISLndl'
     'Yml0ZWwuY2hhdC5GaWxlUgRmaWxlEkUKBGhhc2gYAiADKAsyMS53ZWJpdGVsLnBvcnRhbC5VcG'
     'xvYWRQcm9ncmVzcy5Db21wbGV0ZS5IYXNoRW50cnlSBGhhc2gaNwoJSGFzaEVudHJ5EhAKA2tl'
-    'eRgBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAFCBwoFbWVkaWE=');
+    'eRgBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAFCBgoEZGF0YQ==');
 
 @$core.Deprecated('Use uploadMediaDescriptor instead')
 const UploadMedia$json = {
