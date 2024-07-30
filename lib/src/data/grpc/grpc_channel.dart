@@ -47,6 +47,9 @@ class GrpcChannel {
   // Logger for logging connection state changes and errors.
   final Logger _logger = Logger('GrpcChannel');
 
+  // Certificate for secure connection.
+  List<int>? _cert;
+
   /// Initializes the gRPC channel with the provided parameters.
   ///
   /// [url] The URL of the gRPC server.
@@ -62,6 +65,7 @@ class GrpcChannel {
     required String userAgent,
     required int port,
     required bool secure,
+    List<int>? cert,
   }) async {
     _url = url;
     _secure = secure;
@@ -69,6 +73,7 @@ class GrpcChannel {
     _deviceId = deviceId;
     _appToken = appToken;
     _userAgent = userAgent;
+    _cert = cert;
     await _createChannel(
       url: url,
       deviceId: deviceId,
@@ -76,6 +81,7 @@ class GrpcChannel {
       userAgent: _userAgent,
       port: port,
       secure: secure,
+      cert: _cert,
     );
   }
 
@@ -124,6 +130,7 @@ class GrpcChannel {
     required int port,
     required String url,
     required bool secure,
+    List<int>? cert,
   }) async {
     _logger.info(
         'Creating gRPC channel with the following parameters: URL: $_url, Port: $_port, Secure: $_secure, Device ID: $_deviceId, User Agent: $_userAgent');
@@ -134,7 +141,7 @@ class GrpcChannel {
       port: port,
       options: ChannelOptions(
         credentials: secure
-            ? ChannelCredentials.secure()
+            ? ChannelCredentials.secure(certificates: cert)
             : ChannelCredentials.insecure(),
         userAgent: userAgent,
         idleTimeout: Duration(minutes: 5),

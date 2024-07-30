@@ -32,6 +32,7 @@ abstract interface class AuthService {
   Future<PortalClient> initClient({
     required String url,
     required String appToken,
+    List<int>? cert,
   });
 
   /// Logs in a user with the provided credentials and user information.

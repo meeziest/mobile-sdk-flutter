@@ -29,6 +29,7 @@ class WebitelPortalSdk {
     required String url,
     required String appToken,
     required LoggerLevel loggerLevel,
+    List<int>? cert,
   }) async {
     // Configure dependencies using dependency injection.
     configureDependencies();
@@ -43,6 +44,7 @@ class WebitelPortalSdk {
     final client = authService.initClient(
       url: url,
       appToken: appToken,
+      cert: cert,
     );
 
     return client;

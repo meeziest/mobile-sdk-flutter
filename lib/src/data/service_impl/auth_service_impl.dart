@@ -60,6 +60,7 @@ class AuthServiceImpl implements AuthService {
   Future<client.PortalClient> initClient({
     required String url,
     required String appToken,
+    List<int>? cert,
   }) async {
     log.info(
         'Initializing gRPC channel for the portal URL: $url with the provided app token.');
@@ -136,6 +137,7 @@ class AuthServiceImpl implements AuthService {
         userAgent: userAgentString,
         port: port,
         secure: secureConnection,
+        cert: cert,
       );
 
       return PortalClientImpl(
