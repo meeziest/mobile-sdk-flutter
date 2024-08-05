@@ -85,19 +85,6 @@ final $typed_data.Uint8List responseDescriptor = $convert.base64Decode(
     'YnVmLkFueVIEZGF0YRIkCgNlcnIYAiABKAsyEi5nb29nbGUucnBjLlN0YXR1c1IDZXJyGjcKCU'
     '1ldGFFbnRyeRIQCgNrZXkYASABKAlSA2tleRIUCgV2YWx1ZRgCIAEoCVIFdmFsdWU6AjgB');
 
-@$core.Deprecated('Use updateSignedOutDescriptor instead')
-const UpdateSignedOut$json = {
-  '1': 'UpdateSignedOut',
-  '2': [
-    {'1': 'cause', '3': 1, '4': 1, '5': 11, '6': '.google.rpc.Status', '10': 'cause'},
-  ],
-};
-
-/// Descriptor for `UpdateSignedOut`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List updateSignedOutDescriptor = $convert.base64Decode(
-    'Cg9VcGRhdGVTaWduZWRPdXQSKAoFY2F1c2UYASABKAsyEi5nb29nbGUucnBjLlN0YXR1c1IFY2'
-    'F1c2U=');
-
 @$core.Deprecated('Use echoDescriptor instead')
 const Echo$json = {
   '1': 'Echo',
@@ -109,4 +96,17 @@ const Echo$json = {
 /// Descriptor for `Echo`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List echoDescriptor = $convert.base64Decode(
     'CgRFY2hvEhIKBGRhdGEYASABKAxSBGRhdGE=');
+
+@$core.Deprecated('Use updateDisconnectDescriptor instead')
+const UpdateDisconnect$json = {
+  '1': 'UpdateDisconnect',
+  '2': [
+    {'1': 'cause', '3': 1, '4': 1, '5': 11, '6': '.google.rpc.Status', '10': 'cause'},
+  ],
+};
+
+/// Descriptor for `UpdateDisconnect`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateDisconnectDescriptor = $convert.base64Decode(
+    'ChBVcGRhdGVEaXNjb25uZWN0EigKBWNhdXNlGAEgASgLMhIuZ29vZ2xlLnJwYy5TdGF0dXNSBW'
+    'NhdXNl');
 

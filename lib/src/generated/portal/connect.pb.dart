@@ -276,58 +276,6 @@ class Response extends $pb.GeneratedMessage {
   $core.Map<$core.String, $core.String> get meta => $_getMap(3);
 }
 
-class UpdateSignedOut extends $pb.GeneratedMessage {
-  factory UpdateSignedOut({
-    $14.Status? cause,
-  }) {
-    final $result = create();
-    if (cause != null) {
-      $result.cause = cause;
-    }
-    return $result;
-  }
-  UpdateSignedOut._() : super();
-  factory UpdateSignedOut.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
-  factory UpdateSignedOut.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UpdateSignedOut', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
-    ..aOM<$14.Status>(1, _omitFieldNames ? '' : 'cause', subBuilder: $14.Status.create)
-    ..hasRequiredFields = false
-  ;
-
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
-  'Will be removed in next major version')
-  UpdateSignedOut clone() => UpdateSignedOut()..mergeFromMessage(this);
-  @$core.Deprecated(
-  'Using this can add significant overhead to your binary. '
-  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
-  'Will be removed in next major version')
-  UpdateSignedOut copyWith(void Function(UpdateSignedOut) updates) => super.copyWith((message) => updates(message as UpdateSignedOut)) as UpdateSignedOut;
-
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static UpdateSignedOut create() => UpdateSignedOut._();
-  UpdateSignedOut createEmptyInstance() => create();
-  static $pb.PbList<UpdateSignedOut> createRepeated() => $pb.PbList<UpdateSignedOut>();
-  @$core.pragma('dart2js:noInline')
-  static UpdateSignedOut getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UpdateSignedOut>(create);
-  static UpdateSignedOut? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $14.Status get cause => $_getN(0);
-  @$pb.TagNumber(1)
-  set cause($14.Status v) { setField(1, v); }
-  @$pb.TagNumber(1)
-  $core.bool hasCause() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearCause() => clearField(1);
-  @$pb.TagNumber(1)
-  $14.Status ensureCause() => $_ensure(0);
-}
-
 class Echo extends $pb.GeneratedMessage {
   factory Echo({
     $core.List<$core.int>? data,
@@ -376,6 +324,61 @@ class Echo extends $pb.GeneratedMessage {
   $core.bool hasData() => $_has(0);
   @$pb.TagNumber(1)
   void clearData() => clearField(1);
+}
+
+/// UpdateDisconnect notifies the client about
+/// an imminent disconnect due to specified reason.
+class UpdateDisconnect extends $pb.GeneratedMessage {
+  factory UpdateDisconnect({
+    $14.Status? cause,
+  }) {
+    final $result = create();
+    if (cause != null) {
+      $result.cause = cause;
+    }
+    return $result;
+  }
+  UpdateDisconnect._() : super();
+  factory UpdateDisconnect.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory UpdateDisconnect.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UpdateDisconnect', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
+    ..aOM<$14.Status>(1, _omitFieldNames ? '' : 'cause', subBuilder: $14.Status.create)
+    ..hasRequiredFields = false
+  ;
+
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  UpdateDisconnect clone() => UpdateDisconnect()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  UpdateDisconnect copyWith(void Function(UpdateDisconnect) updates) => super.copyWith((message) => updates(message as UpdateDisconnect)) as UpdateDisconnect;
+
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateDisconnect create() => UpdateDisconnect._();
+  UpdateDisconnect createEmptyInstance() => create();
+  static $pb.PbList<UpdateDisconnect> createRepeated() => $pb.PbList<UpdateDisconnect>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateDisconnect getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UpdateDisconnect>(create);
+  static UpdateDisconnect? _defaultInstance;
+
+  /// The disconnect reason
+  @$pb.TagNumber(1)
+  $14.Status get cause => $_getN(0);
+  @$pb.TagNumber(1)
+  set cause($14.Status v) { setField(1, v); }
+  @$pb.TagNumber(1)
+  $core.bool hasCause() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCause() => clearField(1);
+  @$pb.TagNumber(1)
+  $14.Status ensureCause() => $_ensure(0);
 }
 
 

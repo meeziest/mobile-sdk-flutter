@@ -31,10 +31,10 @@ class CustomerClient extends $grpc.Client {
       '/webitel.portal.Customer/Token',
       ($3.TokenRequest value) => value.writeToBuffer(),
       ($core.List<$core.int> value) => $3.AccessToken.fromBuffer(value));
-  static final _$logout = $grpc.ClientMethod<$4.LogoutRequest, $2.UpdateSignedOut>(
+  static final _$logout = $grpc.ClientMethod<$4.LogoutRequest, $2.UpdateDisconnect>(
       '/webitel.portal.Customer/Logout',
       ($4.LogoutRequest value) => value.writeToBuffer(),
-      ($core.List<$core.int> value) => $2.UpdateSignedOut.fromBuffer(value));
+      ($core.List<$core.int> value) => $2.UpdateDisconnect.fromBuffer(value));
   static final _$inspect = $grpc.ClientMethod<$4.InspectRequest, $3.AccessToken>(
       '/webitel.portal.Customer/Inspect',
       ($4.InspectRequest value) => value.writeToBuffer(),
@@ -62,7 +62,7 @@ class CustomerClient extends $grpc.Client {
     return $createUnaryCall(_$token, request, options: options);
   }
 
-  $grpc.ResponseFuture<$2.UpdateSignedOut> logout($4.LogoutRequest request, {$grpc.CallOptions? options}) {
+  $grpc.ResponseFuture<$2.UpdateDisconnect> logout($4.LogoutRequest request, {$grpc.CallOptions? options}) {
     return $createUnaryCall(_$logout, request, options: options);
   }
 
@@ -98,13 +98,13 @@ abstract class CustomerServiceBase extends $grpc.Service {
         false,
         ($core.List<$core.int> value) => $3.TokenRequest.fromBuffer(value),
         ($3.AccessToken value) => value.writeToBuffer()));
-    $addMethod($grpc.ServiceMethod<$4.LogoutRequest, $2.UpdateSignedOut>(
+    $addMethod($grpc.ServiceMethod<$4.LogoutRequest, $2.UpdateDisconnect>(
         'Logout',
         logout_Pre,
         false,
         false,
         ($core.List<$core.int> value) => $4.LogoutRequest.fromBuffer(value),
-        ($2.UpdateSignedOut value) => value.writeToBuffer()));
+        ($2.UpdateDisconnect value) => value.writeToBuffer()));
     $addMethod($grpc.ServiceMethod<$4.InspectRequest, $3.AccessToken>(
         'Inspect',
         inspect_Pre,
@@ -136,7 +136,7 @@ abstract class CustomerServiceBase extends $grpc.Service {
     return token(call, await request);
   }
 
-  $async.Future<$2.UpdateSignedOut> logout_Pre($grpc.ServiceCall call, $async.Future<$4.LogoutRequest> request) async {
+  $async.Future<$2.UpdateDisconnect> logout_Pre($grpc.ServiceCall call, $async.Future<$4.LogoutRequest> request) async {
     return logout(call, await request);
   }
 
@@ -150,7 +150,7 @@ abstract class CustomerServiceBase extends $grpc.Service {
 
   $async.Future<$2.Echo> ping($grpc.ServiceCall call, $2.Echo request);
   $async.Future<$3.AccessToken> token($grpc.ServiceCall call, $3.TokenRequest request);
-  $async.Future<$2.UpdateSignedOut> logout($grpc.ServiceCall call, $4.LogoutRequest request);
+  $async.Future<$2.UpdateDisconnect> logout($grpc.ServiceCall call, $4.LogoutRequest request);
   $async.Future<$3.AccessToken> inspect($grpc.ServiceCall call, $4.InspectRequest request);
   $async.Future<$4.RegisterDeviceResponse> registerDevice($grpc.ServiceCall call, $4.RegisterDeviceRequest request);
   $async.Stream<$2.Update> connect($grpc.ServiceCall call, $async.Stream<$2.Request> request);

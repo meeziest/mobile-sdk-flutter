@@ -16,7 +16,7 @@ service Customer {
   rpc Token(TokenRequest) returns (AccessToken);
 
   // Logout session request
-  rpc Logout(LogoutRequest) returns (UpdateSignedOut);
+  rpc Logout(LogoutRequest) returns (UpdateDisconnect);
 
   // Inspect your authorization access token
   rpc Inspect(InspectRequest) returns (AccessToken);

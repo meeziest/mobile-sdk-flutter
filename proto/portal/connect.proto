@@ -39,10 +39,13 @@ message Response {
   google.rpc.Status err = 2;
 }
 
-message UpdateSignedOut {
-  google.rpc.Status cause = 1;
-}
-
 message Echo {
   bytes data = 1;
+}
+
+// UpdateDisconnect notifies the client about
+// an imminent disconnect due to specified reason.
+message UpdateDisconnect {
+  // The disconnect reason
+  google.rpc.Status cause = 1;
 }
