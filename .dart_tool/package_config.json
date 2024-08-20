@@ -165,13 +165,13 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/flutter/packages/flutter",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/packages/flutter",
       "packageUri": "lib/",
-      "languageVersion": "3.2"
+      "languageVersion": "3.3"
     },
     {
       "name": "flutter_web_plugins",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/flutter/packages/flutter_web_plugins",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -243,7 +243,7 @@
     },
     {
       "name": "injectable",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/injectable-2.4.1",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/injectable-2.4.4",
       "packageUri": "lib/",
       "languageVersion": "3.0"
     },
@@ -291,13 +291,13 @@
     },
     {
       "name": "material_color_utilities",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/material_color_utilities-0.8.0",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/material_color_utilities-0.11.1",
       "packageUri": "lib/",
       "languageVersion": "2.17"
     },
     {
       "name": "meta",
-      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/meta-1.11.0",
+      "rootUri": "file:///Users/volodiahunkalo/.pub-cache/hosted/pub.dev/meta-1.15.0",
       "packageUri": "lib/",
       "languageVersion": "2.12"
     },
@@ -447,7 +447,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/flutter/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -590,7 +590,10 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-05-23T12:16:18.419316Z",
+  "generated": "2024-08-15T08:48:14.165743Z",
   "generator": "pub",
-  "generatorVersion": "3.3.3"
+  "generatorVersion": "3.5.0",
+  "flutterRoot": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter",
+  "flutterVersion": "3.24.0",
+  "pubCache": "file:///Users/volodiahunkalo/.pub-cache"
 }

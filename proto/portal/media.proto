@@ -3,6 +3,7 @@ package webitel.portal;
 option go_package = "webitel.go/api/portal;portal";
 
 import "chat/messages/message.proto";
+import "portal/connect.proto";
 
 // Media (file) storage
 service MediaStorage {
@@ -11,8 +12,8 @@ service MediaStorage {
   // Continue incomplete upload.
   rpc Upload(stream UploadRequest) returns (stream UploadProgress);
 
-  // Legacy.
   // Upload a file (without actually sending it to the chat)
+  // Deprecated: Use [MediaStorage.Upload] instead.
   rpc UploadFile(stream UploadMedia) returns (webitel.chat.File);
 
   // Returns content of a whole file
@@ -81,6 +82,9 @@ message UploadProgress {
     Partial part = 1;
     // Upload complete. Result.
     Complete stat = 2;
+    // Early notification about 
+    // upstream disconnect init.
+    UpdateDisconnect end = 3;
   }
 }
 
@@ -109,5 +113,8 @@ message MediaFile {
     webitel.chat.File file = 1;
     // File content part
     bytes data = 2;
+    // Early notification about 
+    // upstream disconnect init.
+    UpdateDisconnect end = 3;
   }
 }

@@ -69,6 +69,7 @@ const UploadProgress$json = {
   '2': [
     {'1': 'part', '3': 1, '4': 1, '5': 11, '6': '.webitel.portal.UploadProgress.Partial', '9': 0, '10': 'part'},
     {'1': 'stat', '3': 2, '4': 1, '5': 11, '6': '.webitel.portal.UploadProgress.Complete', '9': 0, '10': 'stat'},
+    {'1': 'end', '3': 3, '4': 1, '5': 11, '6': '.webitel.portal.UpdateDisconnect', '9': 0, '10': 'end'},
   ],
   '3': [UploadProgress_Partial$json, UploadProgress_Complete$json],
   '8': [
@@ -109,11 +110,12 @@ const UploadProgress_Complete_HashEntry$json = {
 final $typed_data.Uint8List uploadProgressDescriptor = $convert.base64Decode(
     'Cg5VcGxvYWRQcm9ncmVzcxI8CgRwYXJ0GAEgASgLMiYud2ViaXRlbC5wb3J0YWwuVXBsb2FkUH'
     'JvZ3Jlc3MuUGFydGlhbEgAUgRwYXJ0Ej0KBHN0YXQYAiABKAsyJy53ZWJpdGVsLnBvcnRhbC5V'
-    'cGxvYWRQcm9ncmVzcy5Db21wbGV0ZUgAUgRzdGF0Gi8KB1BhcnRpYWwSEAoDcGlkGAEgASgJUg'
-    'NwaWQSEgoEc2l6ZRgCIAEoA1IEc2l6ZRqyAQoIQ29tcGxldGUSJgoEZmlsZRgBIAEoCzISLndl'
-    'Yml0ZWwuY2hhdC5GaWxlUgRmaWxlEkUKBGhhc2gYAiADKAsyMS53ZWJpdGVsLnBvcnRhbC5VcG'
-    'xvYWRQcm9ncmVzcy5Db21wbGV0ZS5IYXNoRW50cnlSBGhhc2gaNwoJSGFzaEVudHJ5EhAKA2tl'
-    'eRgBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAFCBgoEZGF0YQ==');
+    'cGxvYWRQcm9ncmVzcy5Db21wbGV0ZUgAUgRzdGF0EjQKA2VuZBgDIAEoCzIgLndlYml0ZWwucG'
+    '9ydGFsLlVwZGF0ZURpc2Nvbm5lY3RIAFIDZW5kGi8KB1BhcnRpYWwSEAoDcGlkGAEgASgJUgNw'
+    'aWQSEgoEc2l6ZRgCIAEoA1IEc2l6ZRqyAQoIQ29tcGxldGUSJgoEZmlsZRgBIAEoCzISLndlYm'
+    'l0ZWwuY2hhdC5GaWxlUgRmaWxlEkUKBGhhc2gYAiADKAsyMS53ZWJpdGVsLnBvcnRhbC5VcGxv'
+    'YWRQcm9ncmVzcy5Db21wbGV0ZS5IYXNoRW50cnlSBGhhc2gaNwoJSGFzaEVudHJ5EhAKA2tleR'
+    'gBIAEoCVIDa2V5EhQKBXZhbHVlGAIgASgJUgV2YWx1ZToCOAFCBgoEZGF0YQ==');
 
 @$core.Deprecated('Use uploadMediaDescriptor instead')
 const UploadMedia$json = {
@@ -152,6 +154,7 @@ const MediaFile$json = {
   '2': [
     {'1': 'file', '3': 1, '4': 1, '5': 11, '6': '.webitel.chat.File', '9': 0, '10': 'file'},
     {'1': 'data', '3': 2, '4': 1, '5': 12, '9': 0, '10': 'data'},
+    {'1': 'end', '3': 3, '4': 1, '5': 11, '6': '.webitel.portal.UpdateDisconnect', '9': 0, '10': 'end'},
   ],
   '8': [
     {'1': 'media_type'},
@@ -161,5 +164,6 @@ const MediaFile$json = {
 /// Descriptor for `MediaFile`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List mediaFileDescriptor = $convert.base64Decode(
     'CglNZWRpYUZpbGUSKAoEZmlsZRgBIAEoCzISLndlYml0ZWwuY2hhdC5GaWxlSABSBGZpbGUSFA'
-    'oEZGF0YRgCIAEoDEgAUgRkYXRhQgwKCm1lZGlhX3R5cGU=');
+    'oEZGF0YRgCIAEoDEgAUgRkYXRhEjQKA2VuZBgDIAEoCzIgLndlYml0ZWwucG9ydGFsLlVwZGF0'
+    'ZURpc2Nvbm5lY3RIAFIDZW5kQgwKCm1lZGlhX3R5cGU=');
 

@@ -15,6 +15,7 @@ import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 import '../chat/messages/message.pb.dart' as $6;
+import 'connect.pb.dart' as $2;
 
 class InputFile extends $pb.GeneratedMessage {
   factory InputFile({
@@ -444,6 +445,7 @@ class UploadProgress_Complete extends $pb.GeneratedMessage {
 enum UploadProgress_Data {
   part, 
   stat, 
+  end, 
   notSet
 }
 
@@ -451,6 +453,7 @@ class UploadProgress extends $pb.GeneratedMessage {
   factory UploadProgress({
     UploadProgress_Partial? part,
     UploadProgress_Complete? stat,
+    $2.UpdateDisconnect? end,
   }) {
     final $result = create();
     if (part != null) {
@@ -458,6 +461,9 @@ class UploadProgress extends $pb.GeneratedMessage {
     }
     if (stat != null) {
       $result.stat = stat;
+    }
+    if (end != null) {
+      $result.end = end;
     }
     return $result;
   }
@@ -468,12 +474,14 @@ class UploadProgress extends $pb.GeneratedMessage {
   static const $core.Map<$core.int, UploadProgress_Data> _UploadProgress_DataByTag = {
     1 : UploadProgress_Data.part,
     2 : UploadProgress_Data.stat,
+    3 : UploadProgress_Data.end,
     0 : UploadProgress_Data.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'UploadProgress', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
-    ..oo(0, [1, 2])
+    ..oo(0, [1, 2, 3])
     ..aOM<UploadProgress_Partial>(1, _omitFieldNames ? '' : 'part', subBuilder: UploadProgress_Partial.create)
     ..aOM<UploadProgress_Complete>(2, _omitFieldNames ? '' : 'stat', subBuilder: UploadProgress_Complete.create)
+    ..aOM<$2.UpdateDisconnect>(3, _omitFieldNames ? '' : 'end', subBuilder: $2.UpdateDisconnect.create)
     ..hasRequiredFields = false
   ;
 
@@ -524,6 +532,19 @@ class UploadProgress extends $pb.GeneratedMessage {
   void clearStat() => clearField(2);
   @$pb.TagNumber(2)
   UploadProgress_Complete ensureStat() => $_ensure(1);
+
+  /// Early notification about
+  /// upstream disconnect init.
+  @$pb.TagNumber(3)
+  $2.UpdateDisconnect get end => $_getN(2);
+  @$pb.TagNumber(3)
+  set end($2.UpdateDisconnect v) { setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasEnd() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearEnd() => clearField(3);
+  @$pb.TagNumber(3)
+  $2.UpdateDisconnect ensureEnd() => $_ensure(2);
 }
 
 enum UploadMedia_MediaType {
@@ -678,6 +699,7 @@ class GetFileRequest extends $pb.GeneratedMessage {
 enum MediaFile_MediaType {
   file, 
   data, 
+  end, 
   notSet
 }
 
@@ -685,6 +707,7 @@ class MediaFile extends $pb.GeneratedMessage {
   factory MediaFile({
     $6.File? file,
     $core.List<$core.int>? data,
+    $2.UpdateDisconnect? end,
   }) {
     final $result = create();
     if (file != null) {
@@ -692,6 +715,9 @@ class MediaFile extends $pb.GeneratedMessage {
     }
     if (data != null) {
       $result.data = data;
+    }
+    if (end != null) {
+      $result.end = end;
     }
     return $result;
   }
@@ -702,12 +728,14 @@ class MediaFile extends $pb.GeneratedMessage {
   static const $core.Map<$core.int, MediaFile_MediaType> _MediaFile_MediaTypeByTag = {
     1 : MediaFile_MediaType.file,
     2 : MediaFile_MediaType.data,
+    3 : MediaFile_MediaType.end,
     0 : MediaFile_MediaType.notSet
   };
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'MediaFile', package: const $pb.PackageName(_omitMessageNames ? '' : 'webitel.portal'), createEmptyInstance: create)
-    ..oo(0, [1, 2])
+    ..oo(0, [1, 2, 3])
     ..aOM<$6.File>(1, _omitFieldNames ? '' : 'file', subBuilder: $6.File.create)
     ..a<$core.List<$core.int>>(2, _omitFieldNames ? '' : 'data', $pb.PbFieldType.OY)
+    ..aOM<$2.UpdateDisconnect>(3, _omitFieldNames ? '' : 'end', subBuilder: $2.UpdateDisconnect.create)
     ..hasRequiredFields = false
   ;
 
@@ -756,6 +784,19 @@ class MediaFile extends $pb.GeneratedMessage {
   $core.bool hasData() => $_has(1);
   @$pb.TagNumber(2)
   void clearData() => clearField(2);
+
+  /// Early notification about
+  /// upstream disconnect init.
+  @$pb.TagNumber(3)
+  $2.UpdateDisconnect get end => $_getN(2);
+  @$pb.TagNumber(3)
+  set end($2.UpdateDisconnect v) { setField(3, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasEnd() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearEnd() => clearField(3);
+  @$pb.TagNumber(3)
+  $2.UpdateDisconnect ensureEnd() => $_ensure(2);
 }
 
 
