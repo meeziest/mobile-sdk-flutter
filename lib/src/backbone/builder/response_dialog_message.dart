@@ -72,7 +72,7 @@ final class ResponseDialogMessageBuilder {
 
   DialogMessageResponse build() {
     final sender =
-        _update.message.from.id == _userId ? Sender.user : Sender.operator;
+        _update.message.from.name == 'You' ? Sender.user : Sender.operator;
 
     final type = MessageHelper.determineMessageTypeResponse(_update);
 
