@@ -259,7 +259,11 @@ final class ChatServiceImpl implements ChatService {
             final onMemberLeftController =
                 await getControllerForMemberLeft(dialog.id);
 
+            final bool isClosed =
+                (dialog.left != 0 || dialog.left == 0 && dialog.join == 0);
+
             return DialogImpl(
+              isClosed: isClosed,
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
@@ -295,6 +299,7 @@ final class ChatServiceImpl implements ChatService {
               statusCode: statusCode,
               errorMessage: response.err.message,
             ),
+            isClosed: true,
             topMessage: 'ERROR',
             id: response.id,
             onNewMessage: Stream<DialogMessageResponse>.empty(),
@@ -361,7 +366,11 @@ final class ChatServiceImpl implements ChatService {
             final onMemberLeftController =
                 await getControllerForMemberLeft(dialog.id);
 
+            final bool isClosed =
+                (dialog.left != 0 || dialog.left == 0 && dialog.join == 0);
+
             return DialogImpl(
+              isClosed: isClosed,
               topMessage: dialog.message.text,
               id: dialog.id,
               onNewMessage: onNewMessageController.stream,
@@ -395,6 +404,7 @@ final class ChatServiceImpl implements ChatService {
             statusCode: statusCode,
             errorMessage: response.err.message,
           ),
+          isClosed: true,
           topMessage: 'ERROR',
           id: response.id,
           onNewMessage: Stream<DialogMessageResponse>.empty(),

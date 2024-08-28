@@ -24,6 +24,9 @@ abstract interface class Dialog {
   /// Returns the top message as a string.
   String get topMessage;
 
+  /// Retrieves flag whether chat is closed or not.
+  bool get isClosed;
+
   /// Stream of new messages in the dialog.
   ///
   /// Returns a stream of [DialogMessageResponse] for new messages.

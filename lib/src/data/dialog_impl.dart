@@ -24,6 +24,10 @@ final class DialogImpl implements Dialog {
   @override
   final String topMessage;
 
+  /// Flag indicating whether the chat is closed or not.
+  @override
+  final bool isClosed;
+
   /// The error associated with the dialog, if any.
   @override
   final CallError? error;
@@ -52,6 +56,7 @@ final class DialogImpl implements Dialog {
   DialogImpl({
     required this.id,
     required this.topMessage,
+    required this.isClosed,
     required this.onNewMessage,
     required this.onMemberAdded,
     required this.onMemberLeft,
@@ -64,6 +69,7 @@ final class DialogImpl implements Dialog {
   DialogImpl.initial()
       : id = 'default_id',
         topMessage = 'No messages yet',
+        isClosed = true,
         error = CallError(statusCode: '', errorMessage: ''),
         onNewMessage = Stream.empty(),
         onMemberLeft = Stream.empty(),
