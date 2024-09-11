@@ -260,7 +260,7 @@ final class ChatServiceImpl implements ChatService {
                 await getControllerForMemberLeft(dialog.id);
 
             final bool isClosed =
-                (dialog.left != 0 || dialog.left == 0 && dialog.join == 0);
+                (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
 
             return DialogImpl(
               isClosed: isClosed,
@@ -367,7 +367,7 @@ final class ChatServiceImpl implements ChatService {
                 await getControllerForMemberLeft(dialog.id);
 
             final bool isClosed =
-                (dialog.left != 0 || dialog.left == 0 && dialog.join == 0);
+                (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
 
             return DialogImpl(
               isClosed: isClosed,
