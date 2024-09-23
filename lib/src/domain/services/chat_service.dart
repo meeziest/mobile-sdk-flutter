@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
@@ -11,7 +12,8 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.d
 import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
-import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
+
+import '../entities/upload.dart';
 
 /// Interface for the chat service, providing methods for fetching messages,
 /// sending messages, handling dialogs, and managing streams and errors.
@@ -93,14 +95,6 @@ abstract interface class ChatService {
   /// Returns a stream of [MediaFileResponse] for the downloaded file.
   Download downloadFile({required String fileId, int? offset});
 
-  /// Pauses the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be paused.
-  Future<void> pauseDownload({
-    required String fileId,
-    required StreamSubscription<MediaFile> subscription,
-  });
-
   /// Resumes the download of a media file.
   ///
   /// [fileId] The ID of the file to be resumed.
@@ -109,6 +103,21 @@ abstract interface class ChatService {
     required StreamController<MediaFileResponse> controller,
     required int offset,
     required DownloadImpl download,
+  });
+
+  /// Uploads a media file to be sent in a dialog.
+  ///
+  /// [mediaType] The type of the media to be uploaded.
+  /// [mediaName] The name of the media to be uploaded.
+  /// [mediaData] The data stream of the media to be uploaded.
+  ///
+  /// Returns an [Upload] object representing the upload operation.
+  Upload uploadFile({
+    required String mediaType,
+    required String mediaName,
+    required File file,
+    String? pid,
+    int? offset,
   });
 
   /// Provides a stream controller for channel status changes.

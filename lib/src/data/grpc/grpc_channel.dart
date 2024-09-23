@@ -195,7 +195,7 @@ class GrpcChannel {
   Future<void> _reconnect() async {
     try {
       await retry(
-        () async {
+            () async {
           await _createChannel(
             url: _url,
             port: _port,

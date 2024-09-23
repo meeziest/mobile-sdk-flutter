@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:injectable/injectable.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
@@ -6,10 +7,10 @@ import 'package:webitel_portal_sdk/src/domain/entities/dialog.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file_request.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_chat_member.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/postback.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/upload.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/upload_file.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
 
@@ -20,13 +21,13 @@ final class DialogImpl implements Dialog {
   @override
   final String id;
 
+  /// The current status of the dialog whether it's closed.
+  @override
+  final bool isClosed;
+
   /// The top message in the dialog.
   @override
   final String topMessage;
-
-  /// Flag indicating whether the chat is closed or not.
-  @override
-  final bool isClosed;
 
   /// The error associated with the dialog, if any.
   @override
@@ -36,11 +37,11 @@ final class DialogImpl implements Dialog {
   @override
   final Stream<DialogMessageResponse> onNewMessage;
 
-  /// Stream [PortalChatMember] for new member added to the chat..
+  /// Stream [PortalChatMember] for new member added to the chat.
   @override
   final Stream<PortalChatMember> onMemberAdded;
 
-  /// Stream [PortalChatMember] for member left the chat..
+  /// Stream [PortalChatMember] for member left the chat.
   @override
   final Stream<PortalChatMember> onMemberLeft;
 
@@ -48,11 +49,6 @@ final class DialogImpl implements Dialog {
   late final ChatService _chatService;
 
   /// Constructor for initializing a [DialogImpl] instance.
-  ///
-  /// [id] The unique identifier for the dialog.
-  /// [topMessage] The top message in the dialog.
-  /// [onNewMessage] The stream for new messages in the dialog.
-  /// [error] The error associated with the dialog, if any.
   DialogImpl({
     required this.id,
     required this.topMessage,
@@ -76,19 +72,9 @@ final class DialogImpl implements Dialog {
         onMemberAdded = Stream.empty();
 
   /// Sends a message in the dialog.
-  ///
-  /// [mediaType] The type of the media (optional).
-  /// [mediaName] The name of the media (optional).
-  /// [mediaData] The stream of media data (optional).
-  /// [content] The content of the message.
-  /// [requestId] The unique identifier for the request.
-  ///
-  /// Returns a [Future] that completes with a [DialogMessageResponse].
   @override
   Future<DialogMessageResponse> sendMessage({
-    String? mediaType,
-    String? mediaName,
-    Stream<List<int>>? mediaData,
+    UploadFile? uploadFile,
     required String content,
     required String requestId,
   }) async {
@@ -97,22 +83,16 @@ final class DialogImpl implements Dialog {
       message: DialogMessageRequest(
         content: content,
         requestId: requestId,
-        file: MediaFileRequest(
-          data: mediaData ?? Stream<List<int>>.empty(),
-          name: mediaName ?? '',
-          type: mediaType ?? '',
-          requestId: requestId,
+        uploadFile: UploadFile(
+          name: uploadFile?.name ?? '',
+          type: uploadFile?.type ?? '',
+          id: uploadFile?.id ?? '',
         ),
       ),
     );
   }
 
   /// Sends a postback in the dialog.
-  ///
-  /// [postback] The postback object,
-  /// [requestId] The unique identifier for the request.
-  ///
-  /// Returns a [Future] that completes with a [DialogMessageResponse].
   @override
   Future<DialogMessageResponse> sendPostback({
     required Postback postback,
@@ -126,11 +106,6 @@ final class DialogImpl implements Dialog {
   }
 
   /// Fetches messages in the dialog.
-  ///
-  /// [limit] The maximum number of messages to fetch (optional).
-  /// [offset] The offset from which to start fetching messages (optional).
-  ///
-  /// Returns a [Future] that completes with a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchMessages({
     int? limit,
@@ -144,11 +119,6 @@ final class DialogImpl implements Dialog {
   }
 
   /// Fetches updates in the dialog.
-  ///
-  /// [limit] The maximum number of updates to fetch (optional).
-  /// [offset] The offset from which to start fetching updates (optional).
-  ///
-  /// Returns a [Future] that completes with a list of [DialogMessageResponse].
   @override
   Future<List<DialogMessageResponse>> fetchUpdates({
     int? limit,
@@ -162,14 +132,27 @@ final class DialogImpl implements Dialog {
   }
 
   /// Downloads a media file associated with a dialog.
-  ///
-  /// [fileId] The ID of the file to be downloaded.
-  ///
-  /// Returns a stream of [MediaFileResponse] representing the downloaded file.
   @override
   Download downloadFile({required String fileId, int? offset}) =>
       _chatService.downloadFile(
         fileId: fileId,
+        offset: offset,
+      );
+
+  /// Uploads a media file associated with a dialog.
+  @override
+  Upload uploadFile({
+    required String mediaType,
+    required String mediaName,
+    required File file,
+    String? pid,
+    int? offset,
+  }) =>
+      _chatService.uploadFile(
+        mediaType: mediaType,
+        mediaName: mediaName,
+        file: file,
+        pid: pid,
         offset: offset,
       );
 }

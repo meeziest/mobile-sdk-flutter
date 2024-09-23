@@ -40,7 +40,7 @@ final class MessageHelper {
   /// [dialogMessageRequestEntity] The dialog message request to be checked.
   static MessageType determineMessageTypeRequest(
       DialogMessageRequest dialogMessageRequestEntity) {
-    if (dialogMessageRequestEntity.file.name.isNotEmpty) {
+    if (dialogMessageRequestEntity.uploadFile.id != '') {
       return MessageType.media;
     } else {
       return MessageType.text;

@@ -383,14 +383,11 @@ class AuthServiceImpl implements AuthService {
 
     try {
       // Send the logout request to the server.
-      final logoutRes = await _grpcChannel.customerStub.logout(LogoutRequest());
+      await _grpcChannel.customerStub.logout(LogoutRequest());
 
       log.info('User logged out successfully.');
 
-      return res.PortalResponse(
-        status: PortalResponseStatus.success,
-        message: logoutRes.cause.message,
-      );
+      return res.PortalResponse(status: PortalResponseStatus.success);
     } catch (err) {
       log.severe(
           'Failed to logout the current user. Error: ${err.toString()}', err);

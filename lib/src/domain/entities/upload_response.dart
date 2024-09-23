@@ -1,5 +1,7 @@
-/// Represents a response containing information about a media file.
-class MediaFileResponse {
+import 'package:webitel_portal_sdk/src/domain/entities/progress.dart';
+
+/// Represents a response containing information about an uploaded response.
+class UploadResponse {
   /// The name of the media file.
   final String? name;
 
@@ -13,7 +15,7 @@ class MediaFileResponse {
   final int? size;
 
   /// The byte data of the media file.
-  final List<int>? bytes;
+  final Progress? progress;
 
   /// Constructs a [MediaFileResponse] instance with the given file details.
   ///
@@ -22,23 +24,23 @@ class MediaFileResponse {
   /// [id] The unique identifier of the media file.
   /// [size] The size of the media file in bytes.
   /// [bytes] The byte data of the media file (optional).
-  MediaFileResponse({
-    List<int>? bytes,
+  UploadResponse({
+    Progress? progress,
     this.size,
     this.name,
     this.type,
     this.id,
-  }) : bytes = bytes ?? [];
+  }) : progress = progress ?? Progress(progressSize: 0, progressId: '');
 
   /// Named constructor for creating an initial/default instance of [MediaFileResponse].
   ///
   /// The initial instance has default values for all fields.
-  MediaFileResponse.initial()
+  UploadResponse.initial()
       : name = '',
         type = '',
         id = '',
         size = 0,
-        bytes = [];
+        progress = Progress(progressSize: 0, progressId: '');
 
   /// Creates a copy of this [MediaFileResponse] with the given fields replaced with new values.
   ///
@@ -49,19 +51,19 @@ class MediaFileResponse {
   /// [bytes] The new byte data of the media file (optional).
   ///
   /// Returns a new [MediaFileResponse] instance with the updated values.
-  MediaFileResponse copyWith({
+  UploadResponse copyWith({
     String? name,
     String? type,
     String? id,
     int? size,
-    List<int>? bytes,
+    Progress? progress,
   }) {
-    return MediaFileResponse(
+    return UploadResponse(
       name: name ?? this.name,
       type: type ?? this.type,
       id: id ?? this.id,
       size: size ?? this.size,
-      bytes: bytes ?? this.bytes,
+      progress: progress ?? this.progress,
     );
   }
 }

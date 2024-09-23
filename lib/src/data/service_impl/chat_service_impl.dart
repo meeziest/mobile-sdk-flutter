@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:collection';
+import 'dart:io';
 
 import 'package:fixnum/fixnum.dart' as fixnum;
 import 'package:grpc/grpc.dart';
@@ -19,12 +21,18 @@ import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_connect.dart';
+import 'package:webitel_portal_sdk/src/data/upload_impl.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/button.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/connect.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_request.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/download.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
-import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/message_type.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/progress.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/upload.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/upload_task.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/generated/chat/messages/dialog.pb.dart'
     as dialog;
@@ -100,6 +108,10 @@ final class ChatServiceImpl implements ChatService {
   /// Each chat ID maps to a StreamController that broadcasts [PortalChatMember] events.
   final Map<String, StreamController<PortalChatMember>>
       _onMemberLeftControllers = {};
+
+  // Queue and state flag for uploads
+  final Queue<UploadTask> _uploadQueue = Queue<UploadTask>();
+  bool _isUploading = false;
 
   // Constructor for initializing the chat service with the required dependencies.
   ChatServiceImpl(
@@ -256,11 +268,11 @@ final class ChatServiceImpl implements ChatService {
             final onNewMemberAddedController =
                 await getControllerForMemberAdded(dialog.id);
 
-            final onMemberLeftController =
-                await getControllerForMemberLeft(dialog.id);
-
             final bool isClosed =
                 (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
+
+            final onMemberLeftController =
+                await getControllerForMemberLeft(dialog.id);
 
             return DialogImpl(
               isClosed: isClosed,
@@ -404,8 +416,8 @@ final class ChatServiceImpl implements ChatService {
             statusCode: statusCode,
             errorMessage: response.err.message,
           ),
-          isClosed: true,
           topMessage: 'ERROR',
+          isClosed: true,
           id: response.id,
           onNewMessage: Stream<DialogMessageResponse>.empty(),
           onMemberAdded: Stream<PortalChatMember>.empty(),
@@ -420,6 +432,250 @@ final class ChatServiceImpl implements ChatService {
       );
     }
     return DialogImpl.initial();
+  }
+
+  // Add a task to the queue and start processing if not already uploading
+  void _addToUploadQueue({
+    required String mediaType,
+    required String mediaName,
+    required File file,
+    String? pid,
+    int? offset,
+    required StreamController<UploadResponse> controller,
+  }) {
+    final completer = Completer<void>();
+    _uploadQueue.add(
+      UploadTask(
+        mediaType: mediaType,
+        mediaName: mediaName,
+        file: file,
+        pid: pid,
+        offset: offset,
+        controller: controller,
+        completer: completer,
+      ),
+    );
+
+    // Start processing the queue if not already uploading
+    if (!_isUploading) {
+      _processQueue();
+    }
+  }
+
+  // Process the upload queue sequentially
+  void _processQueue() {
+    if (_uploadQueue.isEmpty) {
+      _isUploading = false;
+      return;
+    }
+
+    _isUploading = true;
+    final task = _uploadQueue.removeFirst();
+
+    final subscription = _grpcChannel.mediaStorageStub
+        .upload(
+      _uploadMediaStream(
+        pid: task.pid,
+        offset: task.offset,
+        file: task.file,
+        mediaName: task.mediaName,
+        mediaType: task.mediaType,
+        completer: task.completer,
+      ),
+    )
+        .listen(
+      (progress) {
+        if (progress.hasPart()) {
+          log.info('Upload progress: ${progress.part.size} bytes uploaded.');
+          task.controller.add(
+            UploadResponse(
+              progress: Progress(
+                progressSize: progress.part.size.toInt(),
+                progressId: progress.part.pid,
+              ),
+            ),
+          );
+          if (!task.completer.isCompleted) {
+            task.completer.complete();
+          }
+          task.completer =
+              Completer<void>(); // Create a new completer for the next batch
+        } else if (progress.hasStat()) {
+          log.info('Upload completed for file: ${progress.stat.file.name}');
+          task.controller.add(
+            UploadResponse(
+              id: progress.stat.file.id,
+              type: progress.stat.file.type,
+              name: progress.stat.file.name,
+              size: progress.stat.file.size.toInt(),
+            ),
+          );
+        }
+      },
+      onError: (error) {
+        log.severe('Upload error: $error');
+        final callError = CallError(
+          statusCode: 'UPLOAD_ERROR',
+          errorMessage: error.toString(),
+        );
+        task.controller.addError(callError);
+        task.controller.close();
+        _processQueue(); // Continue to the next task in the queue
+      },
+      onDone: () {
+        log.info('Upload stream closed.');
+        task.controller.close();
+        _processQueue(); // Continue to the next task in the queue
+      },
+      cancelOnError: true,
+    );
+
+    // Set the subscription in the upload object to manage cancellation
+    final upload = UploadImpl(
+      onProgress: task.controller,
+      offset: task.offset ?? 0,
+    );
+    upload.setSubscription(subscription);
+  }
+
+  @override
+  Upload uploadFile({
+    required String mediaType,
+    required String mediaName,
+    required File file,
+    String? pid,
+    int? offset,
+  }) {
+    // Create a StreamController for managing upload progress
+    final StreamController<UploadResponse> controller =
+        StreamController<UploadResponse>();
+
+    _addToUploadQueue(
+      mediaType: mediaType,
+      mediaName: mediaName,
+      file: file,
+      pid: pid,
+      offset: offset,
+      controller: controller,
+    );
+
+    return UploadImpl(
+      onProgress: controller,
+      offset: 0,
+    );
+  }
+
+  Stream<UploadRequest> _uploadMediaStream({
+    required File file,
+    required String mediaName,
+    required String mediaType,
+    required Completer<void> completer,
+    String? pid,
+    int? offset,
+  }) async* {
+    log.info('Starting upload stream for file: $mediaName of type: $mediaType');
+
+    // Existing code logic for managing chunk size and upload...
+    int chunkSize = 512;
+    final int minChunkSize = 100;
+    final int maxChunkSize = 131072;
+    final int maxDelayThreshold = 5000;
+    int currentOffset = offset ?? 0;
+    int chunkCount = 0;
+    final int fileLength = await file.length();
+    int fastUploadCount = 0;
+    DateTime lastDecreaseTime = DateTime.now();
+    final Duration decreaseCooldown = Duration(seconds: 3);
+
+    List<double> uploadSpeeds = [];
+    int adjustmentsCount = 0;
+    final int adjustmentInterval = 5;
+
+    if (pid == null) {
+      yield UploadRequest(
+        new_2: UploadRequest_Start(
+          file: InputFile(
+            name: mediaName,
+            type: mediaType,
+          ),
+          progress: true,
+        ),
+      );
+    } else {
+      log.info('Resuming upload with PID: $pid from offset: $currentOffset');
+    }
+
+    while (currentOffset < fileLength) {
+      int end = (currentOffset + chunkSize > fileLength)
+          ? fileLength
+          : currentOffset + chunkSize;
+      Stream<List<int>> fileStream = file.openRead(currentOffset, end);
+
+      await for (var bytes in fileStream) {
+        yield UploadRequest(
+          part: bytes,
+          pid: pid ?? '',
+        );
+      }
+
+      currentOffset += chunkSize;
+      chunkCount++;
+
+      if (chunkCount == 3) {
+        final startTime = DateTime.now();
+        await completer.future;
+
+        final endTime = DateTime.now();
+        int elapsedTimeMs = endTime.difference(startTime).inMilliseconds;
+        if (elapsedTimeMs == 0) {
+          elapsedTimeMs = 1;
+        }
+
+        final currentSpeed = (chunkSize / elapsedTimeMs) * 1000;
+        uploadSpeeds.add(currentSpeed);
+        if (uploadSpeeds.length > 5) {
+          uploadSpeeds.removeAt(0);
+        }
+
+        final averageSpeed =
+            uploadSpeeds.reduce((a, b) => a + b) / uploadSpeeds.length;
+        adjustmentsCount++;
+        if (adjustmentsCount >= adjustmentInterval) {
+          final currentTime = DateTime.now();
+
+          if (elapsedTimeMs > maxDelayThreshold &&
+              currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+            chunkSize =
+                (chunkSize * 0.9).clamp(minChunkSize, maxChunkSize).toInt();
+            log.warning(
+                'Significant delay detected. Gradually reducing chunk size to: $chunkSize bytes.');
+            lastDecreaseTime = currentTime;
+          } else if (averageSpeed > 50000) {
+            fastUploadCount++;
+            if (fastUploadCount >= 3) {
+              chunkSize =
+                  (chunkSize * 1.15).clamp(minChunkSize, maxChunkSize).toInt();
+              fastUploadCount = 0;
+            }
+          } else if (averageSpeed < 20000 &&
+              currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+            chunkSize =
+                (chunkSize * 0.99).clamp(minChunkSize, maxChunkSize).toInt();
+            log.warning(
+                'Consistently slow speed. Gradually reducing chunk size to: $chunkSize bytes.');
+            lastDecreaseTime = currentTime;
+          }
+
+          log.info(
+              'Elapsed time: $elapsedTimeMs ms, Average upload speed: ${averageSpeed.toStringAsFixed(2)} B/s, Adjusted chunk size: $chunkSize bytes');
+          adjustmentsCount = 0;
+        }
+
+        chunkCount = 0;
+      }
+    }
+
+    log.info('Completed streaming upload requests for file: $mediaName');
   }
 
   /// Downloads a media file associated with a dialog.
@@ -527,8 +783,8 @@ final class ChatServiceImpl implements ChatService {
         }
 
         // Add the received data to the file
-        file!.bytes.clear();
-        file!.bytes.addAll(mediaFile.data);
+        file!.bytes?.clear();
+        file!.bytes?.addAll(mediaFile.data);
         offset += mediaFile.data.length;
 
         // Update the download offset
@@ -545,7 +801,7 @@ final class ChatServiceImpl implements ChatService {
             "GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
 
         // Attempt to resume the download if it was interrupted
-        if (file != null && offset < fixnum.Int64(file!.size)) {
+        if (file != null && offset < fixnum.Int64(file!.size ?? 0)) {
           log.info(
               "Attempting to resume file download for '${file!.name}' from offset $offset.");
 
@@ -608,8 +864,8 @@ final class ChatServiceImpl implements ChatService {
 
         // Listen to the resumed media stream
         await for (MediaFile mediaFile in resumedMedia) {
-          file.bytes.clear();
-          file.bytes.addAll(mediaFile.data);
+          file.bytes?.clear();
+          file.bytes?.addAll(mediaFile.data);
           offset += mediaFile.data.length;
 
           log.info(
@@ -632,20 +888,20 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
-  /// Pauses the download of a media file.
-  ///
-  /// [fileId] The ID of the file to be paused.
-  /// [subscription] The StreamSubscription managing the download stream.
-  @override
-  Future<void> pauseDownload({
-    required String fileId,
-    required StreamSubscription<MediaFile> subscription,
-  }) async {
-    // Cancel the subscription to pause the download
-    await subscription.cancel();
-
-    log.info("Paused download for file ID: $fileId");
-  }
+  // /// Pauses the download of a media file.
+  // ///
+  // /// [fileId] The ID of the file to be paused.
+  // /// [subscription] The StreamSubscription managing the download stream.
+  // @override
+  // Future<void> pauseDownload({
+  //   required String fileId,
+  //   required StreamSubscription<MediaFile> subscription,
+  // }) async {
+  //   // Cancel the subscription to pause the download
+  //   await subscription.cancel();
+  //
+  //   log.info("Paused download for file ID: $fileId");
+  // }
 
   /// Resumes the download of a media file.
   ///
@@ -776,6 +1032,7 @@ final class ChatServiceImpl implements ChatService {
                   return buttonRow.row
                       .map((button) {
                         log.info('Processing button: $button');
+
                         // Check if the code or url property is not empty
                         if (button.code.isNotEmpty || button.url.isNotEmpty) {
                           return Button(
@@ -785,8 +1042,7 @@ final class ChatServiceImpl implements ChatService {
                           );
                         } else {
                           log.warning(
-                              'Skipping button with empty code or url - text:'
-                              ' ${button.share.name}');
+                              'Skipping button with empty code - ${button.text}');
                           return null;
                         }
                       })
@@ -871,10 +1127,7 @@ final class ChatServiceImpl implements ChatService {
       log.info("Sending message of type $messageType for user $userId");
 
       final request = await _buildSendMessageRequest(
-        message,
-        userId ?? '',
-        messageType,
-      );
+          message, userId ?? '', messageType, message.uploadFile);
 
       _grpcConnect.sendRequest(request);
 
@@ -883,7 +1136,7 @@ final class ChatServiceImpl implements ChatService {
         userId ?? '',
         _handleSendMessageResponse,
         _handleSendMessageError,
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(const Duration(seconds: 30));
     } on GrpcError catch (err) {
       log.severe("GRPC Error on sendMessage: ${err.message}");
 
@@ -1042,51 +1295,73 @@ final class ChatServiceImpl implements ChatService {
   /// [pid] The process ID for resuming incomplete uploads, if any.
   ///
   /// Yields a stream of [UploadRequest] messages.
-  Stream<UploadRequest> _uploadMediaStream({
-    required Stream<List<int>> data,
-    required String name,
-    required String type,
-    String? pid,
-    int? offset,
-  }) async* {
-    log.info(
-        'Starting to stream UploadRequest with file name: $name and type: $type. Process ID: $pid, Offset: $offset');
-
-    if (pid != null) {
-      // Resume incomplete upload
-      log.info('Resuming incomplete upload with Process ID: $pid');
-
-      yield UploadRequest(pid: pid);
-    } else {
-      // Start new upload
-      log.info('Starting new upload for file: $name of type: $type');
-
-      yield UploadRequest(
-          new_2: UploadRequest_Start(
-        file: InputFile(
-          name: name,
-          type: type,
-        ),
-      ));
-    }
-
-    int currentOffset = offset ?? 0;
-
-    await for (var bytes in data) {
-      if (currentOffset > 0) {
-        log.info(
-            'Resuming from offset: $currentOffset, skipping already uploaded bytes');
-
-        bytes = bytes.sublist(currentOffset);
-        currentOffset = 0; // Reset offset after using it once
-      }
-      log.info('Streaming data chunk of size: ${bytes.length} bytes.');
-
-      yield UploadRequest(part: bytes);
-    }
-
-    log.info('Completed streaming UploadRequest messages for file: $name');
-  }
+  // Stream<UploadRequest> _uploadMediaStream({
+  //   required Stream<List<int>> data,
+  //   required String name,
+  //   required String type,
+  //   String? pid,
+  //   int? offset,
+  //   required Function setProgressCompleter,
+  // }) async* {
+  //   log.info(
+  //       'Starting to stream UploadRequest with file name: $name and type: $type. Process ID: $pid, Offset: $offset');
+  //
+  //   if (pid != null) {
+  //     // Resume incomplete upload
+  //     log.info('Resuming incomplete upload with Process ID: $pid');
+  //     yield UploadRequest(pid: pid);
+  //   } else {
+  //     // Start new upload
+  //     log.info('Starting new upload for file: $name of type: $type');
+  //     yield UploadRequest(
+  //       new_2: UploadRequest_Start(
+  //         file: InputFile(
+  //           name: name,
+  //           type: type,
+  //         ),
+  //       ),
+  //     );
+  //   }
+  //
+  //   int currentOffset = offset ?? 0;
+  //   List<List<int>> chunkBuffer = [];
+  //
+  //   await for (var bytes in data) {
+  //     if (currentOffset > 0) {
+  //       log.info(
+  //           'Resuming from offset: $currentOffset, skipping already uploaded bytes');
+  //       bytes = bytes.sublist(currentOffset);
+  //       currentOffset = 0; // Reset offset after using it once
+  //     }
+  //
+  //     chunkBuffer.add(bytes);
+  //     log.info('Buffered data chunk of size: ${bytes.length} bytes.');
+  //
+  //     // Buffer 10 chunks before yielding them
+  //     if (chunkBuffer.length >= 10) {
+  //       for (var chunk in chunkBuffer) {
+  //         log.info('Streaming buffered chunk of size: ${chunk.length} bytes.');
+  //         yield UploadRequest(part: chunk);
+  //       }
+  //
+  //       // Clear buffer after sending
+  //       chunkBuffer.clear();
+  //
+  //       // Set a new completer to wait for progress response
+  //       final completer = Completer<void>();
+  //       setProgressCompleter(completer);
+  //       // await completer.future; // Wait for progress.hasPart
+  //     }
+  //   }
+  //
+  //   // Stream remaining chunks in the buffer
+  //   for (var chunk in chunkBuffer) {
+  //     log.info('Streaming remaining chunk of size: ${chunk.length} bytes.');
+  //     yield UploadRequest(part: chunk);
+  //   }
+  //
+  //   log.info('Completed streaming UploadRequest messages for file: $name');
+  // }
 
   /// Builds the request for sending a message.
   ///
@@ -1099,6 +1374,7 @@ final class ChatServiceImpl implements ChatService {
     DialogMessageRequest message,
     String userId,
     MessageType messageType,
+    UploadFile? uploadFile,
   ) async {
     log.info(
         "Building request for sending a message. User ID: $userId, Message Type: $messageType, Message Content: ${message.content}");
@@ -1108,52 +1384,11 @@ final class ChatServiceImpl implements ChatService {
     );
 
     if (messageType == MessageType.media) {
-      log.info(
-          "Detected outgoing media message. Preparing to upload media file: ${message.file.name} of type: ${message.file.type}");
-
-      String? pid;
-      int offset = 0;
-
-      final r = RetryOptions(maxAttempts: 3);
-
-      try {
-        await r.retry(
-          () async {
-            await for (var progress in _grpcChannel.mediaStorageStub.upload(
-              _uploadMediaStream(
-                data: message.file.data,
-                name: message.file.name,
-                type: message.file.type,
-                pid: pid,
-                offset: offset,
-              ),
-            )) {
-              if (progress.hasPart()) {
-                pid = progress.part.pid;
-                offset = progress.part.size.toInt();
-
-                log.info(
-                    'Upload progress update: Process ID=$pid, Uploaded Size=$offset bytes');
-              } else if (progress.hasStat()) {
-                log.info(
-                    'Upload complete. File details - Name: ${progress.stat.file.name}, ID: ${progress.stat.file.id}, Type: ${progress.stat.file.type}');
-
-                baseRequest.file = file.File(
-                  id: progress.stat.file.id,
-                  name: progress.stat.file.name,
-                  type: progress.stat.file.type,
-                );
-              }
-            }
-          },
-          retryIf: (err) => err is GrpcError,
-          onRetry: (err) => log.warning(
-              'Encountered error during upload: $err. Retrying upload...'),
-        );
-      } catch (err) {
-        log.severe(
-            'Failed to upload media file: ${message.file.name} after 3 retry attempts. Error: $err');
-      }
+      baseRequest.file = file.File(
+        id: uploadFile?.id.toString(),
+        name: uploadFile?.name,
+        type: uploadFile?.type,
+      );
     }
 
     log.info(
@@ -1518,3 +1753,335 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 }
+
+/// Uploads a media file to be sent in the dialog.
+///
+/// [mediaType] The type of the media to be uploaded.
+/// [mediaName] The name of the media to be uploaded.
+/// [mediaData] The data stream of the media to be uploaded.
+///
+/// Returns an [Upload] object representing the upload operation.
+// @override
+// Upload uploadFile({
+//   required String mediaType,
+//   required String mediaName,
+//   required File file,
+//   String? pid,
+//   int? offset,
+// }) {
+//   // Create a StreamController for managing upload progress
+//   final StreamController<UploadResponse> controller =
+//       StreamController<UploadResponse>();
+//
+//   Completer completer = Completer<void>();
+//
+//   // Initialize the UploadImpl to manage the upload process
+//   final UploadImpl upload = UploadImpl(
+//     onProgress: controller,
+//     offset: 0,
+//   );
+//
+//   // Start the upload process
+//   final subscription = _grpcChannel.mediaStorageStub
+//       .upload(
+//     _uploadMediaStream(
+//       pid: pid,
+//       offset: offset,
+//       file: file,
+//       mediaName: mediaName,
+//       mediaType: mediaType,
+//       completer: completer,
+//     ),
+//   )
+//       .listen(
+//     (progress) {
+//       if (progress.hasPart()) {
+//         log.info('Upload progress: ${progress.part.size} bytes uploaded.');
+//         upload.updateOffset(progress.part.size.toInt());
+//         controller.add(
+//           UploadResponse(
+//             progress: Progress(
+//               progressSize: progress.part.size.toInt(),
+//               progressId: progress.part.pid,
+//             ),
+//           ),
+//         );
+//         // Complete the current completer and create a new one for the next batch
+//         if (!completer.isCompleted) {
+//           completer.complete();
+//         }
+//         completer =
+//             Completer<void>(); // Create a new completer for the next batch
+//       } else if (progress.hasStat()) {
+//         log.info('Upload completed for file: ${progress.stat.file.name}');
+//         //16337697
+//         //16337697
+//         //16337697
+//         //16337697
+//16337697
+//         controller.add(
+//           UploadResponse(
+//             id: progress.stat.file.id,
+//             type: progress.stat.file.type,
+//             name: progress.stat.file.name,
+//             size: progress.stat.file.size.toInt(),
+//           ),
+//         );
+//       }
+//     },
+//     onError: (error) {
+//       log.severe('Upload error: $error');
+//       final callError = CallError(
+//         statusCode: 'UPLOAD_ERROR',
+//         errorMessage: error.toString(),
+//       );
+//       upload.setError(callError); // Set the error in the upload
+//       controller.addError(callError);
+//       controller.close();
+//     },
+//     onDone: () {
+//       log.info('Upload stream closed.');
+//       controller.close();
+//     },
+//     cancelOnError: true,
+//   );
+//
+//   // Set the subscription in the upload object to manage cancellation
+//   upload.setSubscription(subscription);
+//
+//   return upload;
+// }
+//
+// Stream<UploadRequest> _uploadMediaStream({
+//   required File file,
+//   required String mediaName,
+//   required String mediaType,
+//   required Completer<void> completer,
+//   String? pid,
+//   int? offset,
+// }) async* {
+//   log.info('Starting upload stream for file: $mediaName of type: $mediaType');
+//
+//   int chunkSize = 512; // Start with 0.5 KB chunk size
+//   final int minChunkSize = 100; // 0.1 KB
+//   final int maxChunkSize = 131072; // 128 KB
+//   final int maxDelayThreshold =
+//       5000; // 5 seconds delay threshold for upload adjustment
+//   int currentOffset = offset ?? 0; // Use the provided offset if it's not null
+//   int chunkCount = 0;
+//   final int fileLength = await file.length(); // Get the total file size
+//   int fastUploadCount = 0; // To count consecutive fast uploads
+//   DateTime lastDecreaseTime =
+//       DateTime.now(); // To track the last time chunk size was decreased
+//   final Duration decreaseCooldown =
+//       Duration(seconds: 3); // 3-second cooldown for decreases
+//
+//   // List to store recent upload speeds for averaging
+//   List<double> uploadSpeeds = [];
+//   int adjustmentsCount =
+//       0; // Track number of adjustments to implement a grace period
+//   final int adjustmentInterval =
+//       5; // Number of chunks before adjusting the size again
+//
+//   // Only send the initial upload request if `pid` is null
+//   if (pid == null) {
+//     yield UploadRequest(
+//       new_2: UploadRequest_Start(
+//         file: InputFile(
+//           name: mediaName,
+//           type: mediaType,
+//         ),
+//         progress: true,
+//       ),
+//     );
+//   } else {
+//     // If `pid` is not null, log that we are resuming the upload
+//     log.info('Resuming upload with PID: $pid from offset: $currentOffset');
+//   }
+//
+//   while (currentOffset < fileLength) {
+//     // Calculate the end position for the current chunk
+//     int end = (currentOffset + chunkSize > fileLength)
+//         ? fileLength
+//         : currentOffset + chunkSize;
+//
+//     // Read the file chunk from 'currentOffset' to 'end'
+//     Stream<List<int>> fileStream = file.openRead(currentOffset, end);
+//
+//     await for (var bytes in fileStream) {
+//       // Include `pid` in the upload request if it is not null
+//       yield UploadRequest(
+//         part: bytes,
+//         pid: pid ?? '',
+//       );
+//     }
+//
+//     // Update the offset for the next chunk
+//     currentOffset += chunkSize;
+//     chunkCount++;
+//
+//     // Wait for the completer after every 3 chunks
+//     if (chunkCount == 3) {
+//       final startTime = DateTime.now();
+//       await completer.future;
+//
+//       final endTime = DateTime.now();
+//       int elapsedTimeMs = endTime.difference(startTime).inMilliseconds;
+//
+//       // Prevent zero division
+//       if (elapsedTimeMs == 0) {
+//         elapsedTimeMs = 1; // Set a minimum value to avoid division by zero
+//       }
+//
+//       // Calculate upload speed (bytes per second) for the current chunk
+//       final currentSpeed = (chunkSize / elapsedTimeMs) * 1000;
+//
+//       // Add the current speed to the list and limit its size to 5 for averaging
+//       uploadSpeeds.add(currentSpeed);
+//       if (uploadSpeeds.length > 5) {
+//         uploadSpeeds.removeAt(0);
+//       }
+//
+//       // Calculate the average speed over the stored speeds
+//       final averageSpeed =
+//           uploadSpeeds.reduce((a, b) => a + b) / uploadSpeeds.length;
+//
+//       // Adjust chunk size based on average speed only after every `adjustmentInterval` chunks
+//       adjustmentsCount++;
+//       if (adjustmentsCount >= adjustmentInterval) {
+//         final currentTime = DateTime.now();
+//
+//         if (elapsedTimeMs > maxDelayThreshold &&
+//             currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+//           // If there's a substantial delay and cooldown period has passed, reduce chunk size smoothly
+//           chunkSize = (chunkSize * 0.9)
+//               .clamp(minChunkSize, maxChunkSize)
+//               .toInt(); // Decrease by 10%
+//           log.warning(
+//               'Significant delay detected. Gradually reducing chunk size to: $chunkSize bytes.');
+//           lastDecreaseTime = currentTime; // Update last decrease time
+//         } else if (averageSpeed > 50000) {
+//           fastUploadCount++;
+//           if (fastUploadCount >= 3) {
+//             // Increase chunk size only after 3 consecutive fast uploads
+//             chunkSize = (chunkSize * 1.15)
+//                 .clamp(minChunkSize, maxChunkSize)
+//                 .toInt(); // Gradual increase by 15%
+//             fastUploadCount = 0; // Reset fast upload count after increasing
+//           }
+//         } else if (averageSpeed < 20000 &&
+//             currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+//           // If speed is consistently slow and cooldown period has passed, decrease the chunk size smoothly
+//           chunkSize = (chunkSize * 0.99)
+//               .clamp(minChunkSize, maxChunkSize)
+//               .toInt(); // Decrease by 10%
+//           log.warning(
+//               'Consistently slow speed. Gradually reducing chunk size to: $chunkSize bytes.');
+//           lastDecreaseTime = currentTime; // Update last decrease time
+//         }
+//
+//         log.info(
+//             'Elapsed time: $elapsedTimeMs ms, Average upload speed: ${averageSpeed.toStringAsFixed(2)} B/s, Adjusted chunk size: $chunkSize bytes');
+//
+//         adjustmentsCount =
+//             0; // Reset the adjustment count to implement the grace period
+//       }
+//
+//       chunkCount = 0; // Reset the chunk count
+//     }
+//   }
+//
+//   log.info('Completed streaming upload requests for file: $mediaName');
+// }
+
+// Stream<UploadRequest> _uploadMediaStream({
+//   required File file,
+//   required String mediaName,
+//   required String mediaType,
+//   required Completer<void> completer,
+//   String? pid,
+//   int? offset,
+// }) async* {
+//   log.info('Starting upload stream for file: $mediaName of type: $mediaType');
+//
+//   int chunkSize = 512; // Start with 0.5 KB chunk size
+//   final int minChunkSize = 100; // 0.1 KB
+//   final int maxChunkSize = 40960; // 40 KB
+//   int currentOffset =
+//       offset ?? 0; // To keep track of the current file read position
+//   int chunkCount = 0;
+//   final int fileLength = await file.length(); // Get the total file size
+//
+//   // Only send the initial upload request if `pid` is null
+//   if (pid == null) {
+//     yield UploadRequest(
+//       new_2: UploadRequest_Start(
+//         file: InputFile(
+//           name: mediaName,
+//           type: mediaType,
+//         ),
+//         progress: true,
+//       ),
+//     );
+//   } else {
+//     // If `pid` is not null, log that we are resuming the upload
+//     log.info('Resuming upload with PID: $pid from offset: $currentOffset');
+//   }
+//
+//   while (currentOffset < fileLength) {
+//     // Calculate the end position for the current chunk
+//     int end = (currentOffset + chunkSize > fileLength)
+//         ? fileLength
+//         : currentOffset + chunkSize;
+//
+//     // Read the file chunk from 'offset' to 'end'
+//     Stream<List<int>> fileStream = file.openRead(currentOffset, end);
+//
+//     await for (var bytes in fileStream) {
+//       // Include `pid` in the upload request if it is not null
+//       yield UploadRequest(
+//         part: bytes,
+//         pid: pid ?? '',
+//       );
+//     }
+//
+//     // Update the offset for the next chunk
+//     currentOffset += chunkSize;
+//     chunkCount++;
+//
+//     // Wait for the completer after every 3 chunks
+//     if (chunkCount == 3) {
+//       final startTime = DateTime.now();
+//       await completer.future;
+//
+//       final endTime = DateTime.now();
+//       int elapsedTimeMs = endTime.difference(startTime).inMilliseconds;
+//
+//       // Prevent zero division
+//       if (elapsedTimeMs == 0) {
+//         elapsedTimeMs = 1; // Set a minimum value to avoid division by zero
+//       }
+//
+//       // Calculate upload speed (bytes per second)
+//       final uploadSpeed = (chunkSize / elapsedTimeMs) * 1000;
+//
+//       // Adjust chunk size based on upload speed
+//       if (uploadSpeed > 50000) {
+//         // If speed is greater than 50KB/s, increase the chunk size
+//         chunkSize =
+//             (chunkSize * 1.25).clamp(minChunkSize, maxChunkSize).toInt();
+//       } else if (uploadSpeed < 20000) {
+//         // If speed is less than 20KB/s, decrease the chunk size
+//         chunkSize =
+//             (chunkSize / 1.25).clamp(minChunkSize, maxChunkSize).toInt();
+//       }
+//
+//       log.info(
+//           'Elapsed time: $elapsedTimeMs ms, Upload speed: ${uploadSpeed.toStringAsFixed(2)} B/s, Adjusted chunk size: $chunkSize bytes');
+//       chunkCount = 0; // Reset the chunk count
+//     }
+//   }
+//
+//   log.info('Completed streaming upload requests for file: $mediaName');
+// }
+// }
