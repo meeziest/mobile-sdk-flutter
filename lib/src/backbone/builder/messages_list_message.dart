@@ -45,9 +45,9 @@ final class MessagesListMessageBuilder {
         sender: messageType,
         dialogMessageContent: message.text,
         peer: PeerInfo(
-          name: message.from.name,
-          type: message.chat.peer.type,
-          id: message.chat.peer.id,
+          name: _peers[peerIndex].name,
+          type: _peers[peerIndex].type,
+          id: _peers[peerIndex].id,
         ),
         file: MediaFileResponse(
           id: message.file.id,
