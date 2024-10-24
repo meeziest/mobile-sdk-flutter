@@ -1,15 +1,19 @@
+import 'package:webitel_portal_sdk/src/domain/entities/button.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
+import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/peer.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/sender.dart';
-import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart';
-import 'package:webitel_portal_sdk/src/generated/chat/messages/peer.pb.dart';
+import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart'
+    as pb;
+import 'package:webitel_portal_sdk/src/generated/chat/messages/peer.pb.dart'
+    as pb;
 
 final class MessagesListMessageBuilder {
   late String _chatId;
   late String _userId;
-  late List<Message> _messages;
-  late List<Peer> _peers;
+  late List<pb.Message> _messages;
+  late List<pb.Peer> _peers;
 
   MessagesListMessageBuilder setChatId(String chatId) {
     _chatId = chatId;
@@ -21,12 +25,12 @@ final class MessagesListMessageBuilder {
     return this;
   }
 
-  MessagesListMessageBuilder setMessages(List<Message> messages) {
+  MessagesListMessageBuilder setMessages(List<pb.Message> messages) {
     _messages = messages;
     return this;
   }
 
-  MessagesListMessageBuilder setPeers(List<Peer> peers) {
+  MessagesListMessageBuilder setPeers(List<pb.Peer> peers) {
     _peers = peers;
     return this;
   }
@@ -37,8 +41,32 @@ final class MessagesListMessageBuilder {
       final messageType =
           _peers[peerIndex].id == _userId ? Sender.user : Sender.operator;
 
+      // Process the keyboard if it's not null
+      Keyboard? keyboard;
+      if (message.keyboard.buttons.isNotEmpty) {
+        keyboard = Keyboard(
+          buttons: message.keyboard.buttons.map((buttonRow) {
+            return buttonRow.row
+                .map((button) {
+                  // Check if the button has either a code or URL
+                  if (button.code.isNotEmpty || button.url.isNotEmpty) {
+                    return Button(
+                      text: button.text,
+                      code: button.code,
+                      url: button.url,
+                    );
+                  }
+                  return null;
+                })
+                .whereType<Button>()
+                .toList();
+          }).toList(),
+        );
+      }
+
       return DialogMessageResponse(
         input: message.keyboard.noInput,
+        keyboard: keyboard ?? Keyboard.initial(),
         timestamp: message.date.toInt(),
         messageId: message.id.toInt(),
         chatId: _chatId,
