@@ -56,7 +56,7 @@ Fetch dialog:
 `final dialog = await client.fetchServiceDialog();`
 
 Send message or message with media to dialog:
-`await dialog.sendMessage();`
+`await dialog.sendMessage(content: message, requestId: id);`
 
 Send Postback:
 `await dialog.sendPostback(mid: mid, code: code, text: text, requestId: requestId);`
@@ -72,14 +72,18 @@ the button's display text, and requestId for the unique request identifier), the
 postback data to the
 server, allowing the system to process the user's action seamlessly._
 
+### Fetching and listening to new messages
+
 Fetch messages | set limit/offset for dialog:
-`await dialog.fetchMessages();`
+`await dialog.fetchMessages(limit: limit, offset: offset);`
 
 Fetch updates | set limit/offset (reversed to **fetchMessages**) for dialog:
-`await dialog.fetchUpdates();`
+`await dialog.fetchUpdates(limit: limit, offset: offset);`
 
 Listen to upcoming/incoming messages in dialog:
 `await dialog.listenToMessages();`
+
+### Downloading files
 
 Retrieve download object:
 `final download = dialog.downloadFile(fileId: fileId);`
@@ -93,6 +97,8 @@ Pause downloading file:
 Resume downloading file:
 `await download.resume();`
 
+### Uploading files
+
 Retrieve upload object:
 `final upload = dialog.uploadFile(file: file, mediaType: type, mediaName: name);`
 
@@ -101,6 +107,8 @@ Listen to file data (data bytes, progress, id, name, size):
 
 Cancel uploading file:
 `await upload.cancel();`
+
+### Members actions
 
 Listen to newMemberAdded to the chat:
 `await dialog.onMemberAdded();`
