@@ -32,6 +32,8 @@ final class ResponseTypeHelper {
       return ResponseType.updateNewMessage;
     } else if (update.data.canUnpackInto(UpdateChatMember())) {
       return ResponseType.memberAdded;
+    } else if (update.data.canUnpackInto(UpdateLeftMember())) {
+      return ResponseType.memberLeft;
     } else {
       throw Exception('Unknown type');
     }
