@@ -1,4 +1,4 @@
-import 'package:webitel_portal_sdk/src/backbone/logger.dart';
+import 'package:webitel_portal_sdk/src/data/logger/logger.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/logger_level.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';

@@ -9,7 +9,7 @@
     },
     {
       "name": "_macros",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/bin/cache/dart-sdk/pkg/_macros",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/3.24.3/flutter/bin/cache/dart-sdk/pkg/_macros",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -171,13 +171,13 @@
     },
     {
       "name": "flutter",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/packages/flutter",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/3.24.3/flutter/packages/flutter",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
     {
       "name": "flutter_web_plugins",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/packages/flutter_web_plugins",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/3.24.3/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -471,7 +471,7 @@
     },
     {
       "name": "sky_engine",
-      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/bin/cache/pkg/sky_engine",
+      "rootUri": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/3.24.3/flutter/bin/cache/pkg/sky_engine",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -620,10 +620,10 @@
       "languageVersion": "3.3"
     }
   ],
-  "generated": "2024-08-28T09:04:31.071103Z",
+  "generated": "2024-11-14T22:37:15.764989Z",
   "generator": "pub",
-  "generatorVersion": "3.5.0",
-  "flutterRoot": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter",
-  "flutterVersion": "3.24.0",
+  "generatorVersion": "3.5.3",
+  "flutterRoot": "file:///Users/volodiahunkalo/Downloads/development/sdk/flutter/3.24.3/flutter",
+  "flutterVersion": "3.24.3",
   "pubCache": "file:///Users/volodiahunkalo/.pub-cache"
 }

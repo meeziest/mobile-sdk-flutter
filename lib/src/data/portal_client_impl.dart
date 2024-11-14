@@ -7,8 +7,9 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
 import 'package:webitel_portal_sdk/src/injection/injection.dart';
-import 'package:webitel_portal_sdk/src/managers/call.dart';
-import 'package:webitel_portal_sdk/src/managers/chat.dart';
+
+import 'managers/call.dart';
+import 'managers/chat.dart';
 
 /// Implementation of [PortalClient] that provides functionalities for portal client operations.
 @LazySingleton(as: PortalClient)

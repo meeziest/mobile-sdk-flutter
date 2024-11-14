@@ -5,16 +5,18 @@ import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/token_request.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/user_agent.dart';
-import 'package:webitel_portal_sdk/src/backbone/constants.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/error.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/uri.dart';
-import 'package:webitel_portal_sdk/src/backbone/helper/user_agent.dart';
-import 'package:webitel_portal_sdk/src/backbone/logger.dart';
-import 'package:webitel_portal_sdk/src/backbone/shared_preferences/shared_preferences_gateway.dart';
+import 'package:webitel_portal_sdk/src/data/builder/token_request.dart';
+import 'package:webitel_portal_sdk/src/data/builder/user_agent.dart';
+import 'package:webitel_portal_sdk/src/data/constansts/constants.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
+import 'package:webitel_portal_sdk/src/data/helper/error.dart';
+import 'package:webitel_portal_sdk/src/data/helper/uri.dart';
+import 'package:webitel_portal_sdk/src/data/helper/user_agent.dart';
+import 'package:webitel_portal_sdk/src/data/logger/logger.dart';
+import 'package:webitel_portal_sdk/src/data/managers/call.dart';
+import 'package:webitel_portal_sdk/src/data/managers/chat.dart';
 import 'package:webitel_portal_sdk/src/data/portal_client_impl.dart';
+import 'package:webitel_portal_sdk/src/data/shared_preferences/shared_preferences_gateway.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart'
     as client;
@@ -26,8 +28,6 @@ import 'package:webitel_portal_sdk/src/domain/services/auth_service.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/account.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/push.pb.dart';
-import 'package:webitel_portal_sdk/src/managers/call.dart';
-import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 /// Implementation of [AuthService] for handling authentication and user management.
 @LazySingleton(as: AuthService)

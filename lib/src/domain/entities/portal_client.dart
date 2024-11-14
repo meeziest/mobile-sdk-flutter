@@ -1,9 +1,9 @@
+import 'package:webitel_portal_sdk/src/data/managers/call.dart';
+import 'package:webitel_portal_sdk/src/data/managers/chat.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/call_error.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/channel.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
-import 'package:webitel_portal_sdk/src/managers/call.dart';
-import 'package:webitel_portal_sdk/src/managers/chat.dart';
 
 /// Interface for the portal client, providing methods for authentication,
 /// device registration, user information retrieval, and access to chat and call managers.

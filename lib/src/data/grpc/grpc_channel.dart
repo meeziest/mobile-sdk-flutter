@@ -4,7 +4,7 @@ import 'package:grpc/grpc.dart';
 import 'package:injectable/injectable.dart';
 import 'package:logging/logging.dart';
 import 'package:retry/retry.dart';
-import 'package:webitel_portal_sdk/src/backbone/builder/call_options.dart';
+import 'package:webitel_portal_sdk/src/data/builder/call_options.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/customer.pbgrpc.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/media.pbgrpc.dart';
 
@@ -195,7 +195,7 @@ class GrpcChannel {
   Future<void> _reconnect() async {
     try {
       await retry(
-            () async {
+        () async {
           await _createChannel(
             url: _url,
             port: _port,

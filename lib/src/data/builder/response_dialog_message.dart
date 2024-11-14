@@ -1,4 +1,4 @@
-import 'package:webitel_portal_sdk/src/backbone/helper/message.dart';
+import 'package:webitel_portal_sdk/src/data/helper/message.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/dialog_message_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/keyboard.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/media_file_response.dart';
