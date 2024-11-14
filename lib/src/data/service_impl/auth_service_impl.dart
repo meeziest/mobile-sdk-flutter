@@ -7,7 +7,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
 import 'package:webitel_portal_sdk/src/data/builder/token_request.dart';
 import 'package:webitel_portal_sdk/src/data/builder/user_agent.dart';
-import 'package:webitel_portal_sdk/src/data/constansts/constants.dart';
+import 'package:webitel_portal_sdk/src/data/constants/constants.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
 import 'package:webitel_portal_sdk/src/data/helper/error.dart';
 import 'package:webitel_portal_sdk/src/data/helper/uri.dart';

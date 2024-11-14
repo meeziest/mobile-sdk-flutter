@@ -12,7 +12,7 @@ import 'package:webitel_portal_sdk/src/data/builder/error_dialog_message.dart';
 import 'package:webitel_portal_sdk/src/data/builder/messages_list_message.dart';
 import 'package:webitel_portal_sdk/src/data/builder/response_dialog_message.dart';
 import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
-import 'package:webitel_portal_sdk/src/data/constansts/constants.dart';
+import 'package:webitel_portal_sdk/src/data/constants/constants.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
