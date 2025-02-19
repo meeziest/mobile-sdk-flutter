@@ -1116,6 +1116,7 @@ final class ChatServiceImpl implements ChatService {
   Future<DialogMessageResponse> sendMessage({
     required DialogMessageRequest message,
     required String chatId,
+    int? timeout,
   }) async {
     try {
       final userId = await _sharedPreferencesGateway.readUserId();
@@ -1133,7 +1134,7 @@ final class ChatServiceImpl implements ChatService {
         userId ?? '',
         _handleSendMessageResponse,
         _handleSendMessageError,
-      ).timeout(const Duration(seconds: 30));
+      ).timeout(Duration(seconds: timeout ?? 30));
     } on GrpcError catch (err) {
       log.severe("GRPC Error on sendMessage: ${err.message}");
 
@@ -1525,6 +1526,7 @@ final class ChatServiceImpl implements ChatService {
     required String chatId,
     required Postback postback,
     required String requestId,
+    int? timeout,
   }) async {
     try {
       final userId = await _sharedPreferencesGateway.readUserId();
@@ -1544,7 +1546,7 @@ final class ChatServiceImpl implements ChatService {
         userId ?? '',
         _handleSendPostbackResponse,
         _handleSendPostbackError,
-      ).timeout(const Duration(seconds: 5));
+      ).timeout(Duration(seconds: timeout ?? 30));
     } on GrpcError catch (err) {
       log.severe("GRPC Error on sendPostback: ${err.message}");
 

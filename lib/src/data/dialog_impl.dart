@@ -77,9 +77,11 @@ final class DialogImpl implements Dialog {
     UploadFile? uploadFile,
     required String content,
     required String requestId,
+    int? timeout = 0,
   }) async {
     return await _chatService.sendMessage(
       chatId: id,
+      timeout: timeout,
       message: DialogMessageRequest(
         content: content,
         requestId: requestId,
@@ -97,9 +99,11 @@ final class DialogImpl implements Dialog {
   Future<DialogMessageResponse> sendPostback({
     required Postback postback,
     required String requestId,
+    int? timeout,
   }) async {
     return await _chatService.sendPostback(
       chatId: id,
+      timeout: timeout,
       requestId: requestId,
       postback: postback,
     );

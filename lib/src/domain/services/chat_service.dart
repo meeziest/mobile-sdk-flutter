@@ -53,6 +53,7 @@ abstract interface class ChatService {
   Future<DialogMessageResponse> sendMessage({
     required String chatId,
     required DialogMessageRequest message,
+    int? timeout,
   });
 
   /// Sends a postback message in a chat.
@@ -66,6 +67,7 @@ abstract interface class ChatService {
     required String chatId,
     required Postback postback,
     required String requestId,
+    int? timeout,
   });
 
   /// Fetches the service dialog.

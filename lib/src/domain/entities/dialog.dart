@@ -81,6 +81,7 @@ abstract interface class Dialog {
     UploadFile? uploadFile,
     required String content,
     required String requestId,
+    int? timeout,
   });
 
   /// Sends a postback.
@@ -92,6 +93,7 @@ abstract interface class Dialog {
   Future<DialogMessageResponse> sendPostback({
     required Postback postback,
     required String requestId,
+    int? timeout,
   });
 
   /// Fetches messages in the dialog with optional pagination.
