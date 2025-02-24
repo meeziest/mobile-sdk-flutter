@@ -13,6 +13,7 @@ import 'package:webitel_portal_sdk/src/data/builder/messages_list_message.dart';
 import 'package:webitel_portal_sdk/src/data/builder/response_dialog_message.dart';
 import 'package:webitel_portal_sdk/src/data/channel_impl.dart';
 import 'package:webitel_portal_sdk/src/data/constants/constants.dart';
+import 'package:webitel_portal_sdk/src/data/constants/error_codes.dart';
 import 'package:webitel_portal_sdk/src/data/dialog_impl.dart';
 import 'package:webitel_portal_sdk/src/data/download_impl.dart';
 import 'package:webitel_portal_sdk/src/data/grpc/grpc_channel.dart';
@@ -1365,14 +1366,6 @@ final class ChatServiceImpl implements ChatService {
     );
   }
 
-  /// Fetches messages based on the given parameters.
-  ///
-  /// [path] The API path for fetching messages.
-  /// [chatId] The ID of the chat for which messages are fetched.
-  /// [limit] The maximum number of messages to fetch.
-  /// [offset] The offset from which to start fetching messages.
-  ///
-  /// Returns a list of [DialogMessageResponse].
   Future<List<DialogMessageResponse>> _fetchMessages({
     required String path,
     required String chatId,
@@ -1442,12 +1435,31 @@ final class ChatServiceImpl implements ChatService {
       }
     } catch (err) {
       if (err is TimeoutException) {
-        log.severe('Timeout while fetching messages for chatId: $chatId');
+        log.severe('Timeout while fetching messages');
+
+        return [
+          DialogMessageResponse.error(
+            requestId: requestId,
+            error: CallError(
+              statusCode: ErrorCodes.timeoutError.toString(),
+              errorMessage: 'Request timed out while fetching messages.',
+            ),
+          ),
+        ];
       } else {
-        log.severe(
-            'An error occurred while fetching messages for chatId: $chatId');
+        log.severe('An error occurred while fetching messages');
+
+        return [
+          DialogMessageResponse.error(
+            requestId: requestId,
+            error: CallError(
+              statusCode: ErrorCodes.unknownError.toString(),
+              errorMessage:
+                  'An unknown error occurred while fetching messages.',
+            ),
+          ),
+        ];
       }
-      return [];
     }
   }
 
