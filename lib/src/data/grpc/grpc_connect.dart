@@ -162,6 +162,8 @@ final class GrpcConnect {
               );
               log.warning(
                   'Error response received: ${decodedResponse.err.message}');
+            case ResponseType.disconnect:
+              handleConnectionClosure(err: 'gRPC stream was terminated');
           }
         }
       } else {

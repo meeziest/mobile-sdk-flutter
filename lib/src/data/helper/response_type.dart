@@ -34,6 +34,8 @@ final class ResponseTypeHelper {
       return ResponseType.memberAdded;
     } else if (update.data.canUnpackInto(UpdateLeftMember())) {
       return ResponseType.memberLeft;
+    } else if (update.data.canUnpackInto(UpdateDisconnect())) {
+      return ResponseType.disconnect;
     } else {
       throw Exception('Unknown type');
     }

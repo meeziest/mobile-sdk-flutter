@@ -14,4 +14,7 @@ enum ResponseType {
 
   ///Member left
   memberLeft,
+
+  ///gRPC stream disconnected
+  disconnect,
 }
