@@ -118,6 +118,11 @@ final class PortalClientImpl implements PortalClient {
     );
   }
 
+  @override
+  Future<void> setAccessToken({required String token}) async {
+    await _authService.setAccessToken(token: token);
+  }
+
   /// Retrieves the current user information.
   ///
   /// Returns a [Future] that completes with a [PortalUser].

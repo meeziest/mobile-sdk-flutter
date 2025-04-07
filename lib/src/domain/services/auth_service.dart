@@ -58,6 +58,11 @@ abstract interface class AuthService {
     bool? phoneNumberVerified,
   });
 
+  // Set custom token (jwt ...)
+  Future<void> setAccessToken({
+    required String token,
+  });
+
   /// Retrieves the current user information.
   ///
   /// Returns a [PortalUser] representing the current user.

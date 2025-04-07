@@ -312,6 +312,13 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  // Sets custom token to headers [x-webitel-access] (jwt ...)
+  @override
+  Future<void> setAccessToken({required String token}) async {
+    _grpcChannel.setAccessToken(token);
+    await _grpcChannel.customerStub.inspect(InspectRequest());
+  }
+
   /// Registers a device with a given push token.
   ///
   /// [pushToken] The push token to register the device with.
