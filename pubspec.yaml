@@ -8,7 +8,7 @@ environment:
 dependencies:
   build_runner: ^2.4.9
   package_info_plus: ^8.0.0
-  device_info_plus: ^10.1.0
+  device_info_plus: ^11.5.0
   get_it: ^7.7.0
   shared_preferences: ^2.2.3
   synchronized: ^3.1.0+1
@@ -16,9 +16,9 @@ dependencies:
   fixnum: ^1.1.0
   logging: ^1.2.0
   injectable: ^2.4.1
-  protobuf: ^3.1.0
+  protobuf: ^4.1.0
   uuid: ^4.4.0
-  grpc: ^3.2.4
+  grpc: ^4.0.0
 
 
 
