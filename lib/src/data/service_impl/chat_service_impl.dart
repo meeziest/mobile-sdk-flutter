@@ -32,11 +32,14 @@ import 'package:webitel_portal_sdk/src/domain/entities/progress.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/upload.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/upload_task.dart';
 import 'package:webitel_portal_sdk/src/domain/services/chat_service.dart';
-import 'package:webitel_portal_sdk/src/generated/chat/messages/dialog.pb.dart' as dialog;
+import 'package:webitel_portal_sdk/src/generated/chat/messages/dialog.pb.dart'
+    as dialog;
 import 'package:webitel_portal_sdk/src/generated/chat/messages/history.pb.dart';
-import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart' as file;
+import 'package:webitel_portal_sdk/src/generated/chat/messages/message.pb.dart'
+    as file;
 import 'package:webitel_portal_sdk/src/generated/google/protobuf/any.pb.dart';
-import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart' as portal;
+import 'package:webitel_portal_sdk/src/generated/portal/connect.pb.dart'
+    as portal;
 import 'package:webitel_portal_sdk/src/generated/portal/media.pb.dart';
 import 'package:webitel_portal_sdk/src/generated/portal/messages.pbgrpc.dart';
 import 'package:webitel_portal_sdk/webitel_portal_sdk.dart';
@@ -91,15 +94,18 @@ final class ChatServiceImpl implements ChatService {
 
   /// A map to manage StreamControllers for new message events, indexed by chat ID.
   /// Each chat ID maps to a StreamController that broadcasts [DialogMessageResponse] events.
-  final Map<String, StreamController<DialogMessageResponse>> _onNewMessageControllers = {};
+  final Map<String, StreamController<DialogMessageResponse>>
+      _onNewMessageControllers = {};
 
   /// A map to manage StreamControllers for new member added events, indexed by chat ID.
   /// Each chat ID maps to a StreamController that broadcasts [PortalChatMember] events.
-  final Map<String, StreamController<PortalChatMember>> _onMemberAddedControllers = {};
+  final Map<String, StreamController<PortalChatMember>>
+      _onMemberAddedControllers = {};
 
   /// A map to manage StreamControllers for member left events, indexed by chat ID.
   /// Each chat ID maps to a StreamController that broadcasts [PortalChatMember] events.
-  final Map<String, StreamController<PortalChatMember>> _onMemberLeftControllers = {};
+  final Map<String, StreamController<PortalChatMember>>
+      _onMemberLeftControllers = {};
 
   // Queue and state flag for uploads
   final Queue<UploadTask> _uploadQueue = Queue<UploadTask>();
@@ -142,15 +148,18 @@ final class ChatServiceImpl implements ChatService {
   ) async {
     final controllerExists = _onMemberAddedControllers.containsKey(chatId);
     if (controllerExists) {
-      log.info('Retrieving existing controller for chat member with ID: $chatId');
+      log.info(
+          'Retrieving existing controller for chat member with ID: $chatId');
     } else {
-      log.info('No controller found for chat member with ID: $chatId, creating a new one.');
+      log.info(
+          'No controller found for chat member with ID: $chatId, creating a new one.');
     }
 
     return _onMemberAddedControllers.putIfAbsent(
       chatId,
       () {
-        log.info('New StreamController for ChatMember created for chat ID: $chatId');
+        log.info(
+            'New StreamController for ChatMember created for chat ID: $chatId');
 
         return StreamController<PortalChatMember>.broadcast();
       },
@@ -167,15 +176,18 @@ final class ChatServiceImpl implements ChatService {
   ) async {
     final controllerExists = _onMemberLeftControllers.containsKey(chatId);
     if (controllerExists) {
-      log.info('Retrieving existing controller for member left with ID: $chatId');
+      log.info(
+          'Retrieving existing controller for member left with ID: $chatId');
     } else {
-      log.info('No controller found for member left with ID: $chatId, creating a new one.');
+      log.info(
+          'No controller found for member left with ID: $chatId, creating a new one.');
     }
 
     return _onMemberLeftControllers.putIfAbsent(
       chatId,
       () {
-        log.info('New StreamController for member left created for chat ID: $chatId');
+        log.info(
+            'New StreamController for member left created for chat ID: $chatId');
         return StreamController<PortalChatMember>.broadcast();
       },
     );
@@ -200,7 +212,8 @@ final class ChatServiceImpl implements ChatService {
     return _onNewMessageControllers.putIfAbsent(
       chatId,
       () {
-        log.info('New StreamController for DialogMessageResponse created for chat ID: $chatId');
+        log.info(
+            'New StreamController for DialogMessageResponse created for chat ID: $chatId');
 
         return StreamController<DialogMessageResponse>.broadcast();
       },
@@ -229,28 +242,35 @@ final class ChatServiceImpl implements ChatService {
     await _grpcConnect.sendRequest(request);
 
     try {
-      final response = await _grpcConnect.responseStream.firstWhere((response) => response.id == requestId);
+      final response = await _grpcConnect.responseStream
+          .firstWhere((response) => response.id == requestId);
 
       log.info('Received response for chat dialogs request ID: $requestId');
 
       if (response.data.canUnpackInto(ChatList())) {
         final unpackedDialogMessages = response.data.unpackInto(ChatList());
         if (unpackedDialogMessages.data.isNotEmpty) {
-          log.info('Successfully unpacked chat dialogs, saving first chat ID to preferences');
+          log.info(
+              'Successfully unpacked chat dialogs, saving first chat ID to preferences');
 
           _sharedPreferencesGateway.saveToDisk(
             'chatId',
             unpackedDialogMessages.data.first.id,
           );
 
-          final List<Future<Dialog>> dialogFutures = unpackedDialogMessages.data.map((dialog) async {
-            final onNewMessageController = await getControllerForNewMessage(dialog.id);
+          final List<Future<Dialog>> dialogFutures =
+              unpackedDialogMessages.data.map((dialog) async {
+            final onNewMessageController =
+                await getControllerForNewMessage(dialog.id);
 
-            final onNewMemberAddedController = await getControllerForMemberAdded(dialog.id);
+            final onNewMemberAddedController =
+                await getControllerForMemberAdded(dialog.id);
 
-            final bool isClosed = (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
+            final bool isClosed =
+                (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
 
-            final onMemberLeftController = await getControllerForMemberLeft(dialog.id);
+            final onMemberLeftController =
+                await getControllerForMemberLeft(dialog.id);
 
             return DialogImpl(
               isClosed: isClosed,
@@ -329,28 +349,35 @@ final class ChatServiceImpl implements ChatService {
     await _grpcConnect.sendRequest(request);
 
     try {
-      final response = await _grpcConnect.responseStream.firstWhere((response) => response.id == requestId);
+      final response = await _grpcConnect.responseStream
+          .firstWhere((response) => response.id == requestId);
 
       log.info('Received response for chat dialogs request ID: $requestId');
       if (response.data.canUnpackInto(ChatList())) {
         final unpackedDialogMessages = response.data.unpackInto(ChatList());
 
         if (unpackedDialogMessages.data.isNotEmpty) {
-          log.info('Successfully unpacked chat dialogs, saving first chat ID to preferences');
+          log.info(
+              'Successfully unpacked chat dialogs, saving first chat ID to preferences');
 
           _sharedPreferencesGateway.saveToDisk(
             'chatId',
             unpackedDialogMessages.data.first.id,
           );
 
-          final List<Future<Dialog>> dialogFutures = unpackedDialogMessages.data.map((dialog) async {
-            final onNewMessageController = await getControllerForNewMessage(dialog.id);
+          final List<Future<Dialog>> dialogFutures =
+              unpackedDialogMessages.data.map((dialog) async {
+            final onNewMessageController =
+                await getControllerForNewMessage(dialog.id);
 
-            final onNewMemberAddedController = await getControllerForMemberAdded(dialog.id);
+            final onNewMemberAddedController =
+                await getControllerForMemberAdded(dialog.id);
 
-            final onMemberLeftController = await getControllerForMemberLeft(dialog.id);
+            final onMemberLeftController =
+                await getControllerForMemberLeft(dialog.id);
 
-            final bool isClosed = (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
+            final bool isClosed =
+                (dialog.left != 0 || (dialog.left == 0 && dialog.join == 0));
 
             return DialogImpl(
               isClosed: isClosed,
@@ -469,7 +496,8 @@ final class ChatServiceImpl implements ChatService {
           if (!task.completer.isCompleted) {
             task.completer.complete();
           }
-          task.completer = Completer<void>(); // Create a new completer for the next batch
+          task.completer =
+              Completer<void>(); // Create a new completer for the next batch
         } else if (progress.hasStat()) {
           log.info('Upload completed for file: ${progress.stat.file.name}');
           task.controller.add(
@@ -517,7 +545,8 @@ final class ChatServiceImpl implements ChatService {
     int? offset,
   }) {
     // Create a StreamController for managing upload progress
-    final StreamController<UploadResponse> controller = StreamController<UploadResponse>();
+    final StreamController<UploadResponse> controller =
+        StreamController<UploadResponse>();
 
     _addToUploadQueue(
       mediaType: mediaType,
@@ -575,7 +604,9 @@ final class ChatServiceImpl implements ChatService {
     }
 
     while (currentOffset < fileLength) {
-      int end = (currentOffset + chunkSize > fileLength) ? fileLength : currentOffset + chunkSize;
+      int end = (currentOffset + chunkSize > fileLength)
+          ? fileLength
+          : currentOffset + chunkSize;
       Stream<List<int>> fileStream = file.openRead(currentOffset, end);
 
       await for (var bytes in fileStream) {
@@ -604,24 +635,32 @@ final class ChatServiceImpl implements ChatService {
           uploadSpeeds.removeAt(0);
         }
 
-        final averageSpeed = uploadSpeeds.reduce((a, b) => a + b) / uploadSpeeds.length;
+        final averageSpeed =
+            uploadSpeeds.reduce((a, b) => a + b) / uploadSpeeds.length;
         adjustmentsCount++;
         if (adjustmentsCount >= adjustmentInterval) {
           final currentTime = DateTime.now();
 
-          if (elapsedTimeMs > maxDelayThreshold && currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
-            chunkSize = (chunkSize * 0.9).clamp(minChunkSize, maxChunkSize).toInt();
-            log.warning('Significant delay detected. Gradually reducing chunk size to: $chunkSize bytes.');
+          if (elapsedTimeMs > maxDelayThreshold &&
+              currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+            chunkSize =
+                (chunkSize * 0.9).clamp(minChunkSize, maxChunkSize).toInt();
+            log.warning(
+                'Significant delay detected. Gradually reducing chunk size to: $chunkSize bytes.');
             lastDecreaseTime = currentTime;
           } else if (averageSpeed > 50000) {
             fastUploadCount++;
             if (fastUploadCount >= 3) {
-              chunkSize = (chunkSize * 1.15).clamp(minChunkSize, maxChunkSize).toInt();
+              chunkSize =
+                  (chunkSize * 1.15).clamp(minChunkSize, maxChunkSize).toInt();
               fastUploadCount = 0;
             }
-          } else if (averageSpeed < 20000 && currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
-            chunkSize = (chunkSize * 0.99).clamp(minChunkSize, maxChunkSize).toInt();
-            log.warning('Consistently slow speed. Gradually reducing chunk size to: $chunkSize bytes.');
+          } else if (averageSpeed < 20000 &&
+              currentTime.difference(lastDecreaseTime) > decreaseCooldown) {
+            chunkSize =
+                (chunkSize * 0.99).clamp(minChunkSize, maxChunkSize).toInt();
+            log.warning(
+                'Consistently slow speed. Gradually reducing chunk size to: $chunkSize bytes.');
             lastDecreaseTime = currentTime;
           }
 
@@ -763,14 +802,17 @@ final class ChatServiceImpl implements ChatService {
         // Add the file to the controller
         controller.add(file!);
 
-        log.info("Received ${mediaFile.data.length} bytes for file '${file!.name}'; Total received: $offset bytes.");
+        log.info(
+            "Received ${mediaFile.data.length} bytes for file '${file!.name}'; Total received: $offset bytes.");
       },
       onError: (err) async {
-        log.warning("GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
+        log.warning(
+            "GrpcError encountered while downloading file '${file?.name ?? "unknown"}': ${err.message}");
 
         // Attempt to resume the download if it was interrupted
         if (file != null && offset < fixnum.Int64(file!.size ?? 0)) {
-          log.info("Attempting to resume file download for '${file!.name}' from offset $offset.");
+          log.info(
+              "Attempting to resume file download for '${file!.name}' from offset $offset.");
 
           await for (var resumedFile in _downloadMediaFromOffset(
             fileId: fileId,
@@ -794,9 +836,11 @@ final class ChatServiceImpl implements ChatService {
       onDone: () async {
         // Close the controller when the download is complete
         if (file != null && offset.toInt() == file!.size) {
-          log.info("Completed download for file ID: $fileId, Total bytes received: $offset.");
+          log.info(
+              "Completed download for file ID: $fileId, Total bytes received: $offset.");
         } else {
-          log.warning("Download not complete for file ID: $fileId, total bytes received: $offset.");
+          log.warning(
+              "Download not complete for file ID: $fileId, total bytes received: $offset.");
         }
         controller.close();
         await sink.flush();
@@ -840,7 +884,8 @@ final class ChatServiceImpl implements ChatService {
           sink.add(mediaFile.data);
           offset += mediaFile.data.length;
 
-          log.info("Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
+          log.info(
+              "Resumed download, received ${mediaFile.data.length} bytes; Total resumed: $offset bytes.");
 
           download.updateOffset(offset.toInt());
 
@@ -990,13 +1035,15 @@ final class ChatServiceImpl implements ChatService {
           final onNewMessageController = _onNewMessageControllers[chatId];
 
           if (onNewMessageController != null) {
-            final messageType = MessageHelper.determineMessageTypeResponse(update);
+            final messageType =
+                MessageHelper.determineMessageTypeResponse(update);
 
             log.info("Received message of type: $messageType in chat: $chatId");
 
             Keyboard? keyboard;
             if (update.message.keyboard.buttons.isNotEmpty) {
-              log.info('Buttons found in keyboard: ${update.message.keyboard.buttons}');
+              log.info(
+                  'Buttons found in keyboard: ${update.message.keyboard.buttons}');
               keyboard = Keyboard(
                 buttons: update.message.keyboard.buttons.map((buttonRow) {
                   log.info('Processing button row: $buttonRow');
@@ -1012,7 +1059,8 @@ final class ChatServiceImpl implements ChatService {
                             url: button.url,
                           );
                         } else {
-                          log.warning('Skipping button with empty code - ${button.text}');
+                          log.warning(
+                              'Skipping button with empty code - ${button.text}');
                           return null;
                         }
                       })
@@ -1032,7 +1080,8 @@ final class ChatServiceImpl implements ChatService {
                   }).join('\n') ??
                   '';
 
-              log.info("Received a button message in chat: $chatId with buttons:\n$buttonDetails");
+              log.info(
+                  "Received a button message in chat: $chatId with buttons:\n$buttonDetails");
             }
 
             final dialogMessage = ResponseDialogMessageBuilder()
@@ -1058,7 +1107,8 @@ final class ChatServiceImpl implements ChatService {
                 .setInput(update.message.keyboard.noInput)
                 .build();
 
-            log.info("Built dialog message: ${dialogMessage.dialogMessageContent}");
+            log.info(
+                "Built dialog message: ${dialogMessage.dialogMessageContent}");
 
             onNewMessageController.add(dialogMessage);
           } else {
@@ -1095,7 +1145,8 @@ final class ChatServiceImpl implements ChatService {
 
       log.info("Sending message of type $messageType for user $userId");
 
-      final request = await _buildSendMessageRequest(message, userId ?? '', messageType, message.uploadFile);
+      final request = await _buildSendMessageRequest(
+          message, userId ?? '', messageType, message.uploadFile);
 
       _grpcConnect.sendRequest(request);
 
@@ -1139,7 +1190,9 @@ final class ChatServiceImpl implements ChatService {
     final completer = Completer<DialogMessageResponse>();
     StreamSubscription<portal.Response>? streamSubscription;
 
-    streamSubscription = _grpcConnect.responseStream.where((response) => response.id == requestId).listen(
+    streamSubscription = _grpcConnect.responseStream
+        .where((response) => response.id == requestId)
+        .listen(
           (response) => handleResponse(response, completer, userId),
           onError: (error) => handleError(error, completer, requestId),
           onDone: () => streamSubscription?.cancel(),
@@ -1161,7 +1214,8 @@ final class ChatServiceImpl implements ChatService {
   ) async {
     if (response.data.canUnpackInto(UpdateNewMessage())) {
       final unpackedMessage = response.data.unpackInto(UpdateNewMessage());
-      final messageType = MessageHelper.determineMessageTypeResponse(unpackedMessage);
+      final messageType =
+          MessageHelper.determineMessageTypeResponse(unpackedMessage);
 
       switch (messageType) {
         case MessageType.text:
@@ -1214,7 +1268,8 @@ final class ChatServiceImpl implements ChatService {
         response.err.message,
       );
 
-      log.warning('Failed to send Message for requestId: $recordId: $errorMessage');
+      log.warning(
+          'Failed to send Message for requestId: $recordId: $errorMessage');
       final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
       completer.complete(
@@ -1239,11 +1294,15 @@ final class ChatServiceImpl implements ChatService {
     Completer<DialogMessageResponse> completer,
     String requestId,
   ) {
-    final errorMessage = error is GrpcError ? error.message : 'Unknown error occurred';
+    final errorMessage =
+        error is GrpcError ? error.message : 'Unknown error occurred';
     log.severe("Error on handling message response: $errorMessage");
 
     completer.complete(
-      ErrorDialogMessageBuilder().setDialogMessageContent(errorMessage ?? '').setRequestId(requestId).build(),
+      ErrorDialogMessageBuilder()
+          .setDialogMessageContent(errorMessage ?? '')
+          .setRequestId(requestId)
+          .build(),
     );
   }
 
@@ -1275,7 +1334,8 @@ final class ChatServiceImpl implements ChatService {
       );
     }
 
-    log.info('Sending message request to portal with path: ${Constants.sendMessagePath}');
+    log.info(
+        'Sending message request to portal with path: ${Constants.sendMessagePath}');
 
     return portal.Request(
       path: Constants.sendMessagePath,
@@ -1335,13 +1395,15 @@ final class ChatServiceImpl implements ChatService {
     final userId = await _sharedPreferencesGateway.readUserId();
     final requestId = uuid.v4();
 
-    log.info('Fetching messages for chatId: $chatId with limit: ${limit ?? 20}');
+    log.info(
+        'Fetching messages for chatId: $chatId with limit: ${limit ?? 20}');
 
     final int64Offset = fixnum.Int64(offset ?? 0);
     final fetchMessagesRequest = ChatMessagesRequest(
       chatId: chatId,
       limit: limit ?? 20,
-      offset: offset != null ? ChatMessagesRequest_Offset(id: int64Offset) : null,
+      offset:
+          offset != null ? ChatMessagesRequest_Offset(id: int64Offset) : null,
     );
     final request = portal.Request(
       path: path,
@@ -1365,7 +1427,8 @@ final class ChatServiceImpl implements ChatService {
             .setPeers(unpackedDialogMessages.peers);
 
         final messages = messagesBuilder.build();
-        log.info('Successfully fetched ${messages.length} messages for chatId: $chatId');
+        log.info(
+            'Successfully fetched ${messages.length} messages for chatId: $chatId');
 
         return messages;
       } else if (response.err.hasMessage()) {
@@ -1374,7 +1437,8 @@ final class ChatServiceImpl implements ChatService {
           response.err.message,
         );
 
-        log.warning('Failed to unpack dialog messages for requestId: $recordId: $errorMessage');
+        log.warning(
+            'Failed to unpack dialog messages for requestId: $recordId: $errorMessage');
         final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
         return [
@@ -1410,7 +1474,8 @@ final class ChatServiceImpl implements ChatService {
             requestId: requestId,
             error: CallError(
               statusCode: ErrorCodes.unknownError.toString(),
-              errorMessage: 'An unknown error occurred while fetching messages.',
+              errorMessage:
+                  'An unknown error occurred while fetching messages.',
             ),
           ),
         ];
@@ -1563,7 +1628,9 @@ final class ChatServiceImpl implements ChatService {
     final completer = Completer<DialogMessageResponse>();
     StreamSubscription<portal.Response>? streamSubscription;
 
-    streamSubscription = _grpcConnect.responseStream.where((response) => response.id == requestId).listen(
+    streamSubscription = _grpcConnect.responseStream
+        .where((response) => response.id == requestId)
+        .listen(
           (response) => handleResponse(response, completer, userId),
           onError: (error) => handleError(error, completer, requestId),
           onDone: () => streamSubscription?.cancel(),
@@ -1580,10 +1647,12 @@ final class ChatServiceImpl implements ChatService {
   ) async {
     if (response.data.canUnpackInto(UpdateNewMessage())) {
       final unpackedMessage = response.data.unpackInto(UpdateNewMessage());
-      final messageType = MessageHelper.determineMessageTypeResponse(unpackedMessage);
+      final messageType =
+          MessageHelper.determineMessageTypeResponse(unpackedMessage);
 
       if (messageType == MessageType.text) {
-        log.info("Handled response for message type $MessageType.outcomingMessage");
+        log.info(
+            "Handled response for message type $MessageType.outcomingMessage");
 
         completer.complete(
           ResponseDialogMessageBuilder()
@@ -1606,7 +1675,8 @@ final class ChatServiceImpl implements ChatService {
         response.err.message,
       );
 
-      log.warning('Failed to send postback for requestId: $recordId: $errorMessage');
+      log.warning(
+          'Failed to send postback for requestId: $recordId: $errorMessage');
       final statusCode = ErrorHelper.getCodeFromMessage(errorMessage);
 
       completer.complete(
@@ -1626,11 +1696,15 @@ final class ChatServiceImpl implements ChatService {
     Completer<DialogMessageResponse> completer,
     String requestId,
   ) {
-    final errorMessage = error is GrpcError ? error.message : 'Unknown error occurred';
+    final errorMessage =
+        error is GrpcError ? error.message : 'Unknown error occurred';
     log.severe("Error on handling postback response: $errorMessage");
 
     completer.complete(
-      ErrorDialogMessageBuilder().setDialogMessageContent(errorMessage ?? '').setRequestId(requestId).build(),
+      ErrorDialogMessageBuilder()
+          .setDialogMessageContent(errorMessage ?? '')
+          .setRequestId(requestId)
+          .build(),
     );
   }
 }
