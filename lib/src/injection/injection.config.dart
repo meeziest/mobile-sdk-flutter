@@ -51,20 +51,14 @@ extension GetItInjectableX on _i174.GetIt {
       environmentFilter,
     );
     gh.lazySingleton<_i659.GrpcChannel>(() => _i659.GrpcChannel());
-    gh.lazySingleton<_i741.SharedPreferencesGateway>(
-        () => _i741.SharedPreferencesGateway());
     gh.lazySingleton<_i73.CallManager>(() => _i73.CallManager());
     gh.lazySingleton<_i655.ChatManager>(() => _i655.ChatManager());
+    gh.lazySingleton<_i741.SharedPreferencesGateway>(
+        () => _i741.SharedPreferencesGateway());
     gh.lazySingleton<_i397.Upload>(() => _i172.UploadImpl(
           onProgress: gh<_i687.StreamController<_i365.UploadResponse>>(),
           subscription: gh<_i687.StreamSubscription<_i198.UploadProgress>>(),
           offset: gh<int>(),
-        ));
-    gh.lazySingleton<_i217.Download>(() => _i608.DownloadImpl(
-          subscription: gh<_i687.StreamSubscription<_i198.MediaFile>>(),
-          offset: gh<int>(),
-          onData: gh<_i687.StreamController<_i1056.MediaFileResponse>>(),
-          fileId: gh<String>(),
         ));
     gh.lazySingleton<_i510.Dialog>(() => _i91.DialogImpl(
           id: gh<String>(),
@@ -99,6 +93,13 @@ extension GetItInjectableX on _i174.GetIt {
           gh<_i659.GrpcChannel>(),
           gh<_i190.GrpcConnect>(),
           gh<_i741.SharedPreferencesGateway>(),
+        ));
+    gh.lazySingleton<_i217.Download>(() => _i608.DownloadImpl(
+          subscription: gh<_i687.StreamSubscription<_i198.MediaFile>>(),
+          offset: gh<int>(),
+          onData: gh<_i687.StreamController<_i1056.MediaFileResponse>>(),
+          fileId: gh<String>(),
+          savePath: gh<String>(),
         ));
     return this;
   }
