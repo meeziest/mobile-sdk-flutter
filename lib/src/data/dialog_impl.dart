@@ -137,10 +137,15 @@ final class DialogImpl implements Dialog {
 
   /// Downloads a media file associated with a dialog.
   @override
-  Download downloadFile({required String fileId, int? offset}) =>
+  Download downloadFile({
+    required String fileId,
+    required String savePath,
+    int? offset,
+  }) =>
       _chatService.downloadFile(
         fileId: fileId,
         offset: offset,
+        savePath: savePath,
       );
 
   /// Uploads a media file associated with a dialog.

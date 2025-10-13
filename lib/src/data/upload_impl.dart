@@ -48,8 +48,7 @@ final class UploadImpl implements Upload {
     if (subscription != null) {
       await subscription!.cancel();
       subscription = null; // Clear the subscription to indicate cancellation
-      onProgress
-          .close(); // Close the stream controller to signal the end of the upload
+      onProgress.close(); // Close the stream controller to signal the end of the upload
     }
   }
 

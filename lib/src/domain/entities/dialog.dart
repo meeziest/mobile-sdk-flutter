@@ -51,7 +51,11 @@ abstract interface class Dialog {
   /// [fileId] The unique identifier of the file to be downloaded.
   ///
   /// Returns a [Download] object representing the download operation.
-  Download downloadFile({required String fileId, int? offset});
+  Download downloadFile({
+    required String fileId,
+    required String savePath,
+    int? offset,
+  });
 
   /// Uploads a media file to be sent in the dialog.
   ///

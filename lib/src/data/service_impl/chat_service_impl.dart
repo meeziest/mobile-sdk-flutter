@@ -685,6 +685,7 @@ final class ChatServiceImpl implements ChatService {
   @override
   Download downloadFile({
     required String fileId,
+    required String savePath,
     int? offset,
   }) {
     // Initialize the StreamController for media file responses
@@ -699,6 +700,7 @@ final class ChatServiceImpl implements ChatService {
       fileId: fileId,
       offset: offset ?? 0,
       onData: controller,
+      savePath: savePath,
     );
 
     // Start the media download from the server
@@ -724,6 +726,9 @@ final class ChatServiceImpl implements ChatService {
     required StreamController<MediaFileResponse> controller,
     required DownloadImpl download,
   }) {
+    final file = File(download.savePath);
+    file.createSync(recursive: true);
+
     // Create the media stream from the gRPC call
     final mediaStream = _grpcChannel.mediaStorageStub.getFile(
       GetFileRequest(
@@ -739,6 +744,7 @@ final class ChatServiceImpl implements ChatService {
       offset: offset,
       controller: controller,
       download: download,
+      targetFile: file,
     );
 
     // Assign the subscription to the download object
@@ -760,8 +766,11 @@ final class ChatServiceImpl implements ChatService {
     required fixnum.Int64 offset,
     required StreamController<MediaFileResponse> controller,
     required DownloadImpl download,
+    required File targetFile,
   }) {
     MediaFileResponse? file;
+
+    final sink = targetFile.openWrite(mode: FileMode.writeOnly);
 
     // Listen to the media stream
     return mediaStream.listen(
@@ -783,6 +792,8 @@ final class ChatServiceImpl implements ChatService {
         // Add the received data to the file
         file!.bytes?.clear();
         file!.bytes?.addAll(mediaFile.data);
+        sink.add(mediaFile.data);
+
         offset += mediaFile.data.length;
 
         // Update the download offset
@@ -809,6 +820,7 @@ final class ChatServiceImpl implements ChatService {
             offset: offset,
             controller: controller,
             download: download,
+            sink: sink,
           )) {
             controller.add(resumedFile);
           }
@@ -817,9 +829,11 @@ final class ChatServiceImpl implements ChatService {
 
           controller.addError(err);
           controller.close();
+          await sink.flush();
+          await sink.close();
         }
       },
-      onDone: () {
+      onDone: () async {
         // Close the controller when the download is complete
         if (file != null && offset.toInt() == file!.size) {
           log.info(
@@ -829,6 +843,8 @@ final class ChatServiceImpl implements ChatService {
               "Download not complete for file ID: $fileId, total bytes received: $offset.");
         }
         controller.close();
+        await sink.flush();
+        await sink.close();
       },
       cancelOnError: true,
     );
@@ -849,6 +865,7 @@ final class ChatServiceImpl implements ChatService {
     required fixnum.Int64 offset,
     required StreamController<MediaFileResponse> controller,
     required DownloadImpl download,
+    required IOSink sink,
   }) async* {
     await retry(
       () async* {
@@ -864,6 +881,7 @@ final class ChatServiceImpl implements ChatService {
         await for (MediaFile mediaFile in resumedMedia) {
           file.bytes?.clear();
           file.bytes?.addAll(mediaFile.data);
+          sink.add(mediaFile.data);
           offset += mediaFile.data.length;
 
           log.info(
@@ -878,6 +896,8 @@ final class ChatServiceImpl implements ChatService {
         log.info("Resumed and completed file download for '${file.name}'.");
 
         controller.close();
+        await sink.flush();
+        await sink.close();
       },
       retryIf: (err) => err is GrpcError,
       onRetry: (err) => log.warning(

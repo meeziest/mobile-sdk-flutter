@@ -95,7 +95,11 @@ abstract interface class ChatService {
   /// [fileId] The unique identifier of the file to be downloaded.
   ///
   /// Returns a stream of [MediaFileResponse] for the downloaded file.
-  Download downloadFile({required String fileId, int? offset});
+  Download downloadFile({
+    required String fileId,
+    required String savePath,
+    int? offset,
+  });
 
   /// Resumes the download of a media file.
   ///
