@@ -35,11 +35,25 @@ final class MessagesListMessageBuilder {
     return this;
   }
 
+  Sender _resolveSender(pb.Message message) {
+    final peerIndex = int.parse(message.from.id) - 1;
+    final peer = _peers[peerIndex];
+
+    if (peer.name == 'You') {
+      return Sender.user;
+    } else if (peer.type == 'bot') {
+      return Sender.bot;
+    } else {
+      return Sender.operator;
+    }
+  }
+
   List<DialogMessageResponse> build() {
     return _messages.map((message) {
       final peerIndex = int.parse(message.from.id) - 1;
-      final messageType =
-          _peers[peerIndex].id == _userId ? Sender.user : Sender.operator;
+      final peer = _peers[peerIndex];
+
+      final messageType = _resolveSender(message);
 
       // Process the keyboard if it's not null
       Keyboard? keyboard;
@@ -73,9 +87,9 @@ final class MessagesListMessageBuilder {
         sender: messageType,
         dialogMessageContent: message.text,
         peer: PeerInfo(
-          name: _peers[peerIndex].name,
-          type: _peers[peerIndex].type,
-          id: _peers[peerIndex].id,
+          name: peer.name,
+          type: peer.type,
+          id: peer.id,
         ),
         file: MediaFileResponse(
           id: message.file.id,
