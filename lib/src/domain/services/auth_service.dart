@@ -2,6 +2,8 @@ import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_response.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_user.dart';
 
+import '../../../webitel_portal_sdk.dart';
+
 /// Interface for the authentication service, providing methods for user authentication,
 /// device registration, client initialization, and user information retrieval.
 abstract interface class AuthService {
@@ -33,6 +35,7 @@ abstract interface class AuthService {
     required String url,
     required String appToken,
     List<int>? cert,
+    Iterable<ClientInterceptor>? interceptors,
   });
 
   /// Logs in a user with the provided credentials and user information.

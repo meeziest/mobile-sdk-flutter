@@ -1,3 +1,4 @@
+import 'package:grpc/grpc.dart';
 import 'package:webitel_portal_sdk/src/data/logger/logger.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/logger_level.dart';
 import 'package:webitel_portal_sdk/src/domain/entities/portal_client.dart';
@@ -30,6 +31,7 @@ class WebitelPortalSdk {
     required String appToken,
     required LoggerLevel loggerLevel,
     List<int>? cert,
+    Iterable<ClientInterceptor>? interceptors,
   }) async {
     // Configure dependencies using dependency injection.
     configureDependencies();
@@ -45,6 +47,7 @@ class WebitelPortalSdk {
       url: url,
       appToken: appToken,
       cert: cert,
+      interceptors: interceptors,
     );
 
     return client;

@@ -61,6 +61,7 @@ class AuthServiceImpl implements AuthService {
     required String url,
     required String appToken,
     List<int>? cert,
+    Iterable<ClientInterceptor>? interceptors,
   }) async {
     log.info(
         'Initializing gRPC channel for the portal URL: $url with the provided app token.');
@@ -138,6 +139,7 @@ class AuthServiceImpl implements AuthService {
         port: port,
         secure: secureConnection,
         cert: cert,
+        interceptors: interceptors,
       );
 
       return PortalClientImpl(

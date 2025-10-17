@@ -50,6 +50,9 @@ class GrpcChannel {
   // Certificate for secure connection.
   List<int>? _cert;
 
+  // Interceptors for the gRPC channel.
+  Iterable<ClientInterceptor>? _interceptors;
+
   /// Initializes the gRPC channel with the provided parameters.
   ///
   /// [url] The URL of the gRPC server.
@@ -66,6 +69,7 @@ class GrpcChannel {
     required int port,
     required bool secure,
     List<int>? cert,
+    Iterable<ClientInterceptor>? interceptors,
   }) async {
     _url = url;
     _secure = secure;
@@ -74,6 +78,7 @@ class GrpcChannel {
     _appToken = appToken;
     _userAgent = userAgent;
     _cert = cert;
+    _interceptors = interceptors;
     await _createChannel(
       url: url,
       deviceId: deviceId,
@@ -82,6 +87,7 @@ class GrpcChannel {
       port: port,
       secure: secure,
       cert: _cert,
+      interceptors: _interceptors,
     );
   }
 
@@ -100,6 +106,8 @@ class GrpcChannel {
       deviceId: _deviceId,
       appToken: _appToken,
       userAgent: _userAgent,
+      interceptors: _interceptors,
+      cert: _cert,
     );
   }
 
@@ -123,15 +131,15 @@ class GrpcChannel {
   /// [port] The port of the gRPC server.
   /// [url] The URL of the gRPC server.
   /// [secure] Indicates if the connection should be secure.
-  Future<void> _createChannel({
-    required String deviceId,
-    required String appToken,
-    required String userAgent,
-    required int port,
-    required String url,
-    required bool secure,
-    List<int>? cert,
-  }) async {
+  Future<void> _createChannel(
+      {required String deviceId,
+      required String appToken,
+      required String userAgent,
+      required int port,
+      required String url,
+      required bool secure,
+      List<int>? cert,
+      Iterable<ClientInterceptor>? interceptors}) async {
     _logger.info(
         'Creating gRPC channel with the following parameters: URL: $_url, Port: $_port, Secure: $_secure, Device ID: $_deviceId, User Agent: $_userAgent');
 
@@ -203,6 +211,8 @@ class GrpcChannel {
             deviceId: _deviceId,
             appToken: _appToken,
             userAgent: _userAgent,
+            cert: _cert,
+            interceptors: _interceptors,
           );
 
           _logger.info(

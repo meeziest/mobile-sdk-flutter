@@ -1,5 +1,7 @@
 library webitel_portal_sdk;
 
+export 'package:grpc/grpc.dart';
+
 export 'src/domain/entities/call_error.dart';
 export 'src/domain/entities/channel_status.dart';
 export 'src/domain/entities/connect_status.dart';
